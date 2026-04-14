@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const competitorController_1 = require("../controllers/competitorController");
+const router = (0, express_1.Router)();
+router.get('/', competitorController_1.getCompetitors);
+router.get('/:id', competitorController_1.getCompetitor);
+router.post('/', competitorController_1.createCompetitor);
+router.put('/:id', competitorController_1.updateCompetitor);
+router.delete('/:id', competitorController_1.deleteCompetitor);
+exports.default = router;
