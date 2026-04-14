@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "echo ok",
-    "start": "node_modules/.bin/ts-node src/index.ts"
+    "start": "node dist/index.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

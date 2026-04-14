@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const briefingController_1 = require("../controllers/briefingController");
+const router = (0, express_1.Router)();
+router.get('/', briefingController_1.getBriefings);
+router.get('/:id', briefingController_1.getBriefing);
+router.post('/', briefingController_1.createBriefing);
+router.put('/:id', briefingController_1.updateBriefing);
+router.delete('/:id', briefingController_1.deleteBriefing);
+exports.default = router;
