@@ -1,6 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import { useSubscription } from '../contexts/SubscriptionContext'
-import {
+import { useAuth } from '../contexts/AuthContext'
   Sparkles, CheckCircle2, Lock, Loader2, ArrowRight, Zap,
 } from 'lucide-react'
 
@@ -103,6 +103,7 @@ import { useState } from 'react'
 
 export default function SubscriptionRoute() {
   const { isActive, isLoading } = useSubscription()
+  const { user } = useAuth()
 
   if (isLoading) {
     return (
@@ -112,6 +113,6 @@ export default function SubscriptionRoute() {
     )
   }
 
-  if (!isActive) return <UpgradeWall />
+if (!isActive && (user as any)?.role !== 'admin') return <UpgradeWall />
   return <Outlet />
 }
