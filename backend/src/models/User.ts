@@ -1,72 +1,116 @@
-// ─── Subscription ─────────────────────────────────────────────────────────────
-export type SubStatus =
-  | 'active' | 'trialing' | 'canceled' | 'past_due'
-  | 'incomplete' | 'incomplete_expired' | 'unpaid' | 'paused'
+import { PrismaClient } from "@prisma/client"
+
+export const prisma = new PrismaClient()
+
+export type SubStatus = "active" | "trialing" | "canceled" | "past_due" | "incomplete" | "incomplete_expired" | "unpaid" | "paused"
 
 export interface SubscriptionData {
   stripeSubscriptionId: string
   status: SubStatus
-  currentPeriodEnd: string      // ISO string
+  currentPeriodEnd: string
   cancelAtPeriodEnd: boolean
   priceId: string
   trialEnd: string | null
 }
 
-// ─── User ─────────────────────────────────────────────────────────────────────
 export interface User {
   id: string
   name: string
   email: string
   passwordHash: string
-  role: 'admin' | 'member'
+  role: "admin" | "member"
   createdAt: string
   lastLoginAt: string | null
-  // Stripe
   stripeCustomerId: string | null
   subscription: SubscriptionData | null
 }
 
-export type PublicUser = Omit<User, 'passwordHash'>
+export type PublicUser = Omit<User, "passwordHash">
 
-// ─── In-memory store ──────────────────────────────────────────────────────────
-// Production: replace with Prisma / TypeORM / Mongoose adapter
-const store      = new Map<string, User>()
-const emailIndex = new Map<string, string>()           // email → id
-const stripeIndex = new Map<string, string>()          // stripeCustomerId → id
+function toUser(u: any): User {
+  return {
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    passwordHash: u.passwordHash,
+    role: u.role as "admin" | "member",
+    createdAt: u.createdAt.toISOString(),
+    lastLoginAt: u.lastLoginAt ? u.lastLoginAt.toISOString() : null,
+    stripeCustomerId: u.stripeCustomerId,
+    subscription: u.subscriptionId ? {
+      stripeSubscriptionId: u.subscriptionId,
+      status: u.subscriptionStatus as SubStatus,
+      currentPeriodEnd: u.subscriptionEnd ? u.subscriptionEnd.toISOString() : "",
+      cancelAtPeriodEnd: u.cancelAtPeriodEnd,
+      priceId: u.priceId ?? "",
+      trialEnd: u.trialEnd ? u.trialEnd.toISOString() : null,
+    } : null,
+  }
+}
 
 export const UserStore = {
-  create(user: User): User {
-    store.set(user.id, user)
-    emailIndex.set(user.email.toLowerCase(), user.id)
-    if (user.stripeCustomerId) stripeIndex.set(user.stripeCustomerId, user.id)
-    return user
+  async create(user: Omit<User, "createdAt" | "lastLoginAt"> & { createdAt?: string }): Promise<User> {
+    const u = await prisma.user.create({
+      data: {
+        id: user.id,
+        name: user.name,
+        email: user.email.toLowerCase(),
+        passwordHash: user.passwordHash,
+        role: user.role,
+      }
+    })
+    return toUser(u)
   },
 
-  findById(id: string): User | undefined {
-    return store.get(id)
+  async findById(id: string): Promise<User | undefined> {
+    const u = await prisma.user.findUnique({ where: { id } })
+    return u ? toUser(u) : undefined
   },
 
-  findByEmail(email: string): User | undefined {
-    const id = emailIndex.get(email.toLowerCase())
-    return id ? store.get(id) : undefined
+  async findByEmail(email: string): Promise<User | undefined> {
+    const u = await prisma.user.findUnique({ where: { email: email.toLowerCase() } })
+    return u ? toUser(u) : undefined
   },
 
-  findByStripeCustomerId(customerId: string): User | undefined {
-    const id = stripeIndex.get(customerId)
-    return id ? store.get(id) : undefined
+  async findByStripeCustomerId(customerId: string): Promise<User | undefined> {
+    const u = await prisma.user.findFirst({ where: { stripeCustomerId: customerId } })
+    return u ? toUser(u) : undefined
   },
 
-  update(id: string, patch: Partial<User>): User | undefined {
-    const user = store.get(id)
-    if (!user) return undefined
-    const updated = { ...user, ...patch, id }
-    store.set(id, updated)
-    if (patch.stripeCustomerId) stripeIndex.set(patch.stripeCustomerId, id)
-    return updated
+  async update(id: string, data: Partial<any>): Promise<User> {
+    const updateData: any = {}
+    if (data.lastLoginAt !== undefined) updateData.lastLoginAt = data.lastLoginAt ? new Date(data.lastLoginAt) : null
+    if (data.stripeCustomerId !== undefined) updateData.stripeCustomerId = data.stripeCustomerId
+    if (data.subscriptionId !== undefined) updateData.subscriptionId = data.subscriptionId
+    if (data.subscriptionStatus !== undefined) updateData.subscriptionStatus = data.subscriptionStatus
+    if (data.subscriptionEnd !== undefined) updateData.subscriptionEnd = data.subscriptionEnd ? new Date(data.subscriptionEnd) : null
+    if (data.trialEnd !== undefined) updateData.trialEnd = data.trialEnd ? new Date(data.trialEnd) : null
+    if (data.priceId !== undefined) updateData.priceId = data.priceId
+    if (data.cancelAtPeriodEnd !== undefined) updateData.cancelAtPeriodEnd = data.cancelAtPeriodEnd
+    if (data.subscription !== undefined) {
+      const sub = data.subscription
+      if (sub) {
+        updateData.subscriptionId = sub.stripeSubscriptionId
+        updateData.subscriptionStatus = sub.status
+        updateData.subscriptionEnd = sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd) : null
+        updateData.cancelAtPeriodEnd = sub.cancelAtPeriodEnd
+        updateData.priceId = sub.priceId
+        updateData.trialEnd = sub.trialEnd ? new Date(sub.trialEnd) : null
+      } else {
+        updateData.subscriptionId = null
+        updateData.subscriptionStatus = null
+        updateData.subscriptionEnd = null
+        updateData.cancelAtPeriodEnd = false
+        updateData.priceId = null
+        updateData.trialEnd = null
+      }
+    }
+    const u = await prisma.user.update({ where: { id }, data: updateData })
+    return toUser(u)
   },
 
   toPublic(user: User): PublicUser {
-    const { passwordHash: _pw, ...pub } = user
+    const { passwordHash, ...pub } = user
     return pub
-  },
+  }
 }
