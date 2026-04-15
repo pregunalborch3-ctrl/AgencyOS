@@ -121,7 +121,7 @@ export default function Register() {
     setError(null); setLoading(true)
     try {
       await register(name.trim(), email.trim().toLowerCase(), password, confirm)
-      navigate('/', { replace: true })
+      navigate('/dashboard', { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al crear la cuenta.')
     } finally {
