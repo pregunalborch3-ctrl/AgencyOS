@@ -1,9 +1,10 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Rocket, Settings, LogOut, Zap } from 'lucide-react'
+import { Rocket, Settings, LogOut, Zap, Clock } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
 const NAV = [
   { path: '/dashboard', icon: Rocket,   label: 'Generar campaña' },
+  { path: '/historial', icon: Clock,    label: 'Historial'       },
   { path: '/settings',  icon: Settings, label: 'Configuración'   },
 ]
 

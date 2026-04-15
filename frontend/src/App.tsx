@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider }         from './contexts/AuthContext'
 import { SubscriptionProvider } from './contexts/SubscriptionContext'
 import ProtectedRoute           from './components/ProtectedRoute'
-import SubscriptionRoute        from './components/SubscriptionRoute'
 import Layout                   from './components/Layout/Layout'
 import Landing                  from './pages/Landing'
 import Login                    from './pages/Login'
@@ -11,6 +10,7 @@ import CampaignApp              from './pages/CampaignApp'
 import Settings                 from './pages/Settings'
 import SubscriptionSuccess      from './pages/SubscriptionSuccess'
 import SubscriptionCanceled     from './pages/SubscriptionCanceled'
+import HistorialPage            from './pages/HistorialPage'
 
 export default function App() {
   return (
@@ -30,10 +30,9 @@ export default function App() {
                 <Route path="/subscription/canceled" element={<SubscriptionCanceled />} />
                 <Route path="/settings"              element={<Settings />} />
 
-                {/* Subscription-gated — main app */}
-                <Route element={<SubscriptionRoute />}>
-                  <Route path="/dashboard" element={<CampaignApp />} />
-                </Route>
+                {/* Main app — paywall handled in-app */}
+                <Route path="/dashboard" element={<CampaignApp />} />
+                <Route path="/historial" element={<HistorialPage />} />
               </Route>
             </Route>
 
