@@ -1,9 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   Rocket, Copy, Check, Zap, Megaphone, Video,
   BarChart3, Users, AlertCircle, RefreshCw,
   TrendingUp, Target, ChevronDown, ArrowRight,
+  Crosshair, UserCheck, Flame, Lock, Crown,
 } from 'lucide-react'
+import { saveToHistory, hasFreeUsed, markFreeUsed, type HistoryEntry } from '../lib/history'
+import { useSubscription } from '../contexts/SubscriptionContext'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface ShortCopy { hook: string; body: string; cta: string; type: string; platform: string }
@@ -17,16 +21,26 @@ interface Segmentation {
   interests: string[]; behaviors: string[]; pains: string[]; desires: string[]
   lookalike: string[]; exclude: string[]
 }
+interface Insight { angle: string; clientType: string; aggressiveness: string }
 interface CampaignResult {
   id: string; generatedAt: string
   input: { productDescription?: string; productUrl?: string; niche: string; objective: string }
   shortCopies: ShortCopy[]; longCopies: LongCopy[]; hooks: Hook[]
   creatives: Creative[]; campaignStructure: CampaignStructure; segmentation: Segmentation
+  insight?: Insight
 }
-type AppState = 'idle' | 'loading' | 'result'
+type AppState = 'idle' | 'loading' | 'result' | 'paywall'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const TOKEN_KEY = 'agencyos_token'
+const TOKEN_KEY   = 'agencyos_token'
+const ONBOARD_KEY = 'agencyos_onboarded'
+
+const ONBOARDING_EXAMPLE = {
+  input:     'Zapatillas running mujer amortiguación máxima, impermeables, €89 — tienda especializada deportes',
+  niche:     'calzado',
+  objective: 'ventas',
+  style:     'performance',
+}
 
 const NICHES = [
   { value: 'ropa',         label: 'Ropa y moda' },
@@ -80,6 +94,11 @@ function detectNiche(text: string): string {
   return ''
 }
 
+function extractProductName(input: string): string {
+  const first = input.split(/[\n,—·]/)[0].trim()
+  return first.length > 60 ? first.slice(0, 57) + '…' : first
+}
+
 // ─── API ──────────────────────────────────────────────────────────────────────
 async function generateCampaign(params: {
   productDescription: string; productUrl: string
@@ -96,7 +115,7 @@ async function generateCampaign(params: {
 }
 
 // ─── Copy button ──────────────────────────────────────────────────────────────
-function CopyBtn({ text, className = '' }: { text: string; className?: string }) {
+function CopyBtn({ text, label, className = '' }: { text: string; label?: string; className?: string }) {
   const [copied, setCopied] = useState(false)
   return (
     <button
@@ -105,7 +124,7 @@ function CopyBtn({ text, className = '' }: { text: string; className?: string })
         copied ? 'text-emerald-400 bg-emerald-400/10' : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'
       } ${className}`}
     >
-      {copied ? <><Check size={11} />Copiado</> : <><Copy size={11} />Copiar</>}
+      {copied ? <><Check size={11} />Copiado</> : <><Copy size={11} />{label ?? 'Copiar'}</>}
     </button>
   )
 }
@@ -143,7 +162,6 @@ function LoadingState() {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-10 py-20">
-      {/* Animated icon */}
       <div className="relative">
         <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
           <Rocket size={28} className="text-indigo-400 animate-pulse" />
@@ -151,7 +169,6 @@ function LoadingState() {
         <div className="absolute inset-0 rounded-2xl animate-ping bg-indigo-500/10" style={{ animationDuration: '2s' }} />
       </div>
 
-      {/* Steps */}
       <div className="flex flex-col items-center gap-3 w-full max-w-xs">
         {LOADING_STEPS.map((msg, i) => (
           <div
@@ -177,10 +194,68 @@ function LoadingState() {
   )
 }
 
+// ─── Insight header ───────────────────────────────────────────────────────────
+function InsightHeader({ insight }: { insight: Insight }) {
+  const aggrColor =
+    insight.aggressiveness === 'Alto'  ? 'text-red-400 bg-red-400/10 border-red-400/20' :
+    insight.aggressiveness === 'Medio' ? 'text-amber-400 bg-amber-400/10 border-amber-400/20' :
+                                         'text-emerald-400 bg-emerald-400/10 border-emerald-400/20'
+
+  return (
+    <div className="flex flex-wrap items-center gap-3 p-4 rounded-2xl bg-zinc-900/60 border border-white/5">
+      <div className="flex items-start gap-2.5 flex-1 min-w-0">
+        <Crosshair size={13} className="text-indigo-400 flex-shrink-0 mt-0.5" />
+        <div className="min-w-0">
+          <p className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest mb-0.5">Ángulo estratégico</p>
+          <p className="text-xs font-semibold text-zinc-200 leading-snug">{insight.angle}</p>
+        </div>
+      </div>
+      <div className="flex items-start gap-2.5 flex-1 min-w-0">
+        <UserCheck size={13} className="text-violet-400 flex-shrink-0 mt-0.5" />
+        <div className="min-w-0">
+          <p className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest mb-0.5">Cliente objetivo</p>
+          <p className="text-xs font-semibold text-zinc-200 leading-snug truncate">{insight.clientType}</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <Flame size={13} className="text-zinc-500" />
+        <span className={`text-xs font-bold px-2.5 py-1 rounded-lg border ${aggrColor}`}>
+          Agresividad {insight.aggressiveness}
+        </span>
+      </div>
+    </div>
+  )
+}
+
 // ─── Output sections ──────────────────────────────────────────────────────────
 function AdsSection({ copies: { short, long } }: { copies: { short: ShortCopy[]; long: LongCopy[] } }) {
+  const metaCopies   = short.filter(c => c.platform.toLowerCase().includes('meta') || c.platform.toLowerCase().includes('facebook'))
+  const tiktokCopies = short.filter(c => c.platform.toLowerCase().includes('tiktok'))
+
+  const formatShort = (copies: ShortCopy[]) =>
+    copies.map(c => `[${c.type}]\n${c.hook}\n\n${c.body}\n\n${c.cta}`).join('\n\n---\n\n')
+
+  const formatAll = () => {
+    const parts: string[] = []
+    if (short.length) parts.push('== COPIES CORTOS ==\n\n' + formatShort(short))
+    if (long.length)  parts.push('== COPIES LARGOS ==\n\n' + long.map(c => `[${c.format}]\n${c.content}`).join('\n\n---\n\n'))
+    return parts.join('\n\n\n')
+  }
+
   return (
     <div className="space-y-8">
+      {/* Bulk copy bar */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider mr-1">Copiar todo:</span>
+        {metaCopies.length > 0 && (
+          <CopyBtn text={formatShort(metaCopies)} label="Meta Ads" />
+        )}
+        {tiktokCopies.length > 0 && (
+          <CopyBtn text={formatShort(tiktokCopies)} label="TikTok Ads" />
+        )}
+        <CopyBtn text={formatAll()} label="Todo" />
+      </div>
+
       {/* Short copies */}
       <div>
         <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4">Copies cortos · Meta Ads · TikTok</p>
@@ -225,9 +300,13 @@ function AdsSection({ copies: { short, long } }: { copies: { short: ShortCopy[];
 }
 
 function HooksSection({ hooks }: { hooks: Hook[] }) {
+  const allText = hooks.map((h, i) => `${i + 1}. ${h.text}`).join('\n')
   return (
     <div className="space-y-2">
-      <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4">5 hooks scroll-stopping</p>
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">5 hooks scroll-stopping</p>
+        <CopyBtn text={allText} label="Copiar todos" />
+      </div>
       {hooks.map((h, i) => (
         <div key={i} className="flex items-start gap-4 p-5 rounded-xl border border-white/5 bg-zinc-900 hover:border-white/10 transition-colors group">
           <span className="text-2xl font-black text-zinc-800 flex-shrink-0 w-7 text-right leading-none mt-0.5">{i + 1}</span>
@@ -254,6 +333,7 @@ function CreativesSection({ creatives }: { creatives: Creative[] }) {
               <p className="text-sm font-bold text-white">{c.format}</p>
               <p className="text-xs text-zinc-500 mt-0.5">{c.platform} · {c.duration}</p>
             </div>
+            <CopyBtn text={c.structure.map(s => `[${s.time}] ${s.action}`).join('\n')} label="Copiar guión" />
           </div>
           <div className="p-5 space-y-2">
             {c.structure.map((s, j) => (
@@ -335,10 +415,10 @@ function AudienceSection({ seg }: { seg: Segmentation }) {
 
       <div className="grid md:grid-cols-2 gap-4">
         {([
-          { label: 'Intereses',       items: seg.interests,  accent: 'text-indigo-400 bg-indigo-400/10' },
-          { label: 'Comportamientos', items: seg.behaviors,  accent: 'text-violet-400 bg-violet-400/10' },
-          { label: 'Audiencias lookalike', items: seg.lookalike, accent: 'text-emerald-400 bg-emerald-400/10' },
-          { label: 'Excluir',         items: seg.exclude,    accent: 'text-red-400 bg-red-400/10' },
+          { label: 'Intereses',            items: seg.interests,  accent: 'text-indigo-400 bg-indigo-400/10' },
+          { label: 'Comportamientos',      items: seg.behaviors,  accent: 'text-violet-400 bg-violet-400/10' },
+          { label: 'Audiencias lookalike', items: seg.lookalike,  accent: 'text-emerald-400 bg-emerald-400/10' },
+          { label: 'Excluir',              items: seg.exclude,    accent: 'text-red-400 bg-red-400/10' },
         ] as const).map(({ label, items, accent }) => (
           <div key={label}>
             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">{label}</p>
@@ -377,16 +457,77 @@ function AudienceSection({ seg }: { seg: Segmentation }) {
   )
 }
 
+// ─── Paywall screen ───────────────────────────────────────────────────────────
+function PaywallScreen({ onUpgrade }: { onUpgrade: () => void }) {
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center py-20 px-6">
+      <div className="max-w-md w-full text-center space-y-8">
+        {/* Icon */}
+        <div className="flex justify-center">
+          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-indigo-500/20 to-violet-500/20 border border-indigo-500/30 flex items-center justify-center shadow-xl shadow-indigo-500/10">
+            <Lock size={32} className="text-indigo-400" />
+          </div>
+        </div>
+
+        {/* Copy */}
+        <div className="space-y-3">
+          <p className="text-[11px] font-bold text-indigo-400 uppercase tracking-widest">1 campaña gratis usada</p>
+          <h2 className="text-3xl font-black text-white leading-tight">
+            Genera campañas<br />
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-violet-400">
+              ilimitadas
+            </span>
+          </h2>
+          <p className="text-zinc-500 text-base">
+            Desbloquea el sistema completo para generar campañas para todos tus clientes, sin límite.
+          </p>
+        </div>
+
+        {/* Features */}
+        <ul className="space-y-2.5 text-left">
+          {[
+            'Campañas ilimitadas para cualquier nicho',
+            'Copies, hooks, guiones y estructura de funnel',
+            'Variantes agresivo, conversión y TikTok',
+            'Historial completo de campañas generadas',
+            'Actualizaciones del sistema incluidas',
+          ].map(f => (
+            <li key={f} className="flex items-center gap-3 text-sm text-zinc-400">
+              <Check size={14} className="text-indigo-400 flex-shrink-0" />
+              {f}
+            </li>
+          ))}
+        </ul>
+
+        {/* CTA */}
+        <div className="space-y-3">
+          <button
+            onClick={onUpgrade}
+            className="w-full flex items-center justify-center gap-2.5 py-4 bg-indigo-500 hover:bg-indigo-400 text-white font-black text-lg rounded-2xl transition-all shadow-xl shadow-indigo-500/25 hover:-translate-y-0.5"
+          >
+            <Crown size={20} /> Desbloquear por 49€/mes
+          </button>
+          <p className="text-[11px] text-zinc-600">Sin contratos · Cancela cuando quieras</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Action buttons ───────────────────────────────────────────────────────────
 const ACTIONS: Array<{ label: string; icon: React.ElementType; variant: string }> = [
-  { label: 'Regenerar',            icon: RefreshCw,   variant: ''           },
-  { label: 'Más agresivo',         icon: TrendingUp,  variant: 'agresivo'   },
-  { label: 'Para conversión',      icon: Target,      variant: 'conversion' },
-  { label: 'Adaptar a TikTok',     icon: Zap,         variant: 'tiktok'     },
+  { label: 'Regenerar',        icon: RefreshCw,  variant: ''           },
+  { label: 'Más agresivo',     icon: TrendingUp, variant: 'agresivo'   },
+  { label: 'Para conversión',  icon: Target,     variant: 'conversion' },
+  { label: 'Adaptar a TikTok', icon: Zap,        variant: 'tiktok'     },
 ]
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function CampaignApp() {
+  const location = useLocation()
+  const navigate  = useNavigate()
+  const { isActive } = useSubscription()
+
   // Form state
   const [input,     setInput]     = useState('')
   const [niche,     setNiche]     = useState('')
@@ -399,8 +540,44 @@ export default function CampaignApp() {
   const [result,    setResult]    = useState<CampaignResult | null>(null)
   const [activeTab, setActiveTab] = useState('ads')
 
-  // Params snapshot (for re-generates)
   const lastParams = useRef({ input, niche, objective, style })
+
+  // ── Onboarding: prefill on first visit ──────────────────────────────────────
+  useEffect(() => {
+    const state = location.state as { loadCampaign?: HistoryEntry; prefill?: { input: string; niche: string; objective: string; style: string } } | null
+
+    if (state?.loadCampaign) {
+      const entry = state.loadCampaign
+      setInput(entry.inputText)
+      setNiche(entry.niche)
+      setObjective(entry.objective)
+      setStyle(entry.style)
+      setResult(entry.result as CampaignResult)
+      setActiveTab('ads')
+      setAppState('result')
+      window.history.replaceState({}, '')
+      return
+    }
+
+    if (state?.prefill) {
+      const p = state.prefill
+      setInput(p.input)
+      setNiche(p.niche)
+      setObjective(p.objective)
+      setStyle(p.style)
+      window.history.replaceState({}, '')
+      return
+    }
+
+    // First visit onboarding
+    if (!localStorage.getItem(ONBOARD_KEY)) {
+      setInput(ONBOARDING_EXAMPLE.input)
+      setNiche(ONBOARDING_EXAMPLE.niche)
+      setObjective(ONBOARDING_EXAMPLE.objective)
+      setStyle(ONBOARDING_EXAMPLE.style)
+      localStorage.setItem(ONBOARD_KEY, '1')
+    }
+  }, [])
 
   // Auto-detect niche on input change
   useEffect(() => {
@@ -413,6 +590,12 @@ export default function CampaignApp() {
     const params = variant ? lastParams.current : { input, niche, objective, style }
     if (!params.input.trim()) { setError('Describe el producto o pega una URL.'); return }
     if (!params.niche)        { setError('Selecciona el nicho.'); return }
+
+    // Paywall check (only on new generates, not variants of existing result)
+    if (!variant && !isActive && hasFreeUsed()) {
+      setAppState('paywall')
+      return
+    }
 
     lastParams.current = { ...params }
     setError(null)
@@ -428,106 +611,134 @@ export default function CampaignApp() {
         campaignStyle:      params.style,
         variant,
       })
+
       setResult(data)
       setActiveTab('ads')
       setAppState('result')
+
+      // Mark free campaign used + save to history
+      if (!variant) {
+        markFreeUsed()
+        const entry: HistoryEntry = {
+          id:          data.id,
+          date:        data.generatedAt,
+          productName: extractProductName(params.input),
+          niche:       params.niche,
+          objective:   params.objective,
+          style:       params.style,
+          inputText:   params.input,
+          result:      data,
+        }
+        saveToHistory(entry)
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error generando la campaña.')
       setAppState('idle')
     }
-  }, [input, niche, objective, style])
+  }, [input, niche, objective, style, isActive])
 
-  const isIdle   = appState === 'idle'
-  const isLoad   = appState === 'loading'
-  const isResult = appState === 'result'
+  const isIdle    = appState === 'idle'
+  const isLoad    = appState === 'loading'
+  const isResult  = appState === 'result'
+  const isPaywall = appState === 'paywall'
+
+  const handleUpgrade = () => navigate('/settings')
 
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-zinc-950">
 
       {/* ── Input block ─────────────────────────────────────────────────── */}
-      <div className={`border-b border-white/5 transition-all duration-500 ${isIdle ? 'py-16' : 'py-5'}`}>
-        <div className={`mx-auto px-6 transition-all duration-500 ${isIdle ? 'max-w-2xl' : 'max-w-5xl'}`}>
+      {!isPaywall && (
+        <div className={`border-b border-white/5 transition-all duration-500 ${isIdle ? 'py-16' : 'py-5'}`}>
+          <div className={`mx-auto px-6 transition-all duration-500 ${isIdle ? 'max-w-2xl' : 'max-w-5xl'}`}>
 
-          {/* Title — only in idle */}
-          {isIdle && (
-            <div className="text-center mb-10">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/8 mb-5">
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
-                <span className="text-xs text-indigo-400 font-semibold">Sistema listo</span>
+            {/* Title — only in idle */}
+            {isIdle && (
+              <div className="text-center mb-10">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/8 mb-5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+                  <span className="text-xs text-indigo-400 font-semibold">Sistema listo</span>
+                </div>
+                <h1 className="text-4xl font-black text-white leading-tight mb-3">
+                  Genera tu campaña<br />
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-violet-400">
+                    lista para lanzar
+                  </span>
+                </h1>
+                <p className="text-zinc-500 text-base">Pega una URL de Shopify o describe el producto. El sistema hace el resto.</p>
+                {!isActive && !hasFreeUsed() && (
+                  <p className="text-xs text-amber-400/80 mt-3 font-medium">
+                    1 campaña gratuita · Sin tarjeta de crédito
+                  </p>
+                )}
               </div>
-              <h1 className="text-4xl font-black text-white leading-tight mb-3">
-                Genera tu campaña<br />
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-violet-400">
-                  lista para lanzar
-                </span>
-              </h1>
-              <p className="text-zinc-500 text-base">Pega una URL de Shopify o describe el producto. El sistema hace el resto.</p>
-            </div>
-          )}
+            )}
 
-          {/* Input main */}
-          <div className={`space-y-3 ${isIdle ? '' : 'flex items-end gap-3 space-y-0'}`}>
-            <div className={`${isIdle ? '' : 'flex-1'} relative`}>
-              {isIdle ? (
-                <textarea
-                  rows={3}
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) runGenerate() }}
-                  placeholder="Ej: tienda.myshopify.com  ·  o describe el producto — «Camisetas algodón orgánico mujer, €35»"
-                  className="w-full px-5 py-4 bg-zinc-900 border border-white/8 rounded-2xl text-white text-base placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all resize-none leading-relaxed"
-                />
-              ) : (
-                <input
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') runGenerate() }}
-                  className="w-full px-4 py-2.5 bg-zinc-900 border border-white/8 rounded-xl text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/50 transition-all"
-                />
-              )}
+            {/* Input main */}
+            <div className={`space-y-3 ${isIdle ? '' : 'flex items-end gap-3 space-y-0'}`}>
+              <div className={`${isIdle ? '' : 'flex-1'} relative`}>
+                {isIdle ? (
+                  <textarea
+                    rows={3}
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) runGenerate() }}
+                    placeholder="Ej: tienda.myshopify.com  ·  o describe el producto — «Camisetas algodón orgánico mujer, €35»"
+                    className="w-full px-5 py-4 bg-zinc-900 border border-white/8 rounded-2xl text-white text-base placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all resize-none leading-relaxed"
+                  />
+                ) : (
+                  <input
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') runGenerate() }}
+                    className="w-full px-4 py-2.5 bg-zinc-900 border border-white/8 rounded-xl text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/50 transition-all"
+                  />
+                )}
+              </div>
+
+              {/* Selectors */}
+              <div className={`${isIdle ? 'grid grid-cols-3 gap-3' : 'flex items-center gap-2 flex-shrink-0'}`}>
+                <Select value={niche}     onChange={setNiche}     options={NICHES}      placeholder="Nicho detectado..." />
+                <Select value={objective} onChange={setObjective} options={OBJECTIVES} />
+                <Select value={style}     onChange={setStyle}     options={STYLES} />
+              </div>
+
+              {/* CTA */}
+              <button
+                onClick={() => runGenerate()}
+                disabled={isLoad}
+                className={`flex items-center justify-center gap-2 font-bold text-white bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all shadow-lg shadow-indigo-500/20 hover:-translate-y-0.5 flex-shrink-0 ${
+                  isIdle ? 'w-full py-4 text-base mt-1' : 'px-5 py-2.5 text-sm'
+                }`}
+              >
+                <Rocket size={isIdle ? 18 : 15} />
+                {isIdle ? 'Generar campaña' : 'Generar'}
+                {isIdle && <span className="ml-1 text-indigo-300 font-normal text-sm">⌘↵</span>}
+              </button>
             </div>
 
-            {/* Selectors */}
-            <div className={`${isIdle ? 'grid grid-cols-3 gap-3' : 'flex items-center gap-2 flex-shrink-0'}`}>
-              <Select
-                value={niche}
-                onChange={setNiche}
-                options={NICHES}
-                placeholder="Nicho detectado..."
-              />
-              <Select value={objective} onChange={setObjective} options={OBJECTIVES} />
-              <Select value={style}     onChange={setStyle}     options={STYLES} />
-            </div>
-
-            {/* CTA */}
-            <button
-              onClick={() => runGenerate()}
-              disabled={isLoad}
-              className={`flex items-center justify-center gap-2 font-bold text-white bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all shadow-lg shadow-indigo-500/20 hover:-translate-y-0.5 flex-shrink-0 ${
-                isIdle ? 'w-full py-4 text-base mt-1' : 'px-5 py-2.5 text-sm'
-              }`}
-            >
-              <Rocket size={isIdle ? 18 : 15} />
-              {isIdle ? 'Generar campaña' : 'Generar'}
-              {isIdle && <span className="ml-1 text-indigo-300 font-normal text-sm">⌘↵</span>}
-            </button>
+            {error && (
+              <div className={`flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 ${isIdle ? 'mt-3' : 'mt-2'}`}>
+                <AlertCircle size={14} className="text-red-400 flex-shrink-0" />
+                <p className="text-xs text-red-300">{error}</p>
+              </div>
+            )}
           </div>
-
-          {error && (
-            <div className={`flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 ${isIdle ? 'mt-3' : 'mt-2'}`}>
-              <AlertCircle size={14} className="text-red-400 flex-shrink-0" />
-              <p className="text-xs text-red-300">{error}</p>
-            </div>
-          )}
         </div>
-      </div>
+      )}
 
       {/* ── Loading ─────────────────────────────────────────────────────── */}
       {isLoad && <LoadingState />}
 
+      {/* ── Paywall ─────────────────────────────────────────────────────── */}
+      {isPaywall && <PaywallScreen onUpgrade={handleUpgrade} />}
+
       {/* ── Result ──────────────────────────────────────────────────────── */}
       {isResult && result && (
         <div className="flex-1 flex flex-col max-w-5xl mx-auto w-full px-6 py-6 gap-5">
+
+          {/* Insight header */}
+          {result.insight && <InsightHeader insight={result.insight} />}
 
           {/* Action buttons */}
           <div className="flex items-center gap-2 flex-wrap">
@@ -558,9 +769,7 @@ export default function CampaignApp() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold transition-all relative ${
-                    activeTab === tab.id
-                      ? 'text-white'
-                      : 'text-zinc-500 hover:text-zinc-300'
+                    activeTab === tab.id ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
                   }`}
                 >
                   <Icon size={12} /> {tab.label}
@@ -574,14 +783,14 @@ export default function CampaignApp() {
 
           {/* Tab content */}
           <div className="flex-1">
-            {activeTab === 'ads'      && <AdsSection    copies={{ short: result.shortCopies, long: result.longCopies }} />}
-            {activeTab === 'hooks'    && <HooksSection  hooks={result.hooks} />}
-            {activeTab === 'creatives'&& <CreativesSection creatives={result.creatives} />}
-            {activeTab === 'campaign' && <CampaignSection structure={result.campaignStructure} />}
-            {activeTab === 'audience' && <AudienceSection seg={result.segmentation} />}
+            {activeTab === 'ads'       && <AdsSection      copies={{ short: result.shortCopies, long: result.longCopies }} />}
+            {activeTab === 'hooks'     && <HooksSection    hooks={result.hooks} />}
+            {activeTab === 'creatives' && <CreativesSection creatives={result.creatives} />}
+            {activeTab === 'campaign'  && <CampaignSection structure={result.campaignStructure} />}
+            {activeTab === 'audience'  && <AudienceSection seg={result.segmentation} />}
           </div>
 
-          {/* New campaign prompt */}
+          {/* Footer */}
           <div className="border-t border-white/5 pt-5 flex items-center justify-between">
             <p className="text-xs text-zinc-600">¿Quieres generar para otro producto?</p>
             <button

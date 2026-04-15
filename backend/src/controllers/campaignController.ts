@@ -302,6 +302,35 @@ function buildSegmentation(niche: typeof DEFAULT_NICHE, product: string) {
   }
 }
 
+// ─── Insight ─────────────────────────────────────────────────────────────────
+function buildInsight(
+  niche: typeof DEFAULT_NICHE,
+  objective: string,
+  campaignStyle: string,
+  variant: string,
+): { angle: string; clientType: string; aggressiveness: string } {
+  const base: Record<string, string> = {
+    ventas_performance:  'Problema–Solución con urgencia y conversión directa',
+    ventas_ugc:          'Prueba social auténtica + transformación real',
+    ventas_branding:     'Aspiracional con posicionamiento de marca premium',
+    leads_performance:   'Captura de deseo + CTA de baja fricción',
+    leads_ugc:           'Testimonial real + generación de confianza',
+    leads_branding:      'Autoridad de marca + propuesta de valor clara',
+    trafico_performance: 'Curiosidad + contenido de valor informativo',
+    trafico_ugc:         'Demostración orgánica + alcance viral',
+    trafico_branding:    'Reconocimiento de marca + contenido educativo',
+  }
+  let angle = base[`${objective}_${campaignStyle || 'performance'}`] ?? 'Problema–Solución con urgencia'
+  if (variant === 'agresivo')   angle = 'Dolor directo + FOMO con máxima presión psicológica'
+  if (variant === 'conversion') angle = 'Conversión directa con garantía + eliminación de objeciones'
+  if (variant === 'tiktok')     angle = 'Entretenimiento viral + disrupción de scroll'
+
+  const agr: Record<string, string> = {
+    agresivo: 'Alto', conversion: 'Alto', tiktok: 'Medio', '': objective === 'ventas' ? 'Medio' : 'Bajo',
+  }
+  return { angle, clientType: niche.profile, aggressiveness: agr[variant] ?? 'Medio' }
+}
+
 // ─── Variant modifiers ────────────────────────────────────────────────────────
 function applyVariant(
   copies: ReturnType<typeof buildShortCopies>,
@@ -392,6 +421,7 @@ export async function generateCampaign(req: Request, res: Response): Promise<voi
     id: uuid(),
     generatedAt: new Date().toISOString(),
     input: { productDescription, productUrl, niche, objective, campaignStyle, variant },
+    insight:           buildInsight(nicheData, objective, campaignStyle ?? '', variant ?? ''),
     shortCopies:       finalCopies,
     longCopies:        buildLongCopies(product, nicheData, objective),
     hooks:             finalHooks,
