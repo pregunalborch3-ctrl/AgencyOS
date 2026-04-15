@@ -86,8 +86,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     await refetch()
   }, [refetch])
 
-  const isActive = subscription?.status === 'active' || subscription?.status === 'trialing'
-
+ const isActive = subscription?.status === 'active' || subscription?.status === 'trialing' || (user as any)?.role === 'admin'
+  
   return (
     <SubContext.Provider value={{ subscription, isLoading, isActive, refetch, subscribe, openPortal, cancel, reactivate }}>
       {children}
