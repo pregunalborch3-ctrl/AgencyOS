@@ -70,6 +70,21 @@ function DashboardMock() {
             <span className="ml-auto text-xs text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full font-semibold">Analizado</span>
           </div>
 
+          {/* Metrics row */}
+          <div className="grid grid-cols-4 gap-2">
+            {[
+              { label: 'ROAS', value: '3.8x', color: 'text-emerald-400' },
+              { label: 'CTR', value: '+2.4%', color: 'text-indigo-400' },
+              { label: 'Hook ganador', value: 'Detectado', color: 'text-violet-400' },
+              { label: 'Audiencia', value: 'Validada', color: 'text-purple-400' },
+            ].map(m => (
+              <div key={m.label} className="p-2.5 rounded-lg bg-zinc-800/60 border border-white/5 text-center">
+                <p className={`text-sm font-black ${m.color}`}>{m.value}</p>
+                <p className="text-[10px] text-zinc-500 mt-0.5">{m.label}</p>
+              </div>
+            ))}
+          </div>
+
           {/* Ads generated */}
           <div className="space-y-3">
             <p className="text-xs text-zinc-500 font-semibold uppercase tracking-widest">Anuncios generados · Meta Ads</p>
@@ -143,7 +158,7 @@ function Hero() {
         {/* Badge */}
         <div className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10">
           <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
-          <span className="text-xs text-indigo-300 font-semibold tracking-wide">Especializado en agencias de e-commerce</span>
+          <span className="text-xs text-indigo-300 font-semibold tracking-wide">Solo para agencias de e-commerce (no para principiantes)</span>
         </div>
 
         {/* Headline */}
@@ -159,6 +174,9 @@ function Hero() {
             Sistema que analiza tiendas de Shopify y genera campañas
             publicitarias listas para lanzar — en minutos, no en días.
           </p>
+          <p className="text-base md:text-lg text-zinc-500 max-w-xl mx-auto font-medium">
+            Las agencias que escalan no crean anuncios desde cero. Usan sistemas.
+          </p>
         </div>
 
         {/* CTAs */}
@@ -173,11 +191,11 @@ function Hero() {
             href="#demo"
             className="flex items-center gap-2 px-7 py-3.5 text-zinc-300 hover:text-white font-semibold rounded-xl border border-white/10 hover:border-white/20 transition-all"
           >
-            <Play size={14} className="text-indigo-400" /> Ver ejemplo real
+            <Play size={14} className="text-indigo-400" /> Ver campaña lista para lanzar
           </a>
         </div>
 
-        <p className="text-xs text-zinc-600">14 días gratis · Sin tarjeta de crédito · Cancela cuando quieras</p>
+        <p className="text-xs text-zinc-600">Empieza gratis. Sin tarjeta. Cancela cuando quieras.</p>
 
         {/* Dashboard mock */}
         <div className="w-full pt-4">
