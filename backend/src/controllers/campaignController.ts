@@ -302,13 +302,65 @@ function buildSegmentation(niche: typeof DEFAULT_NICHE, product: string) {
   }
 }
 
+// ─── Variant modifiers ────────────────────────────────────────────────────────
+function applyVariant(
+  copies: ReturnType<typeof buildShortCopies>,
+  hooks: ReturnType<typeof buildHooks>,
+  variant: string,
+  product: string,
+  niche: typeof DEFAULT_NICHE,
+): { copies: typeof copies; hooks: typeof hooks } {
+  if (variant === 'agresivo') {
+    return {
+      copies: copies.map(c => ({
+        ...c,
+        hook: c.hook.replace('¿Por qué', 'PARA. ¿Por qué') + ' (Esto te va a cambiar la forma de verlo)',
+        body: c.body + ' Sin excusas. El momento es ahora.',
+        cta: c.cta.replace('→', ' AHORA →'),
+      })),
+      hooks: hooks.map(h => ({ ...h, text: h.text + ' — No hay vuelta atrás.' })),
+    }
+  }
+  if (variant === 'conversion') {
+    return {
+      copies: copies.map(c => ({
+        ...c,
+        body: c.body + ` Garantía 30 días o te devolvemos el dinero. Sin preguntas.`,
+        cta: `⚡ ${c.cta}`,
+      })),
+      hooks: [
+        { type: 'Urgencia real', text: `Quedan pocas unidades de ${product}. Y no es marketing.`, why: 'La escasez real convierte mejor que cualquier descuento.' },
+        ...hooks.slice(0, 4),
+      ],
+    }
+  }
+  if (variant === 'tiktok') {
+    return {
+      copies: copies.map(c => ({
+        ...c,
+        hook: c.hook.length > 60 ? c.hook.split(' ').slice(0, 8).join(' ') + '...' : c.hook,
+        body: c.body.split('.')[0] + '. #fyp #viral',
+        cta: 'Link en bio 👇',
+      })),
+      hooks: [
+        { type: 'POV', text: `POV: encontraste ${product} antes que nadie en tu feed.`, why: 'El formato POV tiene 3x más retención en TikTok que los hooks directos.' },
+        { type: 'Stitch bait', text: `Alguien necesita ver esto. No lo hagas pasar.`, why: 'Incita a guardar y compartir — dos señales clave del algoritmo.' },
+        ...hooks.slice(0, 3),
+      ],
+    }
+  }
+  return { copies, hooks }
+}
+
 // ─── Controller ───────────────────────────────────────────────────────────────
 export async function generateCampaign(req: Request, res: Response): Promise<void> {
-  const { productDescription, productUrl, niche, objective } = req.body as {
+  const { productDescription, productUrl, niche, objective, campaignStyle, variant } = req.body as {
     productDescription?: string
     productUrl?: string
     niche?: string
     objective?: string
+    campaignStyle?: string
+    variant?: string
   }
 
   if (!productDescription?.trim() && !productUrl?.trim()) {
@@ -332,13 +384,17 @@ export async function generateCampaign(req: Request, res: Response): Promise<voi
     ? productDescription.trim().split(' ').slice(0, 6).join(' ')
     : (productUrl?.replace(/https?:\/\//, '').split('/')[0] ?? 'tu producto')
 
+  const rawCopies = buildShortCopies(product, nicheData, objective)
+  const rawHooks  = buildHooks(product, nicheData)
+  const { copies: finalCopies, hooks: finalHooks } = applyVariant(rawCopies, rawHooks, variant ?? '', product, nicheData)
+
   const campaign = {
     id: uuid(),
     generatedAt: new Date().toISOString(),
-    input: { productDescription, productUrl, niche, objective },
-    shortCopies:       buildShortCopies(product, nicheData, objective),
+    input: { productDescription, productUrl, niche, objective, campaignStyle, variant },
+    shortCopies:       finalCopies,
     longCopies:        buildLongCopies(product, nicheData, objective),
-    hooks:             buildHooks(product, nicheData),
+    hooks:             finalHooks,
     creatives:         buildCreatives(product, nicheData),
     campaignStructure: buildCampaignStructure(objective),
     segmentation:      buildSegmentation(nicheData, product),
