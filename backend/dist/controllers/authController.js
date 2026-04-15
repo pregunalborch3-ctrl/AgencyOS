@@ -11,21 +11,8 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const uuid_1 = require("uuid");
 const User_1 = require("../models/User");
 const BCRYPT_ROUNDS = 12;
-// ── Validation helpers ────────────────────────────────────────────────────────
 function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-}
-function checkPasswordStrength(password) {
-    const errors = [];
-    if (password.length < 8)
-        errors.push('Mínimo 8 caracteres.');
-    if (!/[A-Z]/.test(password))
-        errors.push('Al menos una letra mayúscula.');
-    if (!/[0-9]/.test(password))
-        errors.push('Al menos un número.');
-    if (!/[^A-Za-z0-9]/.test(password))
-        errors.push('Al menos un carácter especial (!@#$%...).');
-    return { valid: errors.length === 0, errors };
 }
 function signToken(user) {
     const payload = {
@@ -35,53 +22,38 @@ function signToken(user) {
         role: user.role,
     };
     return jsonwebtoken_1.default.sign(payload, process.env.JWT_SECRET, {
-        expiresIn: (process.env.JWT_EXPIRES_IN ?? '7d'),
+        expiresIn: (process.env.JWT_EXPIRES_IN ?? "7d"),
     });
 }
-// ── Controllers ───────────────────────────────────────────────────────────────
 async function register(req, res) {
     const { name, email, password, confirmPassword } = req.body;
-    // Field presence
     if (!name?.trim() || !email?.trim() || !password || !confirmPassword) {
-        res.status(400).json({ success: false, error: 'Todos los campos son obligatorios.' });
+        res.status(400).json({ success: false, error: "Todos los campos son obligatorios." });
         return;
     }
-    // Name length
     if (name.trim().length < 2) {
-        res.status(400).json({ success: false, error: 'El nombre debe tener al menos 2 caracteres.' });
+        res.status(400).json({ success: false, error: "El nombre debe tener al menos 2 caracteres." });
         return;
     }
-    // Email format
     if (!isValidEmail(email)) {
-        res.status(400).json({ success: false, error: 'El formato del email no es válido.' });
+        res.status(400).json({ success: false, error: "El formato del email no es valido." });
         return;
     }
-    // Email uniqueness
-    if (User_1.UserStore.findByEmail(email)) {
-        res.status(409).json({ success: false, error: 'Ya existe una cuenta con ese email.' });
+    if (await User_1.UserStore.findByEmail(email)) {
+        res.status(409).json({ success: false, error: "Ya existe una cuenta con ese email." });
         return;
     }
-    // Password strength
-    const strength = checkPasswordStrength(password);
-    if (!strength.valid) {
-        res.status(400).json({ success: false, error: strength.errors.join(' ') });
-        return;
-    }
-    // Passwords match
     if (password !== confirmPassword) {
-        res.status(400).json({ success: false, error: 'Las contraseñas no coinciden.' });
+        res.status(400).json({ success: false, error: "Las contrasenas no coinciden." });
         return;
     }
-    // Create user
     const passwordHash = await bcryptjs_1.default.hash(password, BCRYPT_ROUNDS);
-    const user = User_1.UserStore.create({
+    const user = await User_1.UserStore.create({
         id: (0, uuid_1.v4)(),
         name: name.trim(),
         email: email.toLowerCase().trim(),
         passwordHash,
-        role: 'member',
-        createdAt: new Date().toISOString(),
-        lastLoginAt: null,
+        role: "member",
         stripeCustomerId: null,
         subscription: null,
     });
@@ -94,22 +66,21 @@ async function register(req, res) {
 async function login(req, res) {
     const { email, password } = req.body;
     if (!email?.trim() || !password) {
-        res.status(400).json({ success: false, error: 'Email y contraseña son obligatorios.' });
+        res.status(400).json({ success: false, error: "Email y contrasena son obligatorios." });
         return;
     }
-    const user = User_1.UserStore.findByEmail(email);
+    const user = await User_1.UserStore.findByEmail(email);
     if (!user) {
-        // Deliberate constant-time-ish response to prevent email enumeration
-        await bcryptjs_1.default.compare(password, '$2a$12$invalidhashplaceholder000000000000000000000000');
-        res.status(401).json({ success: false, error: 'Credenciales incorrectas.' });
+        await bcryptjs_1.default.compare(password, "$2a$12$invalidhashplaceholder00000000000000000000");
+        res.status(401).json({ success: false, error: "Credenciales incorrectas." });
         return;
     }
     const match = await bcryptjs_1.default.compare(password, user.passwordHash);
     if (!match) {
-        res.status(401).json({ success: false, error: 'Credenciales incorrectas.' });
+        res.status(401).json({ success: false, error: "Credenciales incorrectas." });
         return;
     }
-    User_1.UserStore.update(user.id, { lastLoginAt: new Date().toISOString() });
+    await User_1.UserStore.update(user.id, { lastLoginAt: new Date().toISOString() });
     const token = signToken(user);
     res.json({
         success: true,
@@ -117,10 +88,11 @@ async function login(req, res) {
     });
 }
 function me(req, res) {
-    const user = User_1.UserStore.findById(req.user.userId);
-    if (!user) {
-        res.status(404).json({ success: false, error: 'Usuario no encontrado.' });
-        return;
-    }
-    res.json({ success: true, data: User_1.UserStore.toPublic(user) });
+    User_1.UserStore.findById(req.user.userId).then(user => {
+        if (!user) {
+            res.status(404).json({ success: false, error: "Usuario no encontrado." });
+            return;
+        }
+        res.json({ success: true, data: User_1.UserStore.toPublic(user) });
+    });
 }
