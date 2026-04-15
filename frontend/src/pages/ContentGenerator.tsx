@@ -38,12 +38,28 @@ export default function ContentGenerator() {
   const set = (key: keyof ContentRequest, val: string) =>
     setForm((f) => ({ ...f, [key]: val }))
 
-  const generate = async () => {
+ const generate = async () => {
     if (!form.topic || !form.brand) return
     setLoading(true)
-    await new Promise((r) => setTimeout(r, 1400))
-    setResults(mockGenerate(form))
-    setLoading(false)
+    try {
+      const token = localStorage.getItem('agencyos_token')
+      const res = await fetch('/api/content/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(form)
+      })
+      const data = await res.json()
+      if (data.success) {
+        setResults(data.data.map((item: any) => item.caption))
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const copyText = (text: string, idx: number) => {
@@ -206,7 +222,7 @@ export default function ContentGenerator() {
                   <div className="flex gap-1">
                     <button
                       className="btn-ghost text-xs py-1 px-2"
-                      onClick={() => setResults(mockGenerate(form))}
+                      onClick={() => generate()} 
                     >
                       <RefreshCw size={13} />
                     </button>
