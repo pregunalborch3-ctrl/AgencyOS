@@ -4,6 +4,7 @@ import { SubscriptionProvider } from './contexts/SubscriptionContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import SubscriptionRoute from './components/SubscriptionRoute'
 import Layout from './components/Layout/Layout'
+import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
@@ -23,13 +24,14 @@ export default function App() {
         <SubscriptionProvider>
           <Routes>
             {/* Public routes */}
+            <Route path="/"         element={<Landing />} />
             <Route path="/login"    element={<Login />} />
             <Route path="/register" element={<Register />} />
 
             {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
               <Route element={<Layout />}>
-                <Route path="/" element={<Dashboard />} />
+                <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/subscription/success"  element={<SubscriptionSuccess />} />
                 <Route path="/subscription/canceled" element={<SubscriptionCanceled />} />
 
