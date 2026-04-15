@@ -117,3 +117,4 @@ export default function SubscriptionRoute() {
 if (!isActive && (user as any)?.role !== 'admin') return <UpgradeWall />
   return <Outlet />
 }
+
