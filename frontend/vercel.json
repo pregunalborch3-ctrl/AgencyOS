@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://agencyos-production-2aef.up.railway.app/api/:path*"
+    }
+  ]
+}
