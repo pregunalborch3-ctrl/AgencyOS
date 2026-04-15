@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import { useSubscription } from '../contexts/SubscriptionContext'
 import { useAuth } from '../contexts/AuthContext'
+import {
   Sparkles, CheckCircle2, Lock, Loader2, ArrowRight, Zap,
 } from 'lucide-react'
 
