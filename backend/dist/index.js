@@ -9,6 +9,7 @@ const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const auth_1 = __importDefault(require("./routes/auth"));
 const subscription_1 = __importDefault(require("./routes/subscription"));
+const campaigns_1 = __importDefault(require("./routes/campaigns"));
 const content_1 = __importDefault(require("./routes/content"));
 const calendar_1 = __importDefault(require("./routes/calendar"));
 const budget_1 = __importDefault(require("./routes/budget"));
@@ -23,6 +24,7 @@ app.use(express_1.default.json());
 // Routes
 app.use('/api/auth', auth_1.default);
 app.use('/api/subscription', subscription_1.default);
+app.use('/api/campaigns', campaigns_1.default);
 app.use('/api/content', content_1.default);
 app.use('/api/calendar', calendar_1.default);
 app.use('/api/budget', budget_1.default);

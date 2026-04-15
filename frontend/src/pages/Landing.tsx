@@ -59,14 +59,14 @@ function DashboardMock() {
           <div className="w-3 h-3 rounded-full bg-red-500/60" />
           <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
           <div className="w-3 h-3 rounded-full bg-green-500/60" />
-          <span className="ml-3 text-xs text-zinc-500 font-mono">agencyos.com — Campaña Shopify · Nike ES</span>
+          <span className="ml-3 text-xs text-zinc-500 font-mono">agencyos.com — Campaña Shopify · Moda Mujer ES</span>
         </div>
 
         <div className="p-5 space-y-4">
           {/* Input row */}
           <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-800/60 border border-white/5">
             <Store size={15} className="text-indigo-400 flex-shrink-0" />
-            <span className="text-sm text-zinc-300 font-mono">nike.es — Zapatillas Running Pro</span>
+            <span className="text-sm text-zinc-300 font-mono">modaesencial.es — Camisetas algodón mujer</span>
             <span className="ml-auto text-xs text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full font-semibold">Analizado</span>
           </div>
 
@@ -91,17 +91,17 @@ function DashboardMock() {
 
             {[
               {
-                hook: '¿Por qué los mejores corredores de Madrid usan estas zapatillas?',
-                body: 'La tecnología React Foam absorbe el 85% del impacto. Menos lesiones. Más kilómetros. Más ventas.',
-                cta: 'Ver oferta →',
+                hook: '¿Por qué miles de mujeres están cambiando su armario por esta marca?',
+                body: 'Algodón orgánico, tallas reales y diseño minimalista que dura años. Sin fast fashion. Sin compromisos.',
+                cta: 'Ver colección →',
                 badge: 'Hook de curiosidad',
                 color: 'text-violet-400',
                 bg: 'bg-violet-400/10',
               },
               {
-                hook: 'El error que cometen el 90% de corredores (y cómo evitarlo)',
-                body: 'Correr con zapatillas sin amortiguación adecuada destruye tus rodillas. Cambia eso hoy con -20%.',
-                cta: 'Quiero mis Nike →',
+                hook: 'Cansada de comprar ropa que pierde la forma al tercer lavado',
+                body: 'Nuestras camisetas están hechas para durar, no para venderse. Algodón 100% orgánico certificado. €35.',
+                cta: 'Quiero la mía →',
                 badge: 'Hook de problema',
                 color: 'text-indigo-400',
                 bg: 'bg-indigo-400/10',

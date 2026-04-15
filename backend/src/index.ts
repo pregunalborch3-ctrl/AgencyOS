@@ -6,6 +6,7 @@ dotenv.config()
 
 import authRoutes         from './routes/auth'
 import subscriptionRoutes from './routes/subscription'
+import campaignRoutes     from './routes/campaigns'
 import contentRoutes      from './routes/content'
 import calendarRoutes     from './routes/calendar'
 import budgetRoutes       from './routes/budget'
@@ -29,6 +30,7 @@ app.use(express.json())
 // Routes
 app.use('/api/auth',         authRoutes)
 app.use('/api/subscription', subscriptionRoutes)
+app.use('/api/campaigns',    campaignRoutes)
 app.use('/api/content',      contentRoutes)
 app.use('/api/calendar',     calendarRoutes)
 app.use('/api/budget',       budgetRoutes)
