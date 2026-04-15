@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Rocket, Settings, LogOut, Zap, Clock } from 'lucide-react'
+import { Rocket, Settings, LogOut, Clock } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
 const NAV = [
@@ -46,11 +46,6 @@ export default function Sidebar() {
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 w-[60px] bg-zinc-950 border-r border-white/5 flex flex-col items-center py-4 gap-2">
-      {/* Logo */}
-      <Link to="/dashboard" className="w-10 h-10 rounded-xl bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/25 mb-3 flex-shrink-0 hover:bg-indigo-400 transition-colors">
-        <Zap size={18} className="text-white" />
-      </Link>
-
       {/* Nav */}
       <nav className="flex flex-col items-center gap-1.5 flex-1">
         {NAV.map(item => <NavItem key={item.path} {...item} />)}
