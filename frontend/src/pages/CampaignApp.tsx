@@ -4,7 +4,7 @@ import {
   Rocket, Copy, Check, Zap, Megaphone, Video,
   BarChart3, Users, AlertCircle, RefreshCw,
   TrendingUp, Target, ChevronDown, ArrowRight,
-  Crosshair, UserCheck, Flame, Lock, Crown,
+  Crosshair, UserCheck, Flame, Lock, Crown, Sparkles,
 } from 'lucide-react'
 import { saveToHistory, hasFreeUsed, markFreeUsed, type HistoryEntry } from '../lib/history'
 import { useSubscription } from '../contexts/SubscriptionContext'
@@ -35,11 +35,184 @@ type AppState = 'idle' | 'loading' | 'result' | 'paywall'
 const TOKEN_KEY   = 'agencyos_token'
 const ONBOARD_KEY = 'agencyos_onboarded'
 
-const ONBOARDING_EXAMPLE = {
-  input:     'Zapatillas running mujer amortiguación máxima, impermeables, €89 — tienda especializada deportes',
-  niche:     'calzado',
-  objective: 'ventas',
-  style:     'performance',
+// ─── Demo campaign ────────────────────────────────────────────────────────────
+const DEMO_CAMPAIGN: CampaignResult = {
+  id: 'demo',
+  generatedAt: new Date().toISOString(),
+  input: { productDescription: 'Camiseta algodón orgánico mujer — moda sostenible, €39', niche: 'ropa', objective: 'ventas' },
+  insight: {
+    angle: 'Problema–Solución con identidad: "la ropa que llevas dice quién eres"',
+    clientType: 'Mujer 25–38, consciente del impacto, compra calidad sobre cantidad',
+    aggressiveness: 'Medio',
+  },
+  shortCopies: [
+    {
+      type: 'Dolor directo',
+      platform: 'Meta Ads',
+      hook: '¿Sigues comprando ropa que dura 3 lavados?',
+      body: 'Nosotros hacemos camisetas de algodón orgánico certificado que mantienen el color, la forma y la suavidad lavado tras lavado. Sin microplásticos. Sin mano de obra explotada. Solo ropa que dura.',
+      cta: 'Ver colección →',
+    },
+    {
+      type: 'Beneficio inmediato',
+      platform: 'Meta Ads',
+      hook: 'La camiseta que llevas todos los lunes (y el resto de días también)',
+      body: '€39 una vez. Sin decoloración a los 10 lavados. Sin encogimiento. Sin esa sensación barata. Algodón orgánico certificado GOTS, corte limpio, 12 colores que no mueren.',
+      cta: 'Hazte con la tuya',
+    },
+    {
+      type: 'Prueba social',
+      platform: 'Meta Ads',
+      hook: '+4.200 mujeres ya han actualizado su básico favorito',
+      body: '"No voy a comprar más camisetas de fast fashion después de esto." — María, Valencia. Calidad que se nota desde el primer tacto.',
+      cta: 'Comprar ahora',
+    },
+    {
+      type: 'Scroll-stop',
+      platform: 'TikTok Ads',
+      hook: 'POV: encuentras la única camiseta que necesitas para los próximos 5 años',
+      body: 'Algodón orgánico 180g/m². Corte recto. 12 colores neutros. Hecha para durar, no para reemplazar. €39 y no vas a volver a buscar camisetas.',
+      cta: 'Link en bio 🔗',
+    },
+    {
+      type: 'Contraste',
+      platform: 'TikTok Ads',
+      hook: 'Gasto €8 en Zara vs €39 aquí — la diferencia después de 1 año',
+      body: 'La de €8: deformada, decolorada, en el fondo del armario. La nuestra: igual que el primer día. El algodón orgánico no miente. El fast fashion tampoco.',
+      cta: 'Descúbrela',
+    },
+    {
+      type: 'Urgencia suave',
+      platform: 'TikTok Ads',
+      hook: 'Solo quedan 3 tallas M en Blanco Hueso ⚡',
+      body: 'La más vendida. La que agota primero. Algodón orgánico GOTS, corte oversize, €39. Las que la tienen no vuelven a comprar en otro sitio.',
+      cta: 'Reservar ahora',
+    },
+  ],
+  longCopies: [
+    {
+      format: 'Storytelling emocional',
+      platform: 'Meta Ads (Feed)',
+      content: `¿Cuántas camisetas "básicas" tienes guardadas que ya no te pones?
+
+Muchas. Y todas compramos lo mismo: precio bajo, calidad mediocre, a la basura en 6 meses.
+
+Hay otra forma.
+
+Nuestra camiseta de algodón orgánico está hecha para ser la última que necesites.
+
+✓ Certificación GOTS (algodón 100% orgánico)
+✓ 180 g/m² — peso perfecto, no transparenta
+✓ Corte recto, 3 largos disponibles
+✓ 12 colores neutros que combinan con todo
+✓ No encoge. No destiñe. No decepciona.
+
+€39 que no vas a lamentar.
+
+👉 Ver colección completa`,
+    },
+    {
+      format: 'Razón + prueba',
+      platform: 'Meta Ads (Carrusel)',
+      content: `La moda rápida te cuesta más de lo que crees.
+
+€8 × 4 camisetas al año = €32 en basura textil.
+€39 × 1 camiseta que dura 5 años = €7,80/año en calidad real.
+
+Pero no es solo dinero. Es el planeta. Es la persona que la fabricó.
+
+Nuestro algodón es orgánico, certificado, trazable.
+Nuestras costureras cobran salario justo.
+
+Y tú tienes una camiseta que se nota diferente desde que te la pones.
+
+Empieza por la básica. Después ya no querrás volver atrás.
+
+→ Descubre la colección`,
+    },
+  ],
+  hooks: [
+    {
+      type: 'Pregunta provocadora',
+      text: '¿Cuándo fue la última vez que compraste ropa sin arrepentirte a los 3 meses?',
+      why: 'Activa la disonancia cognitiva — el usuario piensa en sus malas compras pasadas y lo conecta con el producto solución.',
+    },
+    {
+      type: 'Dato impactante',
+      text: 'El 73% de la ropa que compramos acaba en vertedero antes de cumplir 1 año.',
+      why: 'Los datos concretos paran el scroll. Crea contexto de urgencia sin presión directa.',
+    },
+    {
+      type: 'Identidad',
+      text: 'Para las que ya no compran por precio. Compran por valor.',
+      why: 'Segmenta directamente a la compradora ideal y crea pertenencia a un grupo aspiracional.',
+    },
+    {
+      type: 'Contraste visual',
+      text: 'La misma camiseta después de 1 lavado vs. después de 200 lavados. (La nuestra, claro.)',
+      why: 'El contraste tiempo-durabilidad es el argumento de compra más fuerte para básicos de calidad.',
+    },
+    {
+      type: 'FOMO suave',
+      text: 'La gente que la compra una vez no vuelve a buscar camisetas. Nosotros tampoco les hacemos falta.',
+      why: 'Crea prueba social implícita y curiosidad sin agresividad. El tono de confianza vende solo.',
+    },
+  ],
+  creatives: [
+    {
+      format: 'UGC Comparativa',
+      platform: 'TikTok / Reels',
+      duration: '30s',
+      structure: [
+        { time: '0–3s',  action: 'HOOK: Mano abriendo armario lleno de camisetas desgastadas. Voz en off: "¿Cuántas de estas llevas realmente puestas?"' },
+        { time: '3–8s',  action: 'Mostrar 3 camisetas de fast fashion con deformaciones visibles, colores apagados. Música lo-fi melancólico.' },
+        { time: '8–18s', action: 'Transición a nuestra camiseta en caja premium. Manos sacándola, textil en primer plano. "La última básica que vas a comprar."' },
+        { time: '18–25s', action: 'Ponérsela. Corte limpio, caída perfecta. Plano espejo: mujer confiada, expresión satisfecha.' },
+        { time: '25–30s', action: 'CTA en pantalla: "€39 · Algodón orgánico · Envío gratis" + logo + link en bio.' },
+      ],
+    },
+    {
+      format: 'Antes / Después Educativo',
+      platform: 'TikTok / Reels',
+      duration: '45s',
+      structure: [
+        { time: '0–4s',   action: 'HOOK disruptivo: "Deja de tirar €100 al año en camisetas malas." Texto grande en pantalla, música que rompe el scroll.' },
+        { time: '4–15s',  action: 'Side by side: camiseta fast fashion a los 6 meses vs la nuestra. Zoom en costuras, color y tejido. Voz en off explicando diferencias.' },
+        { time: '15–30s', action: 'Proceso de producción condensado: campo algodón → telar → costurera → caja. "Hecha diferente. De principio a fin."' },
+        { time: '30–40s', action: 'Testimonios rápidos: 3 clips de 3s. Mujeres reales con la camiseta puesta en situaciones cotidianas.' },
+        { time: '40–45s', action: 'CTA final: "Primera compra con 10% descuento → link en bio". Cuenta atrás visual de 5 segundos.' },
+      ],
+    },
+  ],
+  campaignStructure: {
+    type: 'Full Funnel — Moda Sostenible TOFU→BOFU',
+    funnel: [
+      { stage: 'TOFU',  objective: 'Awareness',     audience: 'Intereses: moda sostenible, conscious fashion, GOTS', budget: '30%', format: 'Video UGC 30s' },
+      { stage: 'MOFU',  objective: 'Consideración', audience: 'Visitantes sin compra + engagement vídeo >50%',        budget: '40%', format: 'Carrusel storytelling' },
+      { stage: 'BOFU',  objective: 'Conversión',    audience: 'Retargeting carrito abandonado + lookalike clientes',  budget: '30%', format: 'Foto producto + UGC corto' },
+    ],
+    totalBudgetSuggestion: 'Mínimo €800/mes para datos significativos. Fase test: €300 en TOFU durante 7 días antes de activar retargeting.',
+    notes: 'Priorizar UGC en TOFU — la audiencia de moda sostenible responde mejor a contenido auténtico que a producción pulida. Split test: storytelling emocional vs. datos concretos en MOFU.',
+  },
+  segmentation: {
+    profile: 'Mujer 25–38 años, urbana, ingreso medio-alto. Compra ropa con intención, no por impulso. Se informa antes de comprar, valora la transparencia de marca. Ya ha reducido fast fashion o quiere hacerlo.',
+    ageRange: '24–42 años',
+    gender: 'Mayoritariamente mujer (85%)',
+    interests: ['Moda sostenible', 'Slow fashion', 'Minimalismo', 'Conscious living', 'Yoga y bienestar', 'Decoración nórdica'],
+    behaviors: ['Compra online frecuente', 'Interacción con marcas de lifestyle', 'Uso de apps segunda mano (Vinted, Wallapop)'],
+    pains: [
+      'Compra ropa que pierde calidad rápido y se siente estafada',
+      'No sabe distinguir marcas realmente sostenibles del greenwashing',
+      'Tiene el armario lleno pero siente que no tiene nada que ponerse',
+    ],
+    desires: [
+      'Tener un armario cápsula con piezas que combinen entre sí',
+      'Comprar menos pero mejor — invertir en calidad real',
+      'Que la ropa refleje sus valores sin sacrificar estética',
+    ],
+    lookalike: ['Compradores de Patagonia', 'Seguidores de Organic Basics', 'Clientes de Arket y COS'],
+    exclude: ['Interés en fast fashion', 'Compradores de muy bajo presupuesto', 'Menores de 18'],
+  },
 }
 
 const NICHES = [
@@ -81,7 +254,7 @@ const TABS = [
 // ─── Niche auto-detect ────────────────────────────────────────────────────────
 function detectNiche(text: string): string {
   const t = text.toLowerCase()
-  if (t.match(/zapat|calzad|boot|shoe|sneaker|tacon/))         return 'calzado'
+  if (t.match(/zapat|calzad|boot|shoe|sneaker|tacon/))          return 'calzado'
   if (t.match(/camis|ropa|moda|fashion|vestid|pantalon|top|sudadera/)) return 'ropa'
   if (t.match(/cream|serum|mascara|belleza|beauty|skin|facial|hidrat/)) return 'belleza'
   if (t.match(/gym|fitness|suplemento|proteina|entreno|muscu|creatina/)) return 'fitness'
@@ -168,16 +341,11 @@ function LoadingState() {
         </div>
         <div className="absolute inset-0 rounded-2xl animate-ping bg-indigo-500/10" style={{ animationDuration: '2s' }} />
       </div>
-
       <div className="flex flex-col items-center gap-3 w-full max-w-xs">
         {LOADING_STEPS.map((msg, i) => (
-          <div
-            key={i}
-            className={`flex items-center gap-3 w-full transition-all duration-500 ${
-              i < step  ? 'opacity-30' :
-              i === step ? 'opacity-100' : 'opacity-15'
-            }`}
-          >
+          <div key={i} className={`flex items-center gap-3 w-full transition-all duration-500 ${
+            i < step ? 'opacity-30' : i === step ? 'opacity-100' : 'opacity-15'
+          }`}>
             <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors duration-300 ${
               i < step ? 'bg-emerald-400' : i === step ? 'bg-indigo-400' : 'bg-zinc-700'
             }`} />
@@ -194,13 +362,46 @@ function LoadingState() {
   )
 }
 
+// ─── Demo banner ──────────────────────────────────────────────────────────────
+function DemoBanner({ onGenerate }: { onGenerate: () => void }) {
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-indigo-500/25 bg-gradient-to-r from-indigo-500/10 via-violet-500/8 to-indigo-500/10 p-5">
+      {/* subtle glow */}
+      <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-indigo-500/10 blur-2xl pointer-events-none" />
+
+      <div className="relative flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <Sparkles size={16} className="text-indigo-400" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-white leading-snug">
+              Campaña de ejemplo — Camiseta algodón orgánico, moda sostenible
+            </p>
+            <p className="text-xs text-zinc-400 mt-0.5 leading-relaxed">
+              Esto es exactamente lo que el sistema genera para cada producto de tus clientes.
+              Copies, hooks, guiones y segmentación listos para lanzar.
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={onGenerate}
+          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/20 hover:-translate-y-0.5 flex-shrink-0 whitespace-nowrap"
+        >
+          <Rocket size={14} /> Generar la mía gratis
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Insight header ───────────────────────────────────────────────────────────
 function InsightHeader({ insight }: { insight: Insight }) {
   const aggrColor =
     insight.aggressiveness === 'Alto'  ? 'text-red-400 bg-red-400/10 border-red-400/20' :
     insight.aggressiveness === 'Medio' ? 'text-amber-400 bg-amber-400/10 border-amber-400/20' :
                                          'text-emerald-400 bg-emerald-400/10 border-emerald-400/20'
-
   return (
     <div className="flex flex-wrap items-center gap-3 p-4 rounded-2xl bg-zinc-900/60 border border-white/5">
       <div className="flex items-start gap-2.5 flex-1 min-w-0">
@@ -244,19 +445,13 @@ function AdsSection({ copies: { short, long } }: { copies: { short: ShortCopy[];
 
   return (
     <div className="space-y-8">
-      {/* Bulk copy bar */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider mr-1">Copiar todo:</span>
-        {metaCopies.length > 0 && (
-          <CopyBtn text={formatShort(metaCopies)} label="Meta Ads" />
-        )}
-        {tiktokCopies.length > 0 && (
-          <CopyBtn text={formatShort(tiktokCopies)} label="TikTok Ads" />
-        )}
+        {metaCopies.length > 0   && <CopyBtn text={formatShort(metaCopies)}   label="Meta Ads" />}
+        {tiktokCopies.length > 0 && <CopyBtn text={formatShort(tiktokCopies)} label="TikTok Ads" />}
         <CopyBtn text={formatAll()} label="Todo" />
       </div>
 
-      {/* Short copies */}
       <div>
         <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4">Copies cortos · Meta Ads · TikTok</p>
         <div className="grid md:grid-cols-3 gap-3">
@@ -277,7 +472,6 @@ function AdsSection({ copies: { short, long } }: { copies: { short: ShortCopy[];
         </div>
       </div>
 
-      {/* Long copies */}
       <div>
         <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4">Copies largos · Storytelling</p>
         <div className="grid md:grid-cols-2 gap-3">
@@ -359,7 +553,6 @@ function CampaignSection({ structure }: { structure: CampaignStructure }) {
         <p className="text-[10px] text-zinc-500 mb-1">Tipo de campaña</p>
         <p className="text-sm font-bold text-white">{structure.type}</p>
       </div>
-
       <div className="overflow-x-auto">
         <table className="w-full text-xs border-collapse">
           <thead>
@@ -382,7 +575,6 @@ function CampaignSection({ structure }: { structure: CampaignStructure }) {
           </tbody>
         </table>
       </div>
-
       <div className="grid md:grid-cols-2 gap-3">
         <div className="rounded-xl border border-white/5 bg-zinc-900 p-4">
           <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Presupuesto sugerido</p>
@@ -412,7 +604,6 @@ function AudienceSection({ seg }: { seg: Segmentation }) {
           <p className="text-xs text-zinc-500 mt-0.5">{seg.gender}</p>
         </div>
       </div>
-
       <div className="grid md:grid-cols-2 gap-4">
         {([
           { label: 'Intereses',            items: seg.interests,  accent: 'text-indigo-400 bg-indigo-400/10' },
@@ -430,7 +621,6 @@ function AudienceSection({ seg }: { seg: Segmentation }) {
           </div>
         ))}
       </div>
-
       <div className="grid md:grid-cols-2 gap-4">
         <div>
           <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-3">Dolores del cliente</p>
@@ -462,28 +652,19 @@ function PaywallScreen({ onUpgrade }: { onUpgrade: () => void }) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center py-20 px-6">
       <div className="max-w-md w-full text-center space-y-8">
-        {/* Icon */}
         <div className="flex justify-center">
           <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-indigo-500/20 to-violet-500/20 border border-indigo-500/30 flex items-center justify-center shadow-xl shadow-indigo-500/10">
             <Lock size={32} className="text-indigo-400" />
           </div>
         </div>
-
-        {/* Copy */}
         <div className="space-y-3">
           <p className="text-[11px] font-bold text-indigo-400 uppercase tracking-widest">1 campaña gratis usada</p>
           <h2 className="text-3xl font-black text-white leading-tight">
             Genera campañas<br />
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-violet-400">
-              ilimitadas
-            </span>
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-violet-400">ilimitadas</span>
           </h2>
-          <p className="text-zinc-500 text-base">
-            Desbloquea el sistema completo para generar campañas para todos tus clientes, sin límite.
-          </p>
+          <p className="text-zinc-500 text-base">Desbloquea el sistema completo para todos tus clientes, sin límite.</p>
         </div>
-
-        {/* Features */}
         <ul className="space-y-2.5 text-left">
           {[
             'Campañas ilimitadas para cualquier nicho',
@@ -493,13 +674,10 @@ function PaywallScreen({ onUpgrade }: { onUpgrade: () => void }) {
             'Actualizaciones del sistema incluidas',
           ].map(f => (
             <li key={f} className="flex items-center gap-3 text-sm text-zinc-400">
-              <Check size={14} className="text-indigo-400 flex-shrink-0" />
-              {f}
+              <Check size={14} className="text-indigo-400 flex-shrink-0" />{f}
             </li>
           ))}
         </ul>
-
-        {/* CTA */}
         <div className="space-y-3">
           <button
             onClick={onUpgrade}
@@ -528,23 +706,25 @@ export default function CampaignApp() {
   const navigate  = useNavigate()
   const { isActive } = useSubscription()
 
-  // Form state
   const [input,     setInput]     = useState('')
   const [niche,     setNiche]     = useState('')
   const [objective, setObjective] = useState('ventas')
   const [style,     setStyle]     = useState('performance')
   const [error,     setError]     = useState<string | null>(null)
 
-  // App state
   const [appState,  setAppState]  = useState<AppState>('idle')
   const [result,    setResult]    = useState<CampaignResult | null>(null)
   const [activeTab, setActiveTab] = useState('ads')
+  const [isDemo,    setIsDemo]    = useState(false)
 
   const lastParams = useRef({ input, niche, objective, style })
 
-  // ── Onboarding: prefill on first visit ──────────────────────────────────────
+  // ── Initial state: demo on first visit, or load from history state ──────────
   useEffect(() => {
-    const state = location.state as { loadCampaign?: HistoryEntry; prefill?: { input: string; niche: string; objective: string; style: string } } | null
+    const state = location.state as {
+      loadCampaign?: HistoryEntry
+      prefill?: { input: string; niche: string; objective: string; style: string }
+    } | null
 
     if (state?.loadCampaign) {
       const entry = state.loadCampaign
@@ -569,13 +749,12 @@ export default function CampaignApp() {
       return
     }
 
-    // First visit onboarding
+    // First visit → show demo campaign immediately
     if (!localStorage.getItem(ONBOARD_KEY)) {
-      setInput(ONBOARDING_EXAMPLE.input)
-      setNiche(ONBOARDING_EXAMPLE.niche)
-      setObjective(ONBOARDING_EXAMPLE.objective)
-      setStyle(ONBOARDING_EXAMPLE.style)
-      localStorage.setItem(ONBOARD_KEY, '1')
+      setResult(DEMO_CAMPAIGN)
+      setActiveTab('ads')
+      setAppState('result')
+      setIsDemo(true)
     }
   }, [])
 
@@ -586,18 +765,27 @@ export default function CampaignApp() {
     if (detected && !niche) setNiche(detected)
   }, [input])
 
+  // Exit demo → go to idle form
+  function exitDemo() {
+    localStorage.setItem(ONBOARD_KEY, '1')
+    setIsDemo(false)
+    setAppState('idle')
+    setResult(null)
+  }
+
   const runGenerate = useCallback(async (variant = '') => {
     const params = variant ? lastParams.current : { input, niche, objective, style }
     if (!params.input.trim()) { setError('Describe el producto o pega una URL.'); return }
     if (!params.niche)        { setError('Selecciona el nicho.'); return }
 
-    // Paywall check (only on new generates, not variants of existing result)
+    // Paywall check (only new generates, not variants)
     if (!variant && !isActive && hasFreeUsed()) {
       setAppState('paywall')
       return
     }
 
     lastParams.current = { ...params }
+    setIsDemo(false)
     setError(null)
     setAppState('loading')
     setResult(null)
@@ -616,8 +804,8 @@ export default function CampaignApp() {
       setActiveTab('ads')
       setAppState('result')
 
-      // Mark free campaign used + save to history
       if (!variant) {
+        localStorage.setItem(ONBOARD_KEY, '1')
         markFreeUsed()
         const entry: HistoryEntry = {
           id:          data.id,
@@ -642,17 +830,14 @@ export default function CampaignApp() {
   const isResult  = appState === 'result'
   const isPaywall = appState === 'paywall'
 
-  const handleUpgrade = () => navigate('/settings')
-
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-zinc-950">
 
-      {/* ── Input block ─────────────────────────────────────────────────── */}
-      {!isPaywall && (
+      {/* ── Input block (hidden during paywall and demo) ─────────────────── */}
+      {!isPaywall && !isDemo && (
         <div className={`border-b border-white/5 transition-all duration-500 ${isIdle ? 'py-16' : 'py-5'}`}>
           <div className={`mx-auto px-6 transition-all duration-500 ${isIdle ? 'max-w-2xl' : 'max-w-5xl'}`}>
 
-            {/* Title — only in idle */}
             {isIdle && (
               <div className="text-center mb-10">
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/8 mb-5">
@@ -667,14 +852,11 @@ export default function CampaignApp() {
                 </h1>
                 <p className="text-zinc-500 text-base">Pega una URL de Shopify o describe el producto. El sistema hace el resto.</p>
                 {!isActive && !hasFreeUsed() && (
-                  <p className="text-xs text-amber-400/80 mt-3 font-medium">
-                    1 campaña gratuita · Sin tarjeta de crédito
-                  </p>
+                  <p className="text-xs text-amber-400/80 mt-3 font-medium">1 campaña gratuita · Sin tarjeta de crédito</p>
                 )}
               </div>
             )}
 
-            {/* Input main */}
             <div className={`space-y-3 ${isIdle ? '' : 'flex items-end gap-3 space-y-0'}`}>
               <div className={`${isIdle ? '' : 'flex-1'} relative`}>
                 {isIdle ? (
@@ -696,14 +878,12 @@ export default function CampaignApp() {
                 )}
               </div>
 
-              {/* Selectors */}
               <div className={`${isIdle ? 'grid grid-cols-3 gap-3' : 'flex items-center gap-2 flex-shrink-0'}`}>
                 <Select value={niche}     onChange={setNiche}     options={NICHES}      placeholder="Nicho detectado..." />
                 <Select value={objective} onChange={setObjective} options={OBJECTIVES} />
                 <Select value={style}     onChange={setStyle}     options={STYLES} />
               </div>
 
-              {/* CTA */}
               <button
                 onClick={() => runGenerate()}
                 disabled={isLoad}
@@ -731,34 +911,39 @@ export default function CampaignApp() {
       {isLoad && <LoadingState />}
 
       {/* ── Paywall ─────────────────────────────────────────────────────── */}
-      {isPaywall && <PaywallScreen onUpgrade={handleUpgrade} />}
+      {isPaywall && <PaywallScreen onUpgrade={() => navigate('/settings')} />}
 
       {/* ── Result ──────────────────────────────────────────────────────── */}
       {isResult && result && (
         <div className="flex-1 flex flex-col max-w-5xl mx-auto w-full px-6 py-6 gap-5">
 
+          {/* Demo banner */}
+          {isDemo && <DemoBanner onGenerate={exitDemo} />}
+
           {/* Insight header */}
           {result.insight && <InsightHeader insight={result.insight} />}
 
-          {/* Action buttons */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-zinc-600 mr-1">Variantes:</span>
-            {ACTIONS.map(action => {
-              const Icon = action.icon
-              return (
-                <button
-                  key={action.label}
-                  onClick={() => runGenerate(action.variant)}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-white/8 bg-zinc-900 hover:bg-zinc-800 hover:border-white/15 text-zinc-400 hover:text-white text-xs font-semibold transition-all"
-                >
-                  <Icon size={12} /> {action.label}
-                </button>
-              )
-            })}
-            <span className="ml-auto text-[10px] text-zinc-700">
-              {new Date(result.generatedAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-            </span>
-          </div>
+          {/* Action buttons — hidden in demo */}
+          {!isDemo && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-zinc-600 mr-1">Variantes:</span>
+              {ACTIONS.map(action => {
+                const Icon = action.icon
+                return (
+                  <button
+                    key={action.label}
+                    onClick={() => runGenerate(action.variant)}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-white/8 bg-zinc-900 hover:bg-zinc-800 hover:border-white/15 text-zinc-400 hover:text-white text-xs font-semibold transition-all"
+                  >
+                    <Icon size={12} /> {action.label}
+                  </button>
+                )
+              })}
+              <span className="ml-auto text-[10px] text-zinc-700">
+                {new Date(result.generatedAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            </div>
+          )}
 
           {/* Tabs */}
           <div className="flex items-center gap-1 border-b border-white/5 pb-0">
@@ -792,13 +977,27 @@ export default function CampaignApp() {
 
           {/* Footer */}
           <div className="border-t border-white/5 pt-5 flex items-center justify-between">
-            <p className="text-xs text-zinc-600">¿Quieres generar para otro producto?</p>
-            <button
-              onClick={() => { setAppState('idle'); setResult(null); setInput(''); setNiche('') }}
-              className="flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition-colors"
-            >
-              Nueva campaña <ArrowRight size={12} />
-            </button>
+            {isDemo ? (
+              <>
+                <p className="text-xs text-zinc-600">¿Listo para generar la tuya?</p>
+                <button
+                  onClick={exitDemo}
+                  className="flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition-colors"
+                >
+                  Generar mi primera campaña <ArrowRight size={12} />
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="text-xs text-zinc-600">¿Quieres generar para otro producto?</p>
+                <button
+                  onClick={() => { setAppState('idle'); setResult(null); setInput(''); setNiche('') }}
+                  className="flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition-colors"
+                >
+                  Nueva campaña <ArrowRight size={12} />
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
