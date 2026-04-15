@@ -1,28 +1,39 @@
 import { Request, Response } from 'express'
 import { v4 as uuid } from 'uuid'
+import Anthropic from '@anthropic-ai/sdk'
 import type { ContentRequest, GeneratedContent } from '../types'
 
-// In-memory store (replace with DB in production)
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 const history: GeneratedContent[] = []
 
-function buildCaption(req: ContentRequest): string {
-  const ctas = req.callToAction
-    ? [req.callToAction]
-    : ['Descúbrelo ahora.', 'Contáctanos hoy.', '¡No te lo pierdas!']
-  const cta = ctas[Math.floor(Math.random() * ctas.length)]
-  const keywords = req.keywords.split(',').map((k) => k.trim()).filter(Boolean)
-  const hashtags = keywords.map((k) => `#${k.replace(/\s/g, '')}`).join(' ')
+async function generateWithClaude(body: ContentRequest): Promise<string> {
+  const prompt = `Eres un experto en marketing digital y redes sociales.
+Genera un caption profesional y atractivo para ${body.platform} con estas características:
+- Marca: ${body.brand}
+- Tema: ${body.topic}
+- Tono: ${body.tone || 'profesional y cercano'}
+- Keywords/hashtags: ${body.keywords}
+- Call to action: ${body.callToAction || 'genérico apropiado'}
 
-  const templates = [
-    `¡${req.brand} lo hace de nuevo! 🚀\n\n${req.topic} — la oportunidad que estabas esperando.\n\n${cta}\n\n${hashtags}`,
-    `Hablemos de ${req.topic.toLowerCase()} ✨\n\nEn ${req.brand} creemos en resultados reales. Cada acción cuenta, cada detalle importa.\n\n${cta}\n\n${hashtags}`,
-    `${req.topic} — más que una tendencia, una necesidad. 💡\n\nDesde ${req.brand} te acompañamos en cada paso.\n\n${cta}\n\n${hashtags}`,
-  ]
+El caption debe:
+- Ser natural y no genérico
+- Incluir emojis relevantes
+- Terminar con hashtags
+- Estar optimizado para ${body.platform}
+- Tener entre 100-300 caracteres (sin hashtags)
 
-  return templates[Math.floor(Math.random() * templates.length)]
+Responde SOLO con el caption, sin explicaciones.`
+
+  const message = await client.messages.create({
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 500,
+    messages: [{ role: 'user', content: prompt }],
+  })
+
+  return (message.content[0] as { text: string }).text
 }
 
-export function generateContent(req: Request, res: Response): void {
+export async function generateContent(req: Request, res: Response): Promise<void> {
   const body = req.body as ContentRequest
 
   if (!body.topic || !body.brand || !body.platform) {
@@ -30,19 +41,30 @@ export function generateContent(req: Request, res: Response): void {
     return
   }
 
-  const variations = Array.from({ length: 3 }, () => {
-    const item: GeneratedContent = {
-      id: uuid(),
-      caption: buildCaption(body),
-      hashtags: body.keywords.split(',').map((k) => k.trim().replace(/\s/g, '')).filter(Boolean),
-      platform: body.platform,
-      createdAt: new Date().toISOString(),
-    }
-    history.push(item)
-    return item
-  })
+  try {
+    const captions = await Promise.all([
+      generateWithClaude(body),
+      generateWithClaude(body),
+      generateWithClaude(body),
+    ])
 
-  res.json({ success: true, data: variations })
+    const variations = captions.map((caption) => {
+      const item: GeneratedContent = {
+        id: uuid(),
+        caption,
+        hashtags: body.keywords.split(',').map((k) => k.trim().replace(/\s/g, '')).filter(Boolean),
+        platform: body.platform,
+        createdAt: new Date().toISOString(),
+      }
+      history.push(item)
+      return item
+    })
+
+    res.json({ success: true, data: variations })
+  } catch (error) {
+    console.error('Error generando contenido con Claude:', error)
+    res.status(500).json({ success: false, error: 'Error al generar contenido con IA' })
+  }
 }
 
 export function getContentHistory(_req: Request, res: Response): void {
