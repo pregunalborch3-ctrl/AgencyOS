@@ -83,7 +83,7 @@ export default function MarketAnalysis() {
     <>
       {/* TAM / SAM / SOM */}
       <ResultSection title="Tamaño de Mercado">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {([
             { label: 'TAM', sub: 'Mercado Total Disponible', ...data.tam },
             { label: 'SAM', sub: 'Mercado Servible',        ...data.sam },

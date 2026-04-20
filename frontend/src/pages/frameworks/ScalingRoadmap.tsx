@@ -131,7 +131,7 @@ export default function ScalingRoadmap() {
                 </div>
 
                 {/* Actions + KPIs */}
-                <div className="grid grid-cols-2 gap-px bg-white/5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/5">
                   <div className="bg-zinc-900 p-4">
                     <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2.5">Acciones</p>
                     <ul className="space-y-1.5">
@@ -174,7 +174,7 @@ export default function ScalingRoadmap() {
       onExportPDF={data ? () => toPDF(target, data) : undefined}
       onExportCSV={data ? () => toCSV(target, data) : undefined}
     >
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <FormField label="Ingresos actuales / mes">
           <input className={inputCls} placeholder="ej. €3.000, €15.000…" value={currentRevenue} onChange={e => setCurrentRevenue(e.target.value)} />
         </FormField>

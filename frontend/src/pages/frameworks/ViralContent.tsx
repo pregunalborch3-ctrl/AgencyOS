@@ -104,7 +104,7 @@ export default function ViralContent() {
     <>
       {/* Hooks */}
       <ResultSection title={`${data.hooks.length} Hooks listos para usar`}>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {data.hooks.map((h, i) => {
             const colorCls = HOOK_COLORS[h.type.toLowerCase()] ?? 'bg-zinc-500/15 text-zinc-400 border-zinc-500/20'
             return (
@@ -176,7 +176,7 @@ export default function ViralContent() {
       onExportPDF={data ? () => toPDF(niche, data) : undefined}
       onExportCSV={data ? () => toCSV(niche, data) : undefined}
     >
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <FormField label="Nicho">
           <input className={inputCls} placeholder="ej. fitness femenino, trading, moda sostenible…" value={niche} onChange={e => setNiche(e.target.value)} />
         </FormField>

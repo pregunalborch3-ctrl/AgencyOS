@@ -124,7 +124,7 @@ export default function DistributionPlan() {
 
       {/* Calendar */}
       <ResultSection title="Calendario 4 semanas">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {data.calendar.map(w => (
             <div key={w.week} className="rounded-xl border border-white/5 bg-zinc-800/40 overflow-hidden">
               <div className="px-3 py-2 bg-zinc-800 border-b border-white/5">
@@ -160,7 +160,7 @@ export default function DistributionPlan() {
       onExportPDF={data ? () => toPDF(product, data) : undefined}
       onExportCSV={data ? () => toCSV(product, data) : undefined}
     >
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <FormField label="Producto o servicio">
           <input className={inputCls} placeholder="ej. curso online de trading, zapatos veganos…" value={product} onChange={e => setProduct(e.target.value)} />
         </FormField>

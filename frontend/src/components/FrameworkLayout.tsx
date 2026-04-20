@@ -23,7 +23,7 @@ export default function FrameworkLayout({
     <div className="flex-1 flex flex-col min-h-screen bg-zinc-950">
 
       {/* Header */}
-      <div className="px-8 py-6 border-b border-white/5">
+      <div className="px-4 py-5 md:px-8 md:py-6 border-b border-white/5">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center">
             <Icon size={17} className="text-indigo-400" />
@@ -35,7 +35,7 @@ export default function FrameworkLayout({
         </div>
       </div>
 
-      <div className="p-8 space-y-6 max-w-5xl w-full mx-auto">
+      <div className="p-4 md:p-8 space-y-6 max-w-5xl w-full mx-auto">
 
         {/* Form card */}
         <div className="rounded-2xl border border-white/5 bg-zinc-900 p-6 space-y-5">

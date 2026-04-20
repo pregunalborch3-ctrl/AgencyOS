@@ -108,7 +108,7 @@ export default function CompetitionMap() {
                 <p className="text-sm font-bold text-white">{c.name}</p>
                 <p className="text-xs text-zinc-500 mt-0.5 italic">{c.positioning}</p>
               </div>
-              <div className="grid grid-cols-3 gap-px bg-white/5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-white/5">
                 <div className="bg-zinc-900 p-3">
                   <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-wide mb-2">Fortalezas</p>
                   <ul className="space-y-1">
@@ -142,7 +142,7 @@ export default function CompetitionMap() {
 
       {/* Differentiators */}
       <ResultSection title="Diferenciadores Clave">
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {data.keyDifferentiators.map((d, i) => (
             <div key={i} className="flex items-start gap-2 p-3 rounded-xl bg-zinc-800/40 border border-indigo-500/15">
               <span className="text-indigo-400 font-black text-xs mt-0.5 flex-shrink-0">{i + 1}</span>

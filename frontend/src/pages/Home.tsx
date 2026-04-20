@@ -188,7 +188,7 @@ export default function Home() {
     <div className="flex-1 flex flex-col min-h-screen bg-zinc-950">
 
       {/* ── 1. Header ─────────────────────────────────────────────────────── */}
-      <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between">
+      <div className="px-4 py-5 md:px-8 md:py-6 border-b border-white/5 flex items-center justify-between">
         <div>
           <p className="text-zinc-500 text-sm">Panel principal</p>
           <h1 className="text-2xl font-black text-white mt-0.5 flex items-center gap-2">
@@ -200,7 +200,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="p-8 space-y-6 flex-1">
+      <div className="p-4 md:p-8 space-y-6 flex-1">
 
         {/* ── 2. Mensaje motivador ──────────────────────────────────────────── */}
         <div className="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-indigo-500/8 border border-indigo-500/20">
@@ -209,7 +209,7 @@ export default function Home() {
         </div>
 
         {/* ── 3. Stats ──────────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard
             icon={Rocket}
             label="Campañas guardadas"
@@ -229,7 +229,7 @@ export default function Home() {
         </div>
 
         {/* ── 4. Gráficos ───────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
           {/* Campañas por semana */}
           <div className="rounded-2xl border border-white/5 bg-zinc-900 p-5">
@@ -283,7 +283,7 @@ export default function Home() {
         </div>
 
         {/* ── 5. Tres bloques ───────────────────────────────────────────────── */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
           {/* Suscripción */}
           <div className="rounded-2xl border border-white/5 bg-zinc-900 p-5 flex flex-col gap-3">
