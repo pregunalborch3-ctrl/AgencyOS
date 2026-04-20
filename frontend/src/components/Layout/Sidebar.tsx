@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   Rocket, Settings, LogOut, Clock, LayoutDashboard,
-  Globe2, Crosshair, Map, Flame, Layers, LayoutGrid, X,
+  Globe2, Crosshair, Map, Flame, Layers, Zap, X,
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -76,6 +76,11 @@ export default function Sidebar() {
     <>
       {/* ── Desktop sidebar ──────────────────────────────────────────────── */}
       <aside className="hidden md:flex fixed inset-y-0 left-0 z-30 w-[60px] bg-zinc-950 border-r border-white/5 flex-col items-center py-4 gap-2 overflow-y-auto">
+        {/* Brand logo */}
+        <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 mb-1 flex-shrink-0">
+          <Zap size={15} className="text-white" />
+        </div>
+
         <nav className="flex flex-col items-center gap-1.5">
           {NAV_MAIN.map(item => <NavItem key={item.path} {...item} />)}
         </nav>
@@ -116,7 +121,7 @@ export default function Sidebar() {
           onClick={() => setDrawerOpen(true)}
           className="flex flex-col items-center justify-center gap-1 flex-1 py-2 min-w-0"
         >
-          <LayoutGrid size={20} className="text-zinc-600" />
+          <Zap size={20} className="text-zinc-600" />
           <span className="text-[9px] font-semibold text-zinc-600">Tools</span>
         </button>
       </nav>

@@ -196,6 +196,18 @@ export default function Login() {
                 : <><span>Iniciar sesión</span><ArrowRight size={17} /></>
               }
             </button>
+
+            {/* Legal notice */}
+            <p className="text-center text-xs text-gray-400 leading-relaxed mt-3">
+              Al continuar aceptas nuestros{' '}
+              <Link to="/terms" className="text-gray-500 underline underline-offset-2 hover:text-gray-700 transition-colors">
+                Términos y Condiciones
+              </Link>
+              {' '}y nuestra{' '}
+              <Link to="/privacy" className="text-gray-500 underline underline-offset-2 hover:text-gray-700 transition-colors">
+                Política de Privacidad
+              </Link>
+            </p>
           </form>
 
           <p className="text-center text-sm text-gray-500 mt-6">

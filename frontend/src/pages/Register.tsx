@@ -287,9 +287,13 @@ export default function Register() {
                   className="w-4 h-4 mt-0.5 rounded border-gray-300 text-indigo-500 focus:ring-indigo-500 cursor-pointer flex-shrink-0" />
                 <label htmlFor="terms" className="text-sm text-gray-600 cursor-pointer select-none leading-relaxed">
                   Acepto los{' '}
-                  <span className="text-indigo-500 font-medium hover:underline cursor-pointer">Términos de servicio</span>
+                  <Link to="/terms" onClick={e => e.stopPropagation()} className="text-indigo-500 font-medium hover:underline">
+                    Términos y Condiciones
+                  </Link>
                   {' '}y la{' '}
-                  <span className="text-indigo-500 font-medium hover:underline cursor-pointer">Política de privacidad</span>
+                  <Link to="/privacy" onClick={e => e.stopPropagation()} className="text-indigo-500 font-medium hover:underline">
+                    Política de Privacidad
+                  </Link>
                 </label>
               </div>
               {termsErr && <p className="text-xs text-red-500 mt-1.5 pl-6">{termsErr}</p>}
@@ -303,6 +307,18 @@ export default function Register() {
                 : <><span>Crear mi cuenta</span><ArrowRight size={17} /></>
               }
             </button>
+
+            {/* Legal notice */}
+            <p className="text-center text-xs text-gray-400 leading-relaxed mt-3">
+              Al continuar aceptas nuestros{' '}
+              <Link to="/terms" onClick={e => e.stopPropagation()} className="text-gray-500 underline underline-offset-2 hover:text-gray-700 transition-colors">
+                Términos y Condiciones
+              </Link>
+              {' '}y nuestra{' '}
+              <Link to="/privacy" onClick={e => e.stopPropagation()} className="text-gray-500 underline underline-offset-2 hover:text-gray-700 transition-colors">
+                Política de Privacidad
+              </Link>
+            </p>
           </form>
 
           <p className="text-center text-sm text-gray-500 mt-5">
