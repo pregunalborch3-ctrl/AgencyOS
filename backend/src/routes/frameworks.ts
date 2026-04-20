@@ -7,13 +7,14 @@ import {
   scalingRoadmap,
 } from '../controllers/frameworksController'
 import { requireAuth } from '../middleware/authMiddleware'
+import { frameworksLimiter } from '../middleware/security'
 
 const router = Router()
 
-router.post('/mercado',      requireAuth, analyzeMarket)
-router.post('/competencia',  requireAuth, mapCompetition)
-router.post('/distribucion', requireAuth, planDistribution)
-router.post('/contenido',    requireAuth, viralContent)
-router.post('/escalado',     requireAuth, scalingRoadmap)
+router.post('/mercado',      requireAuth, frameworksLimiter, analyzeMarket)
+router.post('/competencia',  requireAuth, frameworksLimiter, mapCompetition)
+router.post('/distribucion', requireAuth, frameworksLimiter, planDistribution)
+router.post('/contenido',    requireAuth, frameworksLimiter, viralContent)
+router.post('/escalado',     requireAuth, frameworksLimiter, scalingRoadmap)
 
 export default router

@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken"
 import { v4 as uuid } from "uuid"
 import { UserStore, User } from "../models/User"
 import type { JwtPayload } from "../middleware/authMiddleware"
+import { logFailedLogin } from "../middleware/security"
 
 const BCRYPT_ROUNDS = 12
 
@@ -75,15 +76,19 @@ export async function login(req: Request, res: Response): Promise<void> {
     return
   }
 
+  const ip = req.ip ?? req.socket.remoteAddress ?? 'unknown'
+
   const user = await UserStore.findByEmail(email)
   if (!user) {
     await bcrypt.compare(password, "$2a$12$invalidhashplaceholder00000000000000000000")
+    logFailedLogin(ip, email)
     res.status(401).json({ success: false, error: "Credenciales incorrectas." })
     return
   }
 
   const match = await bcrypt.compare(password, user.passwordHash)
   if (!match) {
+    logFailedLogin(ip, email)
     res.status(401).json({ success: false, error: "Credenciales incorrectas." })
     return
   }

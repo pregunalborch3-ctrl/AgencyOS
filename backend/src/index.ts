@@ -1,8 +1,16 @@
 import express from 'express'
 import cors from 'cors'
+import helmet from 'helmet'
 import dotenv from 'dotenv'
 
 dotenv.config()
+
+import { validateEnv, generalLimiter, sanitizeBody } from './middleware/security'
+
+// Validate env vars before anything else
+console.log('\n🔐 Verificando variables de entorno…')
+validateEnv()
+console.log('  ✓ Variables de entorno OK\n')
 
 import authRoutes         from './routes/auth'
 import subscriptionRoutes from './routes/subscription'
@@ -18,7 +26,19 @@ import frameworkRoutes    from './routes/frameworks'
 const app  = express()
 const PORT = process.env.PORT ?? 3001
 
+// Trust proxy (Railway / Vercel sit behind a reverse proxy)
+app.set('trust proxy', 1)
+
+// Security headers
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}))
+
+// CORS
 app.use(cors({ origin: process.env.FRONTEND_URL ?? 'http://localhost:5173' }))
+
+// Global rate limiter — applied before all routes
+app.use(generalLimiter)
 
 // ⚠  Stripe webhook needs raw body — mount BEFORE express.json()
 app.post(
@@ -27,7 +47,9 @@ app.post(
   (req, res, next) => { subscriptionRoutes(req, res, next) },
 )
 
-app.use(express.json())
+// Body parsing with size limit + sanitization
+app.use(express.json({ limit: '10mb' }))
+app.use(sanitizeBody)
 
 // Routes
 app.use('/api/auth',         authRoutes)
@@ -51,7 +73,7 @@ app.use((_req, res) => {
 })
 
 app.listen(PORT, () => {
-  console.log(`\n🚀 AgencyOS API  →  http://localhost:${PORT}`)
+  console.log(`🚀 AgencyOS API  →  http://localhost:${PORT}`)
   console.log(`   Health        →  http://localhost:${PORT}/api/health\n`)
 })
 
