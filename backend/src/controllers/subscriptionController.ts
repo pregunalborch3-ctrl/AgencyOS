@@ -5,15 +5,15 @@ import { UserStore } from '../models/User'
 const FRONTEND = process.env.FRONTEND_URL ?? 'http://localhost:5173'
 
 // ─── GET /api/subscription/status ────────────────────────────────────────────
-export function getStatus(req: Request, res: Response): void {
-  const user = UserStore.findById(req.user!.userId)
+export async function getStatus(req: Request, res: Response): Promise<void> {
+  const user = await UserStore.findById(req.user!.userId)
   if (!user) { res.status(404).json({ success: false, error: 'Usuario no encontrado.' }); return }
   res.json({ success: true, data: user.subscription ?? null })
 }
 
 // ─── POST /api/subscription/checkout ─────────────────────────────────────────
 export async function createCheckoutSession(req: Request, res: Response): Promise<void> {
-  const user = UserStore.findById(req.user!.userId)
+  const user = await UserStore.findById(req.user!.userId)
   if (!user) { res.status(404).json({ success: false, error: 'Usuario no encontrado.' }); return }
 
   if (!PRICE_ID || PRICE_ID.startsWith('price_REEMPLAZA')) {
@@ -51,7 +51,7 @@ export async function createCheckoutSession(req: Request, res: Response): Promis
 
 // ─── POST /api/subscription/portal ───────────────────────────────────────────
 export async function createPortalSession(req: Request, res: Response): Promise<void> {
-  const user = UserStore.findById(req.user!.userId)
+  const user = await UserStore.findById(req.user!.userId)
   if (!user?.stripeCustomerId) {
     res.status(400).json({ success: false, error: 'No tienes una suscripción activa.' })
     return
@@ -65,7 +65,7 @@ export async function createPortalSession(req: Request, res: Response): Promise<
 
 // ─── POST /api/subscription/cancel ───────────────────────────────────────────
 export async function cancelSubscription(req: Request, res: Response): Promise<void> {
-  const user = UserStore.findById(req.user!.userId)
+  const user = await UserStore.findById(req.user!.userId)
   if (!user?.subscription?.stripeSubscriptionId) {
     res.status(400).json({ success: false, error: 'No tienes una suscripción activa.' })
     return
@@ -86,7 +86,7 @@ export async function cancelSubscription(req: Request, res: Response): Promise<v
 
 // ─── POST /api/subscription/reactivate ───────────────────────────────────────
 export async function reactivateSubscription(req: Request, res: Response): Promise<void> {
-  const user = UserStore.findById(req.user!.userId)
+  const user = await UserStore.findById(req.user!.userId)
   if (!user?.subscription?.stripeSubscriptionId) {
     res.status(400).json({ success: false, error: 'No tienes una suscripción para reactivar.' })
     return
@@ -139,7 +139,7 @@ export async function handleWebhook(req: Request, res: Response): Promise<void> 
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
         const sub  = event.data.object
-        const user = UserStore.findByStripeCustomerId(sub.customer)
+        const user = await UserStore.findByStripeCustomerId(sub.customer)
         if (!user) break
         const item = sub.items.data[0]
         UserStore.update(user.id, {
@@ -157,7 +157,7 @@ export async function handleWebhook(req: Request, res: Response): Promise<void> 
 
       case 'invoice.payment_failed': {
         const invoice = event.data.object
-        const user    = UserStore.findByStripeCustomerId(invoice.customer)
+        const user    = await UserStore.findByStripeCustomerId(invoice.customer)
         if (!user?.subscription) break
         UserStore.update(user.id, {
           subscription: { ...user.subscription, status: 'past_due' },
