@@ -586,6 +586,7 @@ function FinalCta() {
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
 function Footer() {
+  const year = new Date().getFullYear()
   return (
     <footer className="border-t border-white/5 py-10 px-6">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
@@ -594,8 +595,14 @@ function Footer() {
             <Zap size={12} className="text-white" />
           </div>
           <span className="text-sm font-black text-white">AgencyOS</span>
+          <span className="text-xs text-zinc-700 ml-1">© {year}</span>
         </div>
-        <p className="text-xs text-zinc-600">© 2025 AgencyOS · Especializado en agencias de e-commerce</p>
+        <div className="flex items-center gap-6">
+          <Link to="/privacy" className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">Privacidad</Link>
+          <Link to="/terms"   className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">Términos</Link>
+          <Link to="/cookies" className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">Cookies</Link>
+          <a href="mailto:pregunalborch3@gmail.com" className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">Contacto</a>
+        </div>
         <div className="flex items-center gap-6">
           <Link to="/login"    className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">Iniciar sesión</Link>
           <Link to="/register" className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">Crear cuenta</Link>

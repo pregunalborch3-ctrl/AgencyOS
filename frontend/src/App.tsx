@@ -17,6 +17,9 @@ import CompetitionMap          from './pages/frameworks/CompetitionMap'
 import DistributionPlan        from './pages/frameworks/DistributionPlan'
 import ViralContent            from './pages/frameworks/ViralContent'
 import ScalingRoadmap          from './pages/frameworks/ScalingRoadmap'
+import Privacy                 from './pages/legal/Privacy'
+import Terms                   from './pages/legal/Terms'
+import Cookies                 from './pages/legal/Cookies'
 
 export default function App() {
   return (
@@ -28,6 +31,9 @@ export default function App() {
             <Route path="/"         element={<Landing />} />
             <Route path="/login"    element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/privacy"  element={<Privacy />} />
+            <Route path="/terms"    element={<Terms />} />
+            <Route path="/cookies"  element={<Cookies />} />
 
             {/* Protected */}
             <Route element={<ProtectedRoute />}>
