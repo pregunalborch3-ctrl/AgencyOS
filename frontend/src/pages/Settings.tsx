@@ -41,7 +41,7 @@ function GeneralSection() {
   return (
     <div className="card p-6 space-y-5">
       <h3 className="section-title">Información de la agencia</h3>
-      <div className="grid grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5">
         <div>
           <label className="label">Nombre de la agencia</label>
           <input className="input" value={form.name} onChange={e => set('name', e.target.value)} />
@@ -100,7 +100,7 @@ function SecuritySection() {
     <div className="space-y-4">
       <div className="card p-6">
         <h3 className="section-title mb-5">Buenas prácticas de seguridad</h3>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {tips.map((t, i) => (
             <div key={i} className="flex gap-3 p-4 bg-gray-50 rounded-xl">
               <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center flex-shrink-0">{t.icon}</div>
@@ -239,7 +239,7 @@ function BillingSection() {
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <div className="bg-gray-50 rounded-xl p-4">
               <p className="text-xs text-gray-500 mb-1">Precio</p>
               <p className="text-xl font-black text-gray-900">$49<span className="text-sm font-normal text-gray-400">/mes</span></p>
@@ -385,15 +385,15 @@ export default function Settings() {
   return (
     <div className="flex-1">
       <Header title="Configuración" subtitle={subtitles[section]} />
-      <div className="p-6">
-        <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-3">
+      <div className="p-4 md:p-6">
+        <div className="flex flex-col gap-4 md:grid md:grid-cols-12 md:gap-6">
+          <div className="md:col-span-3">
             <div className="card p-3">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mb-3 mt-1">Ajustes</p>
               <SectionNav active={section} onChange={setSection} />
             </div>
           </div>
-          <div className="col-span-9">
+          <div className="md:col-span-9">
             {section === 'general'     && <GeneralSection />}
             {section === 'seguridad'   && <SecuritySection />}
             {section === 'facturacion' && <BillingSection />}
