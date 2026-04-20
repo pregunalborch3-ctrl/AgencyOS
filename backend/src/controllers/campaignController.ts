@@ -1,5 +1,6 @@
 import { Request, Response } from 'express'
 import { v4 as uuid } from 'uuid'
+import { prisma } from '../models/User'
 
 // ─── Niche data ───────────────────────────────────────────────────────────────
 const NICHE_DATA: Record<string, {
@@ -431,4 +432,66 @@ export async function generateCampaign(req: Request, res: Response): Promise<voi
   }
 
   res.json({ success: true, data: campaign })
+}
+
+// ─── Persistencia en BD ────────────────────────────────────────────────────────
+
+export async function saveCampaign(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = req.user!.userId
+    const { name, niche, objective, data } = req.body
+
+    if (!name || !niche || !objective || !data) {
+      res.status(400).json({ success: false, error: 'Faltan campos requeridos: name, niche, objective, data.' })
+      return
+    }
+
+    const saved = await prisma.campaign.create({
+      data: { userId, name, niche, objective, data }
+    })
+
+    res.status(201).json({ success: true, data: saved })
+  } catch {
+    res.status(500).json({ success: false, error: 'Error al guardar la campaña.' })
+  }
+}
+
+export async function getCampaigns(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = req.user!.userId
+
+    const campaigns = await prisma.campaign.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, name: true, niche: true, objective: true, createdAt: true, data: true }
+    })
+
+    res.json({ success: true, data: campaigns })
+  } catch {
+    res.status(500).json({ success: false, error: 'Error al obtener las campañas.' })
+  }
+}
+
+export async function deleteCampaign(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = req.user!.userId
+    const { id } = req.params
+
+    const campaign = await prisma.campaign.findUnique({ where: { id } })
+
+    if (!campaign) {
+      res.status(404).json({ success: false, error: 'Campaña no encontrada.' })
+      return
+    }
+
+    if (campaign.userId !== userId) {
+      res.status(403).json({ success: false, error: 'No tienes permiso para eliminar esta campaña.' })
+      return
+    }
+
+    await prisma.campaign.delete({ where: { id } })
+    res.json({ success: true, data: { id } })
+  } catch {
+    res.status(500).json({ success: false, error: 'Error al eliminar la campaña.' })
+  }
 }

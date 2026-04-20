@@ -11,6 +11,12 @@ import Settings                 from './pages/Settings'
 import SubscriptionSuccess      from './pages/SubscriptionSuccess'
 import SubscriptionCanceled     from './pages/SubscriptionCanceled'
 import HistorialPage            from './pages/HistorialPage'
+import Home                    from './pages/Home'
+import MarketAnalysis          from './pages/frameworks/MarketAnalysis'
+import CompetitionMap          from './pages/frameworks/CompetitionMap'
+import DistributionPlan        from './pages/frameworks/DistributionPlan'
+import ViralContent            from './pages/frameworks/ViralContent'
+import ScalingRoadmap          from './pages/frameworks/ScalingRoadmap'
 
 export default function App() {
   return (
@@ -30,6 +36,12 @@ export default function App() {
                 <Route path="/subscription/canceled" element={<SubscriptionCanceled />} />
                 <Route path="/settings"              element={<Settings />} />
 
+                <Route path="/home"                      element={<Home />} />
+                <Route path="/frameworks/mercado"      element={<MarketAnalysis />} />
+                <Route path="/frameworks/competencia"  element={<CompetitionMap />} />
+                <Route path="/frameworks/distribucion" element={<DistributionPlan />} />
+                <Route path="/frameworks/contenido"    element={<ViralContent />} />
+                <Route path="/frameworks/escalado"     element={<ScalingRoadmap />} />
                 {/* Main app — paywall handled in-app */}
                 <Route path="/dashboard" element={<CampaignApp />} />
                 <Route path="/historial" element={<HistorialPage />} />

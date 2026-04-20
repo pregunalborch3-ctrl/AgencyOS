@@ -5,9 +5,12 @@ import {
   BarChart3, Users, AlertCircle, RefreshCw,
   TrendingUp, Target, ChevronDown, ArrowRight,
   Crosshair, UserCheck, Flame, Lock, Crown, Sparkles,
+  Bookmark, BookmarkCheck,
 } from 'lucide-react'
 import { saveToHistory, hasFreeUsed, markFreeUsed, type HistoryEntry } from '../lib/history'
+import { saveCampaign } from '../lib/campaignsApi'
 import { useSubscription } from '../contexts/SubscriptionContext'
+import { useAuth } from '../contexts/AuthContext'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface ShortCopy { hook: string; body: string; cta: string; type: string; platform: string }
@@ -705,6 +708,7 @@ export default function CampaignApp() {
   const location = useLocation()
   const navigate  = useNavigate()
   const { isActive } = useSubscription()
+  const { token } = useAuth()
 
   const [input,     setInput]     = useState('')
   const [niche,     setNiche]     = useState('')
@@ -716,6 +720,8 @@ export default function CampaignApp() {
   const [result,    setResult]    = useState<CampaignResult | null>(null)
   const [activeTab, setActiveTab] = useState('ads')
   const [isDemo,    setIsDemo]    = useState(false)
+  const [isSaving,  setIsSaving]  = useState(false)
+  const [savedId,   setSavedId]   = useState<string | null>(null)
 
   const lastParams = useRef({ input, niche, objective, style })
 
@@ -803,6 +809,7 @@ export default function CampaignApp() {
       setResult(data)
       setActiveTab('ads')
       setAppState('result')
+      setSavedId(null)
 
       if (!variant) {
         localStorage.setItem(ONBOARD_KEY, '1')
@@ -829,6 +836,24 @@ export default function CampaignApp() {
   const isLoad    = appState === 'loading'
   const isResult  = appState === 'result'
   const isPaywall = appState === 'paywall'
+
+  async function handleSave() {
+    if (!result || !token || savedId) return
+    setIsSaving(true)
+    try {
+      const saved = await saveCampaign(token, {
+        name:      extractProductName(input || result.input.productDescription || result.input.productUrl || 'Campaña'),
+        niche:     result.input.niche,
+        objective: result.input.objective,
+        data:      { ...result, _style: style, _inputText: input },
+      })
+      setSavedId(saved.id)
+    } catch {
+      // silently fail — localStorage already has a copy
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-zinc-950">
@@ -939,8 +964,26 @@ export default function CampaignApp() {
                   </button>
                 )
               })}
-              <span className="ml-auto text-[10px] text-zinc-700">
-                {new Date(result.generatedAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+              <span className="ml-auto flex items-center gap-3">
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving || !!savedId}
+                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all ${
+                    savedId
+                      ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400 cursor-default'
+                      : 'border-white/8 bg-zinc-900 hover:bg-zinc-800 hover:border-white/15 text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  {savedId
+                    ? <><BookmarkCheck size={12} /> Guardada</>
+                    : isSaving
+                      ? <><Bookmark size={12} /> Guardando…</>
+                      : <><Bookmark size={12} /> Guardar</>
+                  }
+                </button>
+                <span className="text-[10px] text-zinc-700">
+                  {new Date(result.generatedAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                </span>
               </span>
             </div>
           )}

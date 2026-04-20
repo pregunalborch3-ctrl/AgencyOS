@@ -8,12 +8,12 @@ datasource db {
 }
 
 model User {
-  id                 String    @id @default(uuid())
+  id                 String     @id @default(uuid())
   name               String
-  email              String    @unique
+  email              String     @unique
   passwordHash       String
-  role               String    @default("member")
-  createdAt          DateTime  @default(now())
+  role               String     @default("member")
+  createdAt          DateTime   @default(now())
   lastLoginAt        DateTime?
   stripeCustomerId   String?
   subscriptionId     String?
@@ -21,5 +21,19 @@ model User {
   subscriptionEnd    DateTime?
   trialEnd           DateTime?
   priceId            String?
-  cancelAtPeriodEnd  Boolean   @default(false)
+  cancelAtPeriodEnd  Boolean    @default(false)
+  campaigns          Campaign[]
+}
+
+model Campaign {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  niche     String
+  objective String
+  data      Json
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }

@@ -12,6 +12,8 @@ import calendarRoutes     from './routes/calendar'
 import budgetRoutes       from './routes/budget'
 import briefingRoutes     from './routes/briefing'
 import competitorRoutes   from './routes/competitor'
+import homeRoutes         from './routes/home'
+import frameworkRoutes    from './routes/frameworks'
 
 const app  = express()
 const PORT = process.env.PORT ?? 3001
@@ -36,6 +38,8 @@ app.use('/api/calendar',     calendarRoutes)
 app.use('/api/budget',       budgetRoutes)
 app.use('/api/briefing',     briefingRoutes)
 app.use('/api/competitor',   competitorRoutes)
+app.use('/api/home',         homeRoutes)
+app.use('/api/frameworks',   frameworkRoutes)
 
 // Health
 app.get('/api/health', (_req, res) => {
