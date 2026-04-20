@@ -77,10 +77,14 @@ export default function Sidebar() {
     <>
       {/* ── Desktop sidebar ──────────────────────────────────────────────── */}
       <aside className="hidden md:flex fixed inset-y-0 left-0 z-30 w-[60px] bg-zinc-950 border-r border-white/5 flex-col items-center py-4 gap-2 overflow-y-auto">
-        {/* Brand logo — links to /home */}
-        <Link to="/home" title="Inicio" className="w-8 h-8 rounded-lg bg-indigo-500 hover:bg-indigo-400 flex items-center justify-center shadow-lg shadow-indigo-500/30 mb-1 flex-shrink-0 transition-colors">
+        {/* Brand logo — navigate to /home */}
+        <button
+          onClick={() => navigate('/home')}
+          title="Inicio"
+          className="w-8 h-8 rounded-lg bg-indigo-500 hover:bg-indigo-400 flex items-center justify-center shadow-lg shadow-indigo-500/30 mb-1 flex-shrink-0 transition-colors cursor-pointer"
+        >
           <Zap size={15} className="text-white" />
-        </Link>
+        </button>
 
         <nav className="flex flex-col items-center gap-1.5">
           {NAV_MAIN.map(item => <NavItem key={item.path} {...item} />)}

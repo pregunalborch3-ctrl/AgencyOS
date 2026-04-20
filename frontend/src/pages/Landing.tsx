@@ -1,12 +1,21 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowRight, Zap, CheckCircle2, Store, Search, Rocket,
   Clock, Lightbulb, TrendingUp, Target, ChevronRight,
-  Play, Star,
+  Play, Star, ChevronDown, ShieldCheck, FileText, Cookie,
 } from 'lucide-react'
 
 // ─── Nav ──────────────────────────────────────────────────────────────────────
+const LEGAL_LINKS = [
+  { to: '/privacy', icon: ShieldCheck, label: 'Política de Privacidad' },
+  { to: '/terms',   icon: FileText,    label: 'Términos y Condiciones'  },
+  { to: '/cookies', icon: Cookie,      label: 'Política de Cookies'     },
+]
+
 function Nav() {
+  const [legalOpen, setLegalOpen] = useState(false)
+
   return (
     <header className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-6 md:px-12 h-16 border-b border-white/5 bg-black/60 backdrop-blur-xl">
       <div className="flex items-center gap-2.5">
@@ -26,6 +35,32 @@ function Nav() {
             {item}
           </a>
         ))}
+
+        {/* Legal dropdown */}
+        <div className="relative" onMouseLeave={() => setLegalOpen(false)}>
+          <button
+            onMouseEnter={() => setLegalOpen(true)}
+            onClick={() => setLegalOpen(v => !v)}
+            className="flex items-center gap-1 text-sm text-zinc-400 hover:text-white transition-colors"
+          >
+            Legal <ChevronDown size={13} className={`transition-transform duration-150 ${legalOpen ? 'rotate-180' : ''}`} />
+          </button>
+          {legalOpen && (
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-52 rounded-xl bg-zinc-900 border border-white/8 shadow-2xl shadow-black/60 overflow-hidden">
+              {LEGAL_LINKS.map(({ to, icon: Icon, label }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  onClick={() => setLegalOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-sm text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
+                >
+                  <Icon size={14} className="text-zinc-600 flex-shrink-0" />
+                  {label}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </nav>
 
       <div className="flex items-center gap-3">
