@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   Rocket, Settings, LogOut, Clock, LayoutDashboard,
   Globe2, Crosshair, Map, Flame, Layers, Zap, X,
+  ShieldCheck, FileText, Cookie,
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -76,10 +77,10 @@ export default function Sidebar() {
     <>
       {/* ── Desktop sidebar ──────────────────────────────────────────────── */}
       <aside className="hidden md:flex fixed inset-y-0 left-0 z-30 w-[60px] bg-zinc-950 border-r border-white/5 flex-col items-center py-4 gap-2 overflow-y-auto">
-        {/* Brand logo */}
-        <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 mb-1 flex-shrink-0">
+        {/* Brand logo — links to /home */}
+        <Link to="/home" title="Inicio" className="w-8 h-8 rounded-lg bg-indigo-500 hover:bg-indigo-400 flex items-center justify-center shadow-lg shadow-indigo-500/30 mb-1 flex-shrink-0 transition-colors">
           <Zap size={15} className="text-white" />
-        </div>
+        </Link>
 
         <nav className="flex flex-col items-center gap-1.5">
           {NAV_MAIN.map(item => <NavItem key={item.path} {...item} />)}
@@ -90,6 +91,14 @@ export default function Sidebar() {
 
         <nav className="flex flex-col items-center gap-1.5">
           {NAV_TOOLS.map(item => <NavItem key={item.path} {...item} />)}
+        </nav>
+
+        <div className="w-6 h-px bg-white/8 my-1" />
+        <span className="text-[8px] font-black text-zinc-700 uppercase tracking-widest select-none">legal</span>
+        <nav className="flex flex-col items-center gap-1.5">
+          <NavItem path="/privacy" icon={ShieldCheck} label="Política de Privacidad" />
+          <NavItem path="/terms"   icon={FileText}    label="Términos y Condiciones" />
+          <NavItem path="/cookies" icon={Cookie}      label="Política de Cookies"    />
         </nav>
 
         <div className="flex flex-col items-center gap-2 mt-auto pt-2">
