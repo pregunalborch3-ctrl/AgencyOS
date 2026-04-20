@@ -1,11 +1,18 @@
 import { Request, Response } from 'express'
 import Anthropic from '@anthropic-ai/sdk'
 
-const anthropic = new Anthropic()
+// ─── Lazy client — lee process.env en el momento de la llamada, no al importar ─
+function getClient(): Anthropic {
+  const key = process.env.ANTHROPIC_API_KEY
+  if (!key) {
+    throw new Error('ANTHROPIC_API_KEY no está configurada en las variables de entorno del servidor.')
+  }
+  return new Anthropic({ apiKey: key })
+}
 
 // ─── Shared helper ────────────────────────────────────────────────────────────
 async function claudeJSON<T>(system: string, user: string): Promise<T> {
-  const msg = await anthropic.messages.create({
+  const msg = await getClient().messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 3000,
     system,
@@ -47,8 +54,9 @@ Genera exactamente 5 tendencias y 5 oportunidades. Valores en euros. Responde en
 
     res.json({ success: true, data })
   } catch (e) {
-    console.error('analyzeMarket:', e)
-    res.status(500).json({ success: false, error: 'Error generando el análisis de mercado.' })
+    const msg = e instanceof Error ? e.message : String(e)
+    console.error('analyzeMarket:', msg)
+    res.status(500).json({ success: false, error: msg })
   }
 }
 
@@ -85,8 +93,9 @@ Analiza solo los competidores proporcionados. Responde en español.`
 
     res.json({ success: true, data })
   } catch (e) {
-    console.error('mapCompetition:', e)
-    res.status(500).json({ success: false, error: 'Error generando el mapa de competencia.' })
+    const msg = e instanceof Error ? e.message : String(e)
+    console.error('mapCompetition:', msg)
+    res.status(500).json({ success: false, error: msg })
   }
 }
 
@@ -135,8 +144,9 @@ Incluye 6 canales ordenados por ROI (priority 1 = mayor ROI) y exactamente 4 sem
 
     res.json({ success: true, data })
   } catch (e) {
-    console.error('planDistribution:', e)
-    res.status(500).json({ success: false, error: 'Error generando el plan de distribución.' })
+    const msg = e instanceof Error ? e.message : String(e)
+    console.error('planDistribution:', msg)
+    res.status(500).json({ success: false, error: msg })
   }
 }
 
@@ -176,8 +186,9 @@ Genera exactamente 10 hooks y 7 entradas en weeklyCalendar (una por día de la s
 
     res.json({ success: true, data })
   } catch (e) {
-    console.error('viralContent:', e)
-    res.status(500).json({ success: false, error: 'Error generando el motor de contenido.' })
+    const msg = e instanceof Error ? e.message : String(e)
+    console.error('viralContent:', msg)
+    res.status(500).json({ success: false, error: msg })
   }
 }
 
@@ -220,7 +231,8 @@ Genera exactamente 4 fases en el orden: Estabilizar, Automatizar, Delegar, Escal
 
     res.json({ success: true, data })
   } catch (e) {
-    console.error('scalingRoadmap:', e)
-    res.status(500).json({ success: false, error: 'Error generando el roadmap de escalado.' })
+    const msg = e instanceof Error ? e.message : String(e)
+    console.error('scalingRoadmap:', msg)
+    res.status(500).json({ success: false, error: msg })
   }
 }
