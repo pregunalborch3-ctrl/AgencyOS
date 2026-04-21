@@ -23,6 +23,7 @@ export interface User {
   lastLoginAt: string | null
   stripeCustomerId: string | null
   subscription: SubscriptionData | null
+  freeUsed: boolean
 }
 
 export type PublicUser = Omit<User, "passwordHash">
@@ -45,6 +46,7 @@ function toUser(u: any): User {
       priceId: u.priceId ?? "",
       trialEnd: u.trialEnd ? u.trialEnd.toISOString() : null,
     } : null,
+    freeUsed: u.freeUsed ?? false,
   }
 }
 
@@ -87,6 +89,7 @@ export const UserStore = {
     if (data.trialEnd !== undefined) updateData.trialEnd = data.trialEnd ? new Date(data.trialEnd) : null
     if (data.priceId !== undefined) updateData.priceId = data.priceId
     if (data.cancelAtPeriodEnd !== undefined) updateData.cancelAtPeriodEnd = data.cancelAtPeriodEnd
+    if (data.freeUsed !== undefined) updateData.freeUsed = data.freeUsed
     if (data.subscription !== undefined) {
       const sub = data.subscription
       if (sub) {

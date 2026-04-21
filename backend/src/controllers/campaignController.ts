@@ -1,6 +1,8 @@
 import { Request, Response } from 'express'
 import { v4 as uuid } from 'uuid'
-import { prisma } from '../models/User'
+import { prisma, UserStore } from '../models/User'
+
+const FREE_BYPASS_EMAILS = ['pregunalborch3@gmail.com']
 
 // ─── Niche data ───────────────────────────────────────────────────────────────
 const NICHE_DATA: Record<string, {
@@ -404,6 +406,28 @@ export async function generateCampaign(req: Request, res: Response): Promise<voi
   if (!objective?.trim()) {
     res.status(400).json({ success: false, error: 'Selecciona el objetivo de la campaña.' })
     return
+  }
+
+  // ── Acceso por suscripción / campaña gratuita (solo para nuevas generaciones) ──
+  if (!variant) {
+    const user = await UserStore.findById((req as any).user.userId)
+    if (!user) {
+      res.status(401).json({ success: false, error: 'Usuario no encontrado.' })
+      return
+    }
+    const status = user.subscription?.status
+    const isActive = status === 'active' || status === 'trialing'
+      || user.role === 'admin'
+      || FREE_BYPASS_EMAILS.includes(user.email)
+
+    if (!isActive) {
+      if (user.freeUsed) {
+        res.status(403).json({ success: false, error: 'FREE_LIMIT_REACHED' })
+        return
+      }
+      // Primera campaña gratuita — marcar en BD
+      await UserStore.update(user.id, { freeUsed: true })
+    }
   }
 
   const nicheKey = niche.toLowerCase()

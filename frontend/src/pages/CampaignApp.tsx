@@ -7,7 +7,7 @@ import {
   Crosshair, UserCheck, Flame, Lock, Crown, Sparkles,
   Bookmark, BookmarkCheck,
 } from 'lucide-react'
-import { saveToHistory, hasFreeUsed, markFreeUsed, type HistoryEntry } from '../lib/history'
+import { saveToHistory, type HistoryEntry } from '../lib/history'
 import { saveCampaign } from '../lib/campaignsApi'
 import { useSubscription } from '../contexts/SubscriptionContext'
 import { useAuth } from '../contexts/AuthContext'
@@ -784,12 +784,6 @@ export default function CampaignApp() {
     if (!params.input.trim()) { setError('Describe el producto o pega una URL.'); return }
     if (!params.niche)        { setError('Selecciona el nicho.'); return }
 
-    // Paywall check (only new generates, not variants)
-    if (!variant && !isActive && hasFreeUsed()) {
-      setAppState('paywall')
-      return
-    }
-
     lastParams.current = { ...params }
     setIsDemo(false)
     setError(null)
@@ -813,7 +807,6 @@ export default function CampaignApp() {
 
       if (!variant) {
         localStorage.setItem(ONBOARD_KEY, '1')
-        markFreeUsed()
         const entry: HistoryEntry = {
           id:          data.id,
           date:        data.generatedAt,
@@ -827,6 +820,10 @@ export default function CampaignApp() {
         saveToHistory(entry)
       }
     } catch (e) {
+      if (e instanceof Error && e.message === 'FREE_LIMIT_REACHED') {
+        setAppState('paywall')
+        return
+      }
       setError(e instanceof Error ? e.message : 'Error generando la campaña.')
       setAppState('idle')
     }
@@ -876,7 +873,7 @@ export default function CampaignApp() {
                   </span>
                 </h1>
                 <p className="text-zinc-500 text-base">Pega una URL de Shopify o describe el producto. El sistema hace el resto.</p>
-                {!isActive && !hasFreeUsed() && (
+                {!isActive && (
                   <p className="text-xs text-amber-400/80 mt-3 font-medium">1 campaña gratuita · Sin tarjeta de crédito</p>
                 )}
               </div>
