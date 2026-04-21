@@ -747,6 +747,102 @@ function Pricing() {
   )
 }
 
+// ─── Section: Testimonials ───────────────────────────────────────────────────
+const TESTIMONIALS = [
+  {
+    initials: 'CM',
+    name: 'Carlos M.',
+    role: 'Adverlab',
+    city: 'Madrid',
+    text: 'Generé una campaña completa para un cliente de moda en 8 minutos. El cliente pensó que había tardado días.',
+    color: 'from-indigo-500 to-violet-500',
+  },
+  {
+    initials: 'LP',
+    name: 'Laura P.',
+    role: 'Consultora eCommerce',
+    city: 'Valencia',
+    text: 'Mis clientes de Shopify reciben campañas con hooks, copy y segmentación. Antes les mandaba solo el texto.',
+    color: 'from-violet-500 to-purple-500',
+  },
+  {
+    initials: 'SR',
+    name: 'Sergio R.',
+    role: 'Agencia Performance',
+    city: 'Sevilla',
+    text: 'Duplicé el número de clientes que puedo gestionar sin contratar a nadie más.',
+    color: 'from-purple-500 to-indigo-500',
+  },
+  {
+    initials: 'AT',
+    name: 'Ana T.',
+    role: 'Freelance Marketing',
+    city: 'Bilbao',
+    text: 'El PDF que genera es tan profesional que lo entrego directamente al cliente sin tocar nada.',
+    color: 'from-indigo-500 to-violet-500',
+  },
+  {
+    initials: 'MF',
+    name: 'Miquel F.',
+    role: 'Ecommerce Agency',
+    city: 'Barcelona',
+    text: 'Probé el free trial y al día 3 ya había pagado. No podía volver atrás.',
+    color: 'from-violet-500 to-fuchsia-500',
+  },
+  {
+    initials: 'DV',
+    name: 'Daniela V.',
+    role: 'Social Ads Manager',
+    city: 'Buenos Aires',
+    text: 'Lo uso para nichos de fitness y moda. Los hooks que genera son mejores que los que yo escribía.',
+    color: 'from-fuchsia-500 to-indigo-500',
+  },
+]
+
+function Testimonials() {
+  return (
+    <section className="py-28 px-6 relative">
+      <div className="absolute inset-0 bg-zinc-900/20 pointer-events-none" />
+      <div className="relative max-w-6xl mx-auto">
+        <div className="text-center mb-16 space-y-3">
+          <p className="text-xs text-indigo-400 font-bold uppercase tracking-widest">Lo que dicen</p>
+          <h2 className="text-4xl md:text-5xl font-black text-white leading-tight">
+            Agencias que ya lo usan<br />
+            <span className="text-zinc-500">cada semana</span>
+          </h2>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-5">
+          {TESTIMONIALS.map((t) => (
+            <div
+              key={t.name}
+              className="flex flex-col gap-5 p-6 rounded-2xl bg-zinc-900 border border-white/5 hover:border-white/10 hover:-translate-y-0.5 transition-all"
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${t.color} flex items-center justify-center flex-shrink-0 shadow-lg`}>
+                  <span className="text-xs font-black text-white">{t.initials}</span>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-white leading-tight">{t.name}</p>
+                  <p className="text-xs text-zinc-500">{t.role} · {t.city}</p>
+                </div>
+                <div className="ml-auto flex gap-0.5">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} size={10} className="fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+              </div>
+              <p className="text-sm text-zinc-300 leading-relaxed flex-1">
+                "{t.text}"
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 // ─── Section: Final CTA ───────────────────────────────────────────────────────
 function FinalCta() {
   return (
@@ -818,6 +914,7 @@ export default function Landing() {
       <Benefits />
       <Demo />
       <Pricing />
+      <Testimonials />
       <FinalCta />
       <FAQ />
       <Footer />
