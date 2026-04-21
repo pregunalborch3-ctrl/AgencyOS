@@ -154,6 +154,29 @@ export default function Dashboard() {
           <UpgradeBanner />
         )}
 
+        {/* Welcome banner — solo para usuarios sin campañas */}
+        {!dataLoading && total === 0 && (
+          <div className="relative rounded-2xl overflow-hidden border border-indigo-500/20 bg-gradient-to-br from-indigo-950/60 via-zinc-900 to-zinc-900 p-8">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
+            <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+              <div className="space-y-2">
+                <p className="text-2xl font-black text-white">
+                  👋 Bienvenido a AgencyOS
+                </p>
+                <p className="text-zinc-400 text-sm leading-relaxed max-w-md">
+                  Genera tu primera campaña en 3 minutos — introduce un producto o tienda Shopify y el sistema hace el resto.
+                </p>
+              </div>
+              <Link
+                to="/campaigns"
+                className="flex-shrink-0 flex items-center gap-2.5 px-7 py-3.5 bg-indigo-500 hover:bg-indigo-400 text-white font-bold rounded-xl transition-all shadow-xl shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:-translate-y-0.5 text-sm"
+              >
+                <Rocket size={16} /> Generar mi primera campaña
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-4">
           {dataLoading ? (

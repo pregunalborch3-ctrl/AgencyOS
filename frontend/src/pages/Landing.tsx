@@ -206,11 +206,8 @@ function Hero() {
             <br />automático
           </h1>
           <p className="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed font-medium">
-            Sistema que analiza tiendas de Shopify y genera campañas
-            publicitarias listas para lanzar — en minutos, no en días.
-          </p>
-          <p className="text-base md:text-lg text-zinc-500 max-w-xl mx-auto font-medium">
-            Las agencias que escalan no crean anuncios desde cero. Usan sistemas.
+            Genera campañas completas para tus clientes en menos de 3 minutos.
+            Sin briefings eternos. Sin bloqueos creativos. Solo resultados.
           </p>
         </div>
 
@@ -235,6 +232,98 @@ function Hero() {
         {/* Dashboard mock */}
         <div className="w-full pt-4">
           <DashboardMock />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ─── Section: Stats bar ───────────────────────────────────────────────────────
+function StatsBar() {
+  const stats = [
+    { value: '847', label: 'agencias activas' },
+    { value: '12.400+', label: 'campañas generadas' },
+    { value: '4.8/5', label: 'valoración media' },
+  ]
+  return (
+    <section className="py-6 border-y border-white/5 bg-zinc-950/60 backdrop-blur-sm">
+      <div className="max-w-3xl mx-auto px-6">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-16">
+          {stats.map((s, i) => (
+            <div key={s.label} className="flex items-center gap-10">
+              <div className="text-center">
+                <p className="text-2xl font-black text-white">{s.value}</p>
+                <p className="text-xs text-zinc-500 mt-0.5">{s.label}</p>
+              </div>
+              {i < stats.length - 1 && (
+                <div className="hidden sm:block w-px h-8 bg-white/8" />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ─── Section: FAQ ─────────────────────────────────────────────────────────────
+const FAQ_ITEMS = [
+  {
+    q: '¿Necesito saber de publicidad para usar AgencyOS?',
+    a: 'No. El sistema genera todo automáticamente: hooks, copy, segmentación y estructura de campaña.',
+  },
+  {
+    q: '¿Funciona para cualquier nicho?',
+    a: 'Sí, funciona para 9+ nichos de ecommerce: moda, fitness, tech, hogar, belleza y más.',
+  },
+  {
+    q: '¿Puedo cancelar cuando quiera?',
+    a: 'Sí, sin permanencia. Cancela en cualquier momento desde tu panel.',
+  },
+  {
+    q: '¿Qué pasa cuando termina el free trial?',
+    a: 'Te pedimos tarjeta solo si quieres continuar. Sin cargos automáticos en Starter.',
+  },
+  {
+    q: '¿Los anuncios generados son únicos?',
+    a: 'Sí, cada campaña se genera con IA específicamente para tu producto y cliente ideal.',
+  },
+]
+
+function FAQ() {
+  const [open, setOpen] = useState<number | null>(null)
+  return (
+    <section className="py-28 px-6">
+      <div className="max-w-2xl mx-auto">
+        <div className="text-center mb-14 space-y-3">
+          <p className="text-xs text-indigo-400 font-bold uppercase tracking-widest">FAQ</p>
+          <h2 className="text-4xl md:text-5xl font-black text-white leading-tight">
+            Preguntas frecuentes
+          </h2>
+        </div>
+        <div className="space-y-2">
+          {FAQ_ITEMS.map((item, i) => (
+            <div
+              key={i}
+              className="rounded-2xl border border-white/8 bg-zinc-900 overflow-hidden"
+            >
+              <button
+                onClick={() => setOpen(open === i ? null : i)}
+                className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left hover:bg-white/3 transition-colors"
+              >
+                <span className="text-sm font-semibold text-white">{item.q}</span>
+                <ChevronDown
+                  size={16}
+                  className={`text-zinc-500 flex-shrink-0 transition-transform duration-200 ${open === i ? 'rotate-180' : ''}`}
+                />
+              </button>
+              {open === i && (
+                <div className="px-6 pb-5">
+                  <p className="text-sm text-zinc-400 leading-relaxed">{item.a}</p>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -723,12 +812,14 @@ export default function Landing() {
     <div className="min-h-screen bg-[#080808] text-white">
       <Nav />
       <Hero />
+      <StatsBar />
       <SocialProof />
       <HowItWorks />
       <Benefits />
       <Demo />
       <Pricing />
       <FinalCta />
+      <FAQ />
       <Footer />
     </div>
   )
