@@ -4,11 +4,6 @@ import {
   ChevronRight,
   Plus,
   X,
-  Instagram,
-  Facebook,
-  Twitter,
-  Linkedin,
-  Video,
 } from 'lucide-react'
 import {
   format,
@@ -86,7 +81,7 @@ export default function PublicationCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date(2026, 3, 1))
   const [posts, setPosts] = useState<CalendarPost[]>(initialPosts)
   const [showModal, setShowModal] = useState(false)
-  const [selectedDay, setSelectedDay] = useState<Date | null>(null)
+  const [, setSelectedDay] = useState<Date | null>(null)
   const [editPost, setEditPost] = useState<Partial<CalendarPost>>(emptyPost())
   const [editingId, setEditingId] = useState<string | null>(null)
 

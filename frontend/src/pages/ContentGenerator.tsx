@@ -15,11 +15,6 @@ const platforms: { value: Platform; label: string; color: string }[] = [
 const tones: ContentTone[] = ['profesional', 'casual', 'humorístico', 'inspiracional', 'urgente', 'educativo']
 const contentTypes: ContentType[] = ['post', 'story', 'reel', 'carrusel', 'artículo', 'anuncio']
 
-const mockGenerate = (req: ContentRequest): string[] => [
-  `¡${req.brand} lo vuelve a hacer! 🚀\n\n${req.topic} — una oportunidad que no puedes dejar pasar. Estamos redefiniendo los estándares de la industria con soluciones que realmente marcan la diferencia.\n\n¿Listo para dar el siguiente paso? ${req.callToAction || 'Descúbrelo ahora.'}\n\n#${req.brand.replace(/\s/g, '')} #${req.keywords.split(',')[0]?.trim().replace(/\s/g, '') || 'marketing'} #innovación`,
-  `Hoy hablamos de ${req.topic.toLowerCase()}. 💡\n\nEn ${req.brand} creemos que el éxito no es casualidad — es el resultado de estrategia, creatividad y compromiso constante.\n\nSigue leyendo para descubrir cómo podemos ayudarte.\n\n${req.callToAction || 'Contáctanos.'}\n\n#${req.keywords.split(',').map(k => k.trim().replace(/\s/g, '')).join(' #')}`,
-  `${req.topic} — así de simple, así de poderoso. ✨\n\nDesde ${req.brand}, te traemos contenido que inspira, conecta y convierte. Porque sabemos que cada palabra cuenta y cada publicación es una oportunidad.\n\n${req.callToAction || 'Únete a la comunidad.'}\n\n#contenido #${req.brand.replace(/\s/g, '').toLowerCase()} #resultados`,
-]
 
 export default function ContentGenerator() {
   const [form, setForm] = useState<ContentRequest>({

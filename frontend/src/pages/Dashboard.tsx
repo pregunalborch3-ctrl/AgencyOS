@@ -5,8 +5,6 @@ import { useSubscription } from '../contexts/SubscriptionContext'
 
 function UpgradeBanner() {
   const { subscribe } = useSubscription()
-  const [loading, setLoading] = [false, (_: boolean) => {}]
-
   const handleSubscribe = async () => {
     try { await subscribe() } catch {}
   }

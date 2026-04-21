@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Trash2, BarChart3, TrendingUp, TrendingDown, Minus, Globe, X } from 'lucide-react'
+import { Plus, TrendingUp, TrendingDown, Minus, Globe, X } from 'lucide-react'
 import Header from '../components/Layout/Header'
 import type { Competitor, SocialMetrics, Platform } from '../types'
 
@@ -194,7 +194,7 @@ export default function CompetitorAnalyzer() {
                           return (
                             <tr key={`${platform}-${field}`} className="hover:bg-gray-50">
                               <td className="px-5 py-3 text-gray-600 capitalize">
-                                {{ followers: 'Seguidores', engagementRate: 'Engagement (%)', postsPerWeek: 'Posts/semana', avgLikes: 'Likes promedio' }[field]}
+                                {({ followers: 'Seguidores', engagementRate: 'Engagement (%)', postsPerWeek: 'Posts/semana', avgLikes: 'Likes promedio' } as Record<string, string>)[field]}
                               </td>
                               {selectedComps.map((comp) => {
                                 const val = getMetric(comp, platform, field) as number | null
