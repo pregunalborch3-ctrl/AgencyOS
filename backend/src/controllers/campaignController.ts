@@ -433,10 +433,15 @@ export async function generateCampaign(req: Request, res: Response): Promise<voi
   const nicheKey = niche.toLowerCase()
   const nicheData = NICHE_DATA[nicheKey] ?? DEFAULT_NICHE
 
-  // Derive a clean product name from input
-  const product = productDescription?.trim()
-    ? productDescription.trim().split(' ').slice(0, 6).join(' ')
-    : (productUrl?.replace(/https?:\/\//, '').split('/')[0] ?? 'tu producto')
+  // Extract a short, natural product name (skip numbers, prices, demographics)
+  const rawInput = productDescription?.trim() || productUrl?.replace(/https?:\/\//, '').split('/')[0] || 'tu producto'
+  const meaningfulWords = rawInput
+    .split(/[\s,—·]+/)
+    .filter(w => w.length > 1 && !/^\d+$/.test(w) && !/^[€$£%]/.test(w) && !/^(para|de|en|con|sin|y|o|a|el|la|los|las|mujer|hombre|chica|chico|niño|niña|adulto)$/i.test(w))
+    .slice(0, 3)
+  const product = meaningfulWords.length
+    ? meaningfulWords[0].charAt(0).toUpperCase() + meaningfulWords[0].slice(1) + (meaningfulWords.length > 1 ? ' ' + meaningfulWords.slice(1).join(' ') : '')
+    : 'tu producto'
 
   const rawCopies = buildShortCopies(product, nicheData, objective)
   const rawHooks  = buildHooks(product, nicheData)

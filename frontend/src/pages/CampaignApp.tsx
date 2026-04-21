@@ -996,6 +996,26 @@ export default function CampaignApp() {
                 {!isActive && (
                   <p className="text-xs text-amber-400/80 mt-3 font-medium">1 campaña gratuita · Sin tarjeta de crédito</p>
                 )}
+                {!input.trim() && (
+                  <div className="flex items-center justify-center gap-2 mt-8 flex-wrap">
+                    {([
+                      { num: '①', label: 'Describe tu producto' },
+                      { num: '→', label: null },
+                      { num: '②', label: 'Elige nicho y objetivo' },
+                      { num: '→', label: null },
+                      { num: '③', label: 'Descarga tu campaña en PDF' },
+                    ] as const).map((item, i) =>
+                      item.label === null ? (
+                        <span key={i} className="text-zinc-700 text-sm font-bold hidden sm:block">→</span>
+                      ) : (
+                        <div key={i} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/5">
+                          <span className="text-indigo-400 font-black text-base leading-none">{item.num}</span>
+                          <span className="text-zinc-400 text-xs font-medium">{item.label}</span>
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
