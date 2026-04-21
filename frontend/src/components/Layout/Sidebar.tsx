@@ -1,17 +1,15 @@
-import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
-  Rocket, Settings, LogOut, Clock, LayoutDashboard,
-  Globe2, Crosshair, Map, Flame, Layers, Zap, X,
+  Rocket, Settings, LogOut, Clock,
+  Globe2, Crosshair, Map, Flame, Layers, Zap,
   ShieldCheck, FileText, Cookie,
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
 const NAV_MAIN = [
-  { path: '/home',      icon: LayoutDashboard, label: 'Inicio',          mobileLabel: 'Inicio'    },
-  { path: '/dashboard', icon: Rocket,          label: 'Generar campaña', mobileLabel: 'Campaña'   },
-  { path: '/historial', icon: Clock,           label: 'Historial',       mobileLabel: 'Historial' },
-  { path: '/settings',  icon: Settings,        label: 'Configuración',   mobileLabel: 'Ajustes'   },
+  { path: '/dashboard', icon: Rocket,   label: 'Generar campaña', mobileLabel: 'Campaña'   },
+  { path: '/historial', icon: Clock,    label: 'Historial',       mobileLabel: 'Historial' },
+  { path: '/settings',  icon: Settings, label: 'Configuración',   mobileLabel: 'Ajustes'   },
 ]
 
 const NAV_TOOLS = [
@@ -69,7 +67,6 @@ const GRADIENTS = [
 export default function Sidebar() {
   const { user, logout }    = useAuth()
   const navigate            = useNavigate()
-  const [drawerOpen, setDrawerOpen] = useState(false)
   const initials  = user ? getInitials(user.name) : 'AG'
   const gradient  = GRADIENTS[(user?.name?.charCodeAt(0) ?? 0) % GRADIENTS.length]
 
@@ -130,53 +127,12 @@ export default function Sidebar() {
         {NAV_MAIN.map(item => (
           <BottomNavItem key={item.path} path={item.path} icon={item.icon} label={item.mobileLabel} />
         ))}
-        <button
-          onClick={() => setDrawerOpen(true)}
-          className="flex flex-col items-center justify-center gap-1 flex-1 py-2 min-w-0"
-        >
+        <Link to="/home" className="flex flex-col items-center justify-center gap-1 flex-1 py-2 min-w-0">
           <Zap size={20} className="text-zinc-600" />
-          <span className="text-[9px] font-semibold text-zinc-600">Tools</span>
-        </button>
+          <span className="text-[9px] font-semibold text-zinc-600">Inicio</span>
+        </Link>
       </nav>
 
-      {/* ── Tools drawer overlay (mobile) ─────────────────────────────────── */}
-      {drawerOpen && (
-        <>
-          <div
-            className="md:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
-            onClick={() => setDrawerOpen(false)}
-          />
-          <div className="md:hidden fixed bottom-[57px] inset-x-0 z-50 bg-zinc-900 border-t border-white/8 rounded-t-2xl shadow-2xl">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
-              <p className="text-xs font-black text-zinc-500 uppercase tracking-widest">Herramientas</p>
-              <button
-                onClick={() => setDrawerOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-white/5 text-zinc-500 transition-all"
-              >
-                <X size={16} />
-              </button>
-            </div>
-            <div className="p-3 space-y-1">
-              {NAV_TOOLS.map(item => {
-                const Icon = item.icon
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    onClick={() => setDrawerOpen(false)}
-                    className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 active:bg-white/8 transition-all"
-                  >
-                    <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
-                      <Icon size={16} className="text-indigo-400" />
-                    </div>
-                    <span className="text-sm font-semibold text-zinc-300">{item.label}</span>
-                  </Link>
-                )
-              })}
-            </div>
-          </div>
-        </>
-      )}
     </>
   )
 }
