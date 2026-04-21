@@ -5,6 +5,7 @@ import { v4 as uuid } from "uuid"
 import { UserStore, User } from "../models/User"
 import type { JwtPayload } from "../middleware/authMiddleware"
 import { logFailedLogin } from "../middleware/security"
+import { sendWelcomeEmail } from "../services/emailService"
 
 const BCRYPT_ROUNDS = 12
 
@@ -59,12 +60,17 @@ export async function register(req: Request, res: Response): Promise<void> {
     role: "member",
     stripeCustomerId: null,
     subscription: null,
+    freeUsed: false,
   })
 
   const token = signToken(user)
   res.status(201).json({
     success: true,
     data: { token, user: UserStore.toPublic(user) },
+  })
+
+  sendWelcomeEmail(user.email, user.name).catch((err: unknown) => {
+    console.error("[register] Fallo al enviar email de bienvenida:", err)
   })
 }
 
