@@ -518,71 +518,141 @@ function Demo() {
 }
 
 // ─── Section: Pricing ─────────────────────────────────────────────────────────
-function Pricing() {
-  const features = [
-    'Generador de campañas completas',
-    'Análisis de cualquier tienda Shopify',
-    'Hooks, copys y creativos ilimitados',
-    'Estructura de campaña profesional',
-    'Segmentación recomendada por producto',
-    'Exportación lista para Meta · Google · TikTok',
-    'Soporte prioritario',
-  ]
+const PLANS = [
+  {
+    key: 'starter',
+    name: 'Starter',
+    price: '$49',
+    desc: 'Para agencias que están empezando a escalar.',
+    badge: null,
+    features: [
+      'Generador de campañas completas',
+      'Análisis de tiendas Shopify',
+      'Hasta 5 clientes activos',
+      'Hooks y copys ilimitados',
+      'Exportación Meta · Google · TikTok',
+      'Soporte por email',
+    ],
+    cta: 'Empezar gratis',
+    highlighted: false,
+    gradient: false,
+  },
+  {
+    key: 'pro',
+    name: 'Pro',
+    price: '$129',
+    desc: 'Para agencias en crecimiento que necesitan más potencia.',
+    badge: 'Más popular',
+    features: [
+      'Todo lo de Starter',
+      'Clientes ilimitados',
+      'Frameworks de análisis IA',
+      'Análisis de competencia',
+      'Estrategia de contenido viral',
+      'Exportación PDF',
+      'Soporte prioritario 24h',
+    ],
+    cta: 'Empezar prueba gratis',
+    highlighted: true,
+    gradient: true,
+  },
+  {
+    key: 'enterprise',
+    name: 'Enterprise',
+    price: '$299',
+    desc: 'Para agencias consolidadas con equipos y múltiples marcas.',
+    badge: null,
+    features: [
+      'Todo lo de Pro',
+      'Acceso API',
+      'Onboarding personalizado',
+      'Manager de cuenta dedicado',
+      'SLA garantizado',
+      'Facturación anual disponible',
+      'Integraciones personalizadas',
+    ],
+    cta: 'Contactar ventas',
+    highlighted: false,
+    gradient: false,
+  },
+]
 
+function Pricing() {
   return (
     <section id="precio" className="py-28 px-6">
-      <div className="max-w-xl mx-auto text-center">
-        <p className="text-xs text-indigo-400 font-bold uppercase tracking-widest mb-4">Precio</p>
-        <h2 className="text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
-          Un plan. Todo incluido.
-        </h2>
-        <p className="text-zinc-400 mb-12 text-lg">
-          Sin niveles, sin límites, sin sorpresas.
-        </p>
-
-        {/* Card */}
-        <div className="relative rounded-3xl overflow-hidden">
-          {/* Gradient border trick */}
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/40 via-violet-500/20 to-purple-500/40 rounded-3xl" />
-          <div className="relative m-px rounded-3xl bg-zinc-900 p-10">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/25 mb-6">
-              <Star size={11} className="text-indigo-400 fill-indigo-400" />
-              <span className="text-xs text-indigo-300 font-semibold">Prueba gratis 14 días</span>
-            </div>
-
-            {/* Price */}
-            <div className="flex items-end justify-center gap-2 mb-2">
-              <span className="text-7xl font-black text-white leading-none">$49</span>
-              <span className="text-zinc-400 text-xl mb-2">/ mes</span>
-            </div>
-            <p className="text-zinc-500 text-sm mb-8">Sin tarjeta de crédito para empezar</p>
-
-            {/* Features */}
-            <ul className="space-y-3 mb-10 text-left">
-              {features.map(f => (
-                <li key={f} className="flex items-center gap-3">
-                  <div className="w-5 h-5 rounded-full bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
-                    <CheckCircle2 size={12} className="text-indigo-400" />
-                  </div>
-                  <span className="text-sm text-zinc-300">{f}</span>
-                </li>
-              ))}
-            </ul>
-
-            {/* CTA */}
-            <Link
-              to="/register"
-              className="flex items-center justify-center gap-2 w-full py-4 bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-base rounded-xl transition-all shadow-xl shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:-translate-y-0.5"
-            >
-              Empezar ahora <ChevronRight size={16} />
-            </Link>
-
-            <p className="text-center text-xs text-zinc-600 mt-4">
-              Cancela en cualquier momento · Pago seguro con Stripe
-            </p>
-          </div>
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-16 space-y-3">
+          <p className="text-xs text-indigo-400 font-bold uppercase tracking-widest">Precio</p>
+          <h2 className="text-4xl md:text-5xl font-black text-white leading-tight">
+            Elige tu plan
+          </h2>
+          <p className="text-zinc-400 text-lg max-w-xl mx-auto">
+            14 días gratis en todos los planes. Sin tarjeta de crédito para Starter.
+          </p>
         </div>
+
+        <div className="grid md:grid-cols-3 gap-6 items-stretch">
+          {PLANS.map(plan => (
+            <div key={plan.key} className={`relative flex flex-col rounded-3xl overflow-hidden ${plan.highlighted ? '' : 'border border-white/8 bg-zinc-900'}`}>
+              {plan.gradient && (
+                <>
+                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/40 via-violet-500/20 to-purple-500/40 rounded-3xl" />
+                  <div className="relative m-px rounded-3xl bg-zinc-900 flex flex-col flex-1" />
+                </>
+              )}
+
+              <div className={`relative flex flex-col flex-1 p-8 ${plan.highlighted ? 'z-10' : ''}`}
+                style={plan.highlighted ? { position: 'relative', zIndex: 10, margin: '1px', borderRadius: '22px', backgroundColor: '#111', flex: 1, display: 'flex', flexDirection: 'column' } : {}}>
+
+                {/* Badge */}
+                <div className="flex items-center justify-between mb-6">
+                  <span className="text-base font-black text-white">{plan.name}</span>
+                  {plan.badge && (
+                    <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/25 text-indigo-300">
+                      <Star size={10} className="fill-indigo-400 text-indigo-400" />
+                      {plan.badge}
+                    </span>
+                  )}
+                </div>
+
+                {/* Price */}
+                <div className="mb-1">
+                  <span className="text-6xl font-black text-white leading-none">{plan.price}</span>
+                  <span className="text-zinc-400 text-lg ml-1">/ mes</span>
+                </div>
+                <p className="text-zinc-500 text-sm mb-8">{plan.desc}</p>
+
+                {/* Features */}
+                <ul className="space-y-3 mb-10 flex-1">
+                  {plan.features.map(f => (
+                    <li key={f} className="flex items-center gap-3">
+                      <div className="w-5 h-5 rounded-full bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
+                        <CheckCircle2 size={12} className="text-indigo-400" />
+                      </div>
+                      <span className="text-sm text-zinc-300">{f}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* CTA */}
+                <Link
+                  to={`/register?plan=${plan.key}`}
+                  className={`flex items-center justify-center gap-2 w-full py-3.5 font-bold text-sm rounded-xl transition-all ${
+                    plan.highlighted
+                      ? 'bg-indigo-500 hover:bg-indigo-400 text-white shadow-xl shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:-translate-y-0.5'
+                      : 'bg-zinc-800 hover:bg-zinc-700 text-white border border-white/8 hover:border-white/15'
+                  }`}
+                >
+                  {plan.cta} <ChevronRight size={15} />
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-center text-xs text-zinc-700 mt-8">
+          Cancela en cualquier momento · Pago seguro con Stripe
+        </p>
       </div>
     </section>
   )

@@ -25,7 +25,7 @@ interface SubContextType {
   isLoading:    boolean
   isActive:     boolean   // active or trialing
   refetch:      () => Promise<void>
-  subscribe:    () => Promise<void>
+  subscribe:    (priceId?: string) => Promise<void>
   openPortal:   () => Promise<void>
   cancel:       () => Promise<void>
   reactivate:   () => Promise<void>
@@ -54,11 +54,13 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   const refetch = useCallback(async () => {
     if (!user) { setSubscription(null); setIsLoading(false); return }
+    // Seed immediately from auth data so UI never shows stale "no subscription"
+    if (user.subscription) setSubscription(user.subscription as SubscriptionData)
     try {
       const data = await authFetch<SubscriptionData | null>('/subscription/status')
-      setSubscription(data)
+      setSubscription(data ?? (user.subscription as SubscriptionData | null))
     } catch {
-      setSubscription(null)
+      setSubscription(user.subscription as SubscriptionData | null)
     } finally {
       setIsLoading(false)
     }
@@ -66,8 +68,11 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { setIsLoading(true); refetch() }, [refetch])
 
-  const subscribe = useCallback(async () => {
-    const { url } = await authFetch<{ url: string }>('/subscription/checkout', { method: 'POST' })
+  const subscribe = useCallback(async (priceId?: string) => {
+    const { url } = await authFetch<{ url: string }>('/subscription/checkout', {
+      method: 'POST',
+      body: priceId ? JSON.stringify({ priceId }) : undefined,
+    })
     window.location.href = url
   }, [])
 

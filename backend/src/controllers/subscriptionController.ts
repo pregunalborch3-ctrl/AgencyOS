@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { stripe, PRICE_ID, WEBHOOK_SECRET } from '../services/stripeService'
+import { stripe, PRICE_ID, PRICE_IDS, WEBHOOK_SECRET } from '../services/stripeService'
 import { UserStore } from '../models/User'
 
 const FRONTEND = process.env.FRONTEND_URL ?? 'http://localhost:5173'
@@ -16,7 +16,13 @@ export async function createCheckoutSession(req: Request, res: Response): Promis
   const user = await UserStore.findById(req.user!.userId)
   if (!user) { res.status(404).json({ success: false, error: 'Usuario no encontrado.' }); return }
 
-  if (!PRICE_ID || PRICE_ID.startsWith('price_REEMPLAZA')) {
+  const { priceId: requestedPriceId } = req.body as { priceId?: string }
+  const allowedIds = Object.values(PRICE_IDS).filter(Boolean)
+  const priceId = (requestedPriceId && allowedIds.includes(requestedPriceId))
+    ? requestedPriceId
+    : (PRICE_IDS.starter || PRICE_ID)
+
+  if (!priceId || priceId.startsWith('price_REEMPLAZA')) {
     res.status(503).json({ success: false, error: 'Stripe no está configurado en el servidor.' })
     return
   }
@@ -34,7 +40,7 @@ export async function createCheckoutSession(req: Request, res: Response): Promis
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     payment_method_types: ['card'],
-    line_items: [{ price: PRICE_ID, quantity: 1 }],
+    line_items: [{ price: priceId, quantity: 1 }],
     mode: 'subscription',
     subscription_data: {
       trial_period_days: 14,

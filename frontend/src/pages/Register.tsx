@@ -1,7 +1,14 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Eye, EyeOff, Loader2, Zap, ArrowRight, CheckCircle2, XCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { useSubscription } from '../contexts/SubscriptionContext'
+
+const PLAN_PRICE_IDS: Record<string, string> = {
+  starter:    'price_1TOdnhF8XDkWjNCAclRxBkO3',
+  pro:        'price_1TOdnTF8XDkWjNCA4uu5qZaD',
+  enterprise: 'price_1TOdnUF8XDkWjNCA0RFFPzVV',
+}
 
 // ─── Password strength ────────────────────────────────────────────────────────
 interface Criterion { label: string; test: (pw: string) => boolean }
@@ -62,6 +69,8 @@ const FEATURES = [
 export default function Register() {
   const { register } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const { subscribe } = useSubscription()
 
   const [name,        setName]        = useState('')
   const [email,       setEmail]       = useState('')
@@ -121,7 +130,13 @@ export default function Register() {
     setError(null); setLoading(true)
     try {
       await register(name.trim(), email.trim().toLowerCase(), password, confirm)
-      navigate('/dashboard', { replace: true })
+      const plan = searchParams.get('plan')
+      const priceId = plan ? PLAN_PRICE_IDS[plan] : undefined
+      if (priceId && plan !== 'starter') {
+        await subscribe(priceId)
+      } else {
+        navigate('/dashboard', { replace: true })
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al crear la cuenta.')
     } finally {
