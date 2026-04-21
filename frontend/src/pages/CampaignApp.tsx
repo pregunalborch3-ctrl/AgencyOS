@@ -5,12 +5,13 @@ import {
   BarChart3, Users, AlertCircle, RefreshCw,
   TrendingUp, Target, ChevronDown, ArrowRight,
   Crosshair, UserCheck, Flame, Lock, Crown, Sparkles,
-  Bookmark, BookmarkCheck,
+  Bookmark, BookmarkCheck, FileDown,
 } from 'lucide-react'
 import { saveToHistory, type HistoryEntry } from '../lib/history'
 import { saveCampaign } from '../lib/campaignsApi'
 import { useSubscription } from '../contexts/SubscriptionContext'
 import { useAuth } from '../contexts/AuthContext'
+import { printHTML } from '../lib/exportUtils'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface ShortCopy { hook: string; body: string; cta: string; type: string; platform: string }
@@ -703,6 +704,125 @@ const ACTIONS: Array<{ label: string; icon: React.ElementType; variant: string }
   { label: 'Adaptar a TikTok', icon: Zap,        variant: 'tiktok'     },
 ]
 
+// ─── PDF builder ─────────────────────────────────────────────────────────────
+function buildCampaignHTML(result: CampaignResult, productName: string): string {
+  const date = new Date(result.generatedAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })
+  const niche = result.input.niche
+  const objective = result.input.objective
+
+  const badge = (text: string, color = '#ede9fe', textColor = '#5b21b6') =>
+    `<span class="badge" style="background:${color};color:${textColor};">${text}</span>`
+
+  let html = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;">
+      <div>
+        <div style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:6px 16px;border-radius:8px;margin-bottom:10px;">
+          <span style="color:white;font-weight:900;font-size:15px;letter-spacing:-0.3px;">⚡ AgencyOS</span>
+        </div>
+        <h1 style="margin:0;color:#111827;font-size:22px;font-weight:900;border:none;padding:0;">${productName}</h1>
+        <p style="margin:4px 0 0;color:#6b7280;font-size:13px;">Nicho: <strong>${niche}</strong> · Objetivo: <strong>${objective}</strong> · ${date}</p>
+      </div>
+    </div>`
+
+  if (result.insight) {
+    html += `
+    <div class="section" style="background:#f8f7ff;border-color:#c4b5fd;">
+      <h2 style="margin-top:0;color:#5b21b6;">Estrategia</h2>
+      <p><strong>Ángulo:</strong> ${result.insight.angle}</p>
+      <p><strong>Cliente ideal:</strong> ${result.insight.clientType}</p>
+      <p style="margin:0;"><strong>Agresividad:</strong> ${result.insight.aggressiveness}</p>
+    </div>`
+  }
+
+  html += `<h2>Copies cortos (${result.shortCopies.length})</h2>`
+  result.shortCopies.forEach(c => {
+    html += `
+    <div class="section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        ${badge(c.type)} <span style="font-size:11px;color:#9ca3af;">${c.platform}</span>
+      </div>
+      <h3 style="margin:0 0 6px;">${c.hook}</h3>
+      <p style="margin:0 0 8px;">${c.body}</p>
+      <p style="margin:0;font-weight:700;color:#6366f1;">${c.cta}</p>
+    </div>`
+  })
+
+  if (result.longCopies.length) {
+    html += `<h2>Copies largos</h2>`
+    result.longCopies.forEach(c => {
+      html += `
+      <div class="section">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          ${badge(c.format)} <span style="font-size:11px;color:#9ca3af;">${c.platform}</span>
+        </div>
+        <pre style="white-space:pre-wrap;font-family:inherit;font-size:13px;color:#374151;margin:0;">${c.content}</pre>
+      </div>`
+    })
+  }
+
+  html += `<h2>Hooks (${result.hooks.length})</h2>`
+  result.hooks.forEach((h, i) => {
+    html += `
+    <div class="section">
+      <div style="display:flex;gap:14px;align-items:flex-start;">
+        <span style="font-size:24px;font-weight:900;color:#d1d5db;min-width:26px;line-height:1;">${i + 1}</span>
+        <div>
+          ${badge(h.type, '#d1fae5', '#065f46')}
+          <p style="font-weight:700;font-size:15px;margin:8px 0 4px;">${h.text}</p>
+          <p style="font-style:italic;color:#6b7280;margin:0;font-size:12px;">${h.why}</p>
+        </div>
+      </div>
+    </div>`
+  })
+
+  html += `<h2>Guiones creativos</h2>`
+  result.creatives.forEach(c => {
+    html += `
+    <div class="section">
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+        <h3 style="margin:0;">${c.format}</h3>
+        <span style="font-size:11px;color:#9ca3af;">${c.platform} · ${c.duration}</span>
+      </div>
+      <table>
+        <thead><tr><th style="width:70px;">Tiempo</th><th>Acción</th></tr></thead>
+        <tbody>${c.structure.map(s => `<tr><td>${s.time}</td><td>${s.action}</td></tr>`).join('')}</tbody>
+      </table>
+    </div>`
+  })
+
+  const cs = result.campaignStructure
+  html += `
+    <h2>Estructura de campaña</h2>
+    <div class="section">
+      <p style="font-weight:700;margin-bottom:10px;">${cs.type}</p>
+      <table>
+        <thead><tr><th>Fase</th><th>Objetivo</th><th>Audiencia</th><th>Formato</th><th>Budget</th></tr></thead>
+        <tbody>${cs.funnel.map(r => `<tr><td><strong>${r.stage}</strong></td><td>${r.objective}</td><td>${r.audience}</td><td>${r.format}</td><td style="color:#6366f1;font-weight:700;">${r.budget}</td></tr>`).join('')}</tbody>
+      </table>
+      <p style="margin-top:12px;"><strong>Presupuesto sugerido:</strong> ${cs.totalBudgetSuggestion}</p>
+      <p style="margin:0;"><strong>Notas:</strong> ${cs.notes}</p>
+    </div>`
+
+  const seg = result.segmentation
+  html += `
+    <h2>Segmentación y audiencia</h2>
+    <div class="section">
+      <p><strong>Perfil:</strong> ${seg.profile}</p>
+      <p><strong>Edad:</strong> ${seg.ageRange} &nbsp;·&nbsp; <strong>Género:</strong> ${seg.gender}</p>
+      <h3>Intereses</h3><p>${seg.interests.join(' · ')}</p>
+      <h3>Comportamientos</h3><p>${seg.behaviors.join(' · ')}</p>
+      <h3>Audiencias lookalike</h3><p>${seg.lookalike.join(' · ')}</p>
+      <h3>Excluir</h3><p>${seg.exclude.join(' · ')}</p>
+      <h3>Dolores del cliente</h3><ul>${seg.pains.map(p => `<li>${p}</li>`).join('')}</ul>
+      <h3>Deseos del cliente</h3><ul>${seg.desires.map(d => `<li>${d}</li>`).join('')}</ul>
+    </div>
+    <div style="margin-top:40px;padding-top:16px;border-top:1px solid #e5e7eb;text-align:center;">
+      <p style="color:#9ca3af;font-size:11px;margin:0;">Generado con AgencyOS · agenciesos.com</p>
+    </div>`
+
+  return html
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function CampaignApp() {
   const location = useLocation()
@@ -961,7 +1081,16 @@ export default function CampaignApp() {
                   </button>
                 )
               })}
-              <span className="ml-auto flex items-center gap-3">
+              <span className="ml-auto flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    const name = extractProductName(input || result.input.productDescription || result.input.productUrl || 'Campaña')
+                    printHTML(`Campaña AgencyOS — ${name} (${result.input.niche})`, buildCampaignHTML(result, name))
+                  }}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-white/8 bg-zinc-900 hover:bg-zinc-800 hover:border-white/15 text-zinc-400 hover:text-white text-xs font-semibold transition-all"
+                >
+                  <FileDown size={12} /> PDF
+                </button>
                 <button
                   onClick={handleSave}
                   disabled={isSaving || !!savedId}
