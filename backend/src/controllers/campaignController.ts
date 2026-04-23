@@ -2,8 +2,6 @@ import { Request, Response } from 'express'
 import { v4 as uuid } from 'uuid'
 import { prisma, UserStore } from '../models/User'
 
-const FREE_BYPASS_EMAILS = ['pregunalborch3@gmail.com']
-
 // ─── Niche data ───────────────────────────────────────────────────────────────
 const NICHE_DATA: Record<string, {
   pains: string[]
@@ -418,7 +416,6 @@ export async function generateCampaign(req: Request, res: Response): Promise<voi
     const status = user.subscription?.status
     const isActive = status === 'active' || status === 'trialing'
       || user.role === 'admin'
-      || FREE_BYPASS_EMAILS.includes(user.email)
 
     if (!isActive) {
       if (user.freeUsed) {
