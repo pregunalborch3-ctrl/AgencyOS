@@ -1,10 +1,11 @@
 import { Request, Response } from 'express'
-import { v4 as uuid } from 'uuid'
+import { PrismaClient } from '@prisma/client'
 import Anthropic from '@anthropic-ai/sdk'
 import type { ContentRequest, GeneratedContent } from '../types'
+import { v4 as uuid } from 'uuid'
 
+const prisma = new PrismaClient()
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-const history: GeneratedContent[] = []
 
 async function generateWithClaude(body: ContentRequest): Promise<string> {
   const prompt = `Eres un experto en marketing digital y redes sociales.
@@ -25,7 +26,7 @@ El caption debe:
 Responde SOLO con el caption, sin explicaciones.`
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-4-6',
     max_tokens: 500,
     messages: [{ role: 'user', content: prompt }],
   })
@@ -34,6 +35,7 @@ Responde SOLO con el caption, sin explicaciones.`
 }
 
 export async function generateContent(req: Request, res: Response): Promise<void> {
+  const userId = req.user!.userId
   const body = req.body as ContentRequest
 
   if (!body.topic || !body.brand || !body.platform) {
@@ -48,16 +50,16 @@ export async function generateContent(req: Request, res: Response): Promise<void
       generateWithClaude(body),
     ])
 
-    const variations = captions.map((caption) => {
-      const item: GeneratedContent = {
-        id: uuid(),
-        caption,
-        hashtags: body.keywords.split(',').map((k) => k.trim().replace(/\s/g, '')).filter(Boolean),
-        platform: body.platform,
-        createdAt: new Date().toISOString(),
-      }
-      history.push(item)
-      return item
+    const variations: GeneratedContent[] = captions.map((caption) => ({
+      id: uuid(),
+      caption,
+      hashtags: body.keywords.split(',').map((k) => k.trim().replace(/\s/g, '')).filter(Boolean),
+      platform: body.platform,
+      createdAt: new Date().toISOString(),
+    }))
+
+    await prisma.contentHistory.createMany({
+      data: variations.map((item) => ({ userId, content: item as object })),
     })
 
     res.json({ success: true, data: variations })
@@ -67,6 +69,13 @@ export async function generateContent(req: Request, res: Response): Promise<void
   }
 }
 
-export function getContentHistory(_req: Request, res: Response): void {
-  res.json({ success: true, data: history.slice(-50) })
+export async function getContentHistory(req: Request, res: Response): Promise<void> {
+  const userId = req.user!.userId
+  const rows = await prisma.contentHistory.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+    take: 50,
+  })
+  const data = rows.map((r) => r.content)
+  res.json({ success: true, data })
 }
