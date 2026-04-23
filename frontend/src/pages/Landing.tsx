@@ -22,7 +22,7 @@ function Nav() {
         <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
           <Zap size={16} className="text-white" />
         </div>
-        <span className="text-white font-black text-lg tracking-tight">AgencyOS</span>
+        <span className="text-white font-black text-lg tracking-tight">Agenciesos</span>
       </div>
 
       <nav className="hidden md:flex items-center gap-8">
@@ -269,7 +269,7 @@ function StatsBar() {
 // ─── Section: FAQ ─────────────────────────────────────────────────────────────
 const FAQ_ITEMS = [
   {
-    q: '¿Necesito saber de publicidad para usar AgencyOS?',
+    q: '¿Necesito saber de publicidad para usar Agenciesos?',
     a: 'No. El sistema genera todo automáticamente: hooks, copy, segmentación y estructura de campaña.',
   },
   {
@@ -858,7 +858,7 @@ function FinalCta() {
           </span>
         </h2>
         <p className="text-zinc-400 text-xl max-w-xl mx-auto">
-          Únete a las agencias que ya generan campañas en minutos con AgencyOS.
+          Únete a las agencias que ya generan campañas en minutos con Agenciesos.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
           <Link
@@ -884,7 +884,7 @@ function Footer() {
           <div className="w-6 h-6 rounded-md bg-indigo-500 flex items-center justify-center">
             <Zap size={12} className="text-white" />
           </div>
-          <span className="text-sm font-black text-white">AgencyOS</span>
+          <span className="text-sm font-black text-white">Agenciesos</span>
           <span className="text-xs text-zinc-700 ml-1">© {year}</span>
         </div>
         <div className="flex items-center gap-6">

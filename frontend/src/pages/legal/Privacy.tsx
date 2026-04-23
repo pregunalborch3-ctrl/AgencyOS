@@ -11,7 +11,7 @@ export default function Privacy() {
           (LOPD-GDD), te informamos de que el responsable del tratamiento de tus datos personales es:
         </p>
         <div className="mt-3 p-4 rounded-xl bg-zinc-800/40 border border-white/5 space-y-1.5">
-          <p><span className="text-zinc-400 font-semibold">Responsable:</span> Roberto (AgencyOS)</p>
+          <p><span className="text-zinc-400 font-semibold">Responsable:</span> Roberto (Agenciesos)</p>
           <p><span className="text-zinc-400 font-semibold">Correo electrónico:</span>{' '}
             <a href="mailto:pregunalborch3@gmail.com" className="text-indigo-400 hover:text-indigo-300 transition-colors">
               pregunalborch3@gmail.com
@@ -22,7 +22,7 @@ export default function Privacy() {
       </Section>
 
       <Section title="2. Datos personales que tratamos">
-        <p>Al utilizar AgencyOS, tratamos las siguientes categorías de datos:</p>
+        <p>Al utilizar Agenciesos, tratamos las siguientes categorías de datos:</p>
         <SubSection title="Datos de registro y cuenta">
           <UL items={[
             'Nombre y apellidos',
@@ -56,7 +56,7 @@ export default function Privacy() {
 
       <Section title="3. Finalidad del tratamiento">
         <UL items={[
-          'Prestación del servicio AgencyOS: creación y gestión de tu cuenta, acceso a las herramientas de generación de campañas con IA.',
+          'Prestación del servicio Agenciesos: creación y gestión de tu cuenta, acceso a las herramientas de generación de campañas con IA.',
           'Gestión de la suscripción y facturación: procesar pagos a través de Stripe, gestionar renovaciones y cancelaciones.',
           'Seguridad: detectar y prevenir accesos no autorizados, fraudes o abusos del servicio.',
           'Comunicaciones del servicio: enviarte notificaciones relacionadas con tu cuenta (cambios en el servicio, avisos de seguridad). No enviamos emails de marketing sin tu consentimiento explícito.',
@@ -194,7 +194,7 @@ export default function Privacy() {
 
       <Section title="8. Cookies">
         <p>
-          AgencyOS utiliza exclusivamente almacenamiento local del navegador (localStorage) para guardar
+          Agenciesos utiliza exclusivamente almacenamiento local del navegador (localStorage) para guardar
           el token de sesión JWT. No usamos cookies de seguimiento ni publicidad. Para más información,
           consulta nuestra{' '}
           <a href="/cookies" className="text-indigo-400 hover:text-indigo-300 transition-colors">

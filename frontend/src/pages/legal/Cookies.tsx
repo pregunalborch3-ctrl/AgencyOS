@@ -17,9 +17,9 @@ export default function Cookies() {
         </p>
       </Section>
 
-      <Section title="2. ¿Qué almacenamiento usa AgencyOS?">
+      <Section title="2. ¿Qué almacenamiento usa Agenciesos?">
         <p>
-          AgencyOS tiene un enfoque minimalista respecto al almacenamiento en el dispositivo del
+          Agenciesos tiene un enfoque minimalista respecto al almacenamiento en el dispositivo del
           usuario. A continuación detallamos todo lo que guardamos:
         </p>
 
@@ -97,7 +97,7 @@ export default function Cookies() {
             </div>
             <div className="p-4">
               <p className="text-xs text-zinc-500">
-                AgencyOS <strong className="text-zinc-300">no utiliza</strong> Google Analytics, Meta
+                Agenciesos <strong className="text-zinc-300">no utiliza</strong> Google Analytics, Meta
                 Pixel, cookies de retargeting ni ningún tipo de seguimiento publicitario o analítico
                 de terceros. No compartimos datos de navegación con plataformas publicitarias.
               </p>
@@ -120,7 +120,7 @@ export default function Cookies() {
       </Section>
 
       <Section title="4. Cómo gestionar o eliminar el almacenamiento">
-        <SubSection title="Eliminar el almacenamiento de AgencyOS">
+        <SubSection title="Eliminar el almacenamiento de Agenciesos">
           <UL items={[
             'Desde la app: ve a Configuración → Seguridad → puedes borrar los datos almacenados localmente.',
             'Desde el navegador: ve a Ajustes → Privacidad → Gestionar datos del sitio → busca agencyos.com y elimina.',
@@ -143,7 +143,7 @@ export default function Cookies() {
         </SubSection>
         <SubSection title="Consecuencias de deshabilitar el almacenamiento técnico">
           <p>
-            Si eliminas o bloqueas el almacenamiento local de AgencyOS, deberás iniciar sesión
+            Si eliminas o bloqueas el almacenamiento local de Agenciesos, deberás iniciar sesión
             de nuevo en cada visita y perderás tus preferencias de configuración guardadas localmente.
             El resto de funcionalidades no se verá afectado.
           </p>

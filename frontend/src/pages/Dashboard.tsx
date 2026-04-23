@@ -133,7 +133,7 @@ export default function Dashboard() {
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <Crown size={14} className="text-indigo-200" />
-                  <span className="text-indigo-200 text-sm font-medium">AgencyOS Pro — Activo</span>
+                  <span className="text-indigo-200 text-sm font-medium">Agenciesos Pro — Activo</span>
                 </div>
                 <p className="text-white font-bold text-lg">Sistema completo desbloqueado</p>
                 {subscription?.cancelAtPeriodEnd && (
@@ -161,7 +161,7 @@ export default function Dashboard() {
             <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
               <div className="space-y-2">
                 <p className="text-2xl font-black text-white">
-                  👋 Bienvenido a AgencyOS
+                  👋 Bienvenido a Agenciesos
                 </p>
                 <p className="text-zinc-400 text-sm leading-relaxed max-w-md">
                   Genera tu primera campaña en 3 minutos — introduce un producto o tienda Shopify y el sistema hace el resto.

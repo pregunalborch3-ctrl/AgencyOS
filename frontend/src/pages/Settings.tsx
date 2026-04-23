@@ -196,7 +196,7 @@ function BillingSection() {
           </div>
           <h2 className="text-2xl font-black text-gray-900 mb-2">Sin suscripción activa</h2>
           <p className="text-gray-500 mb-7 max-w-sm mx-auto leading-relaxed">
-            Suscríbete a AgencyOS Pro para acceder a todas las herramientas. 14 días de prueba gratuita incluidos.
+            Suscríbete a Agenciesos Pro para acceder a todas las herramientas. 14 días de prueba gratuita incluidos.
           </p>
           <div className="flex items-end justify-center gap-1 mb-6">
             <span className="text-5xl font-black text-gray-900">$49</span>
@@ -230,7 +230,7 @@ function BillingSection() {
                 <Crown size={20} className="text-white" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-indigo-500 uppercase tracking-wider">AgencyOS</p>
+                <p className="text-xs font-semibold text-indigo-500 uppercase tracking-wider">Agenciesos</p>
                 <h3 className="text-lg font-black text-gray-900">Plan Pro</h3>
               </div>
             </div>

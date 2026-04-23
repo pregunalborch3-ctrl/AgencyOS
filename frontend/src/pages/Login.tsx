@@ -66,7 +66,7 @@ export default function Login() {
           <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center border border-white/20">
             <Zap size={20} className="text-white" />
           </div>
-          <span className="text-2xl font-black text-white tracking-tight">AgencyOS</span>
+          <span className="text-2xl font-black text-white tracking-tight">Agenciesos</span>
         </div>
 
         {/* Hero copy */}
@@ -96,7 +96,7 @@ export default function Login() {
         {/* Testimonial */}
         <div className="relative bg-white/10 backdrop-blur rounded-2xl p-5 border border-white/10">
           <p className="text-white/90 text-sm leading-relaxed italic">
-            "AgencyOS nos ahorró 12 horas semanales en gestión. El ROI fue inmediato."
+            "Agenciesos nos ahorró 12 horas semanales en gestión. El ROI fue inmediato."
           </p>
           <div className="flex items-center gap-3 mt-3">
             <div className="w-8 h-8 rounded-full bg-indigo-400/60 flex items-center justify-center">

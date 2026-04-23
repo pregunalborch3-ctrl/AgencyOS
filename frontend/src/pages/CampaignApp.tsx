@@ -717,7 +717,7 @@ function buildCampaignHTML(result: CampaignResult, productName: string): string 
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;">
       <div>
         <div style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:6px 16px;border-radius:8px;margin-bottom:10px;">
-          <span style="color:white;font-weight:900;font-size:15px;letter-spacing:-0.3px;">⚡ AgencyOS</span>
+          <span style="color:white;font-weight:900;font-size:15px;letter-spacing:-0.3px;">⚡ Agenciesos</span>
         </div>
         <h1 style="margin:0;color:#111827;font-size:22px;font-weight:900;border:none;padding:0;">${productName}</h1>
         <p style="margin:4px 0 0;color:#6b7280;font-size:13px;">Nicho: <strong>${niche}</strong> · Objetivo: <strong>${objective}</strong> · ${date}</p>
@@ -817,7 +817,7 @@ function buildCampaignHTML(result: CampaignResult, productName: string): string 
       <h3>Deseos del cliente</h3><ul>${seg.desires.map(d => `<li>${d}</li>`).join('')}</ul>
     </div>
     <div style="margin-top:40px;padding-top:16px;border-top:1px solid #e5e7eb;text-align:center;">
-      <p style="color:#9ca3af;font-size:11px;margin:0;">Generado con AgencyOS · agenciesos.com</p>
+      <p style="color:#9ca3af;font-size:11px;margin:0;">Generado con Agenciesos · agenciesos.com</p>
     </div>`
 
   return html
@@ -1105,7 +1105,7 @@ export default function CampaignApp() {
                 <button
                   onClick={() => {
                     const name = extractProductName(input || result.input.productDescription || result.input.productUrl || 'Campaña')
-                    printHTML(`Campaña AgencyOS — ${name} (${result.input.niche})`, buildCampaignHTML(result, name))
+                    printHTML(`Campaña Agenciesos — ${name} (${result.input.niche})`, buildCampaignHTML(result, name))
                   }}
                   className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-white/8 bg-zinc-900 hover:bg-zinc-800 hover:border-white/15 text-zinc-400 hover:text-white text-xs font-semibold transition-all"
                 >

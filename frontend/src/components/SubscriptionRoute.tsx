@@ -41,7 +41,7 @@ function UpgradeWall() {
                 <Zap size={22} className="text-white" />
               </div>
               <div>
-                <p className="text-xs font-bold text-indigo-400 uppercase tracking-wider">AgencyOS Pro</p>
+                <p className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Agenciesos Pro</p>
                 <h2 className="text-xl font-black text-white">Activa tu acceso</h2>
               </div>
             </div>

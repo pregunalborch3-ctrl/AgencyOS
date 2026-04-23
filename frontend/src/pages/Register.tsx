@@ -158,7 +158,7 @@ export default function Register() {
           <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center border border-white/20">
             <Zap size={20} className="text-white" />
           </div>
-          <span className="text-2xl font-black text-white tracking-tight">AgencyOS</span>
+          <span className="text-2xl font-black text-white tracking-tight">Agenciesos</span>
         </div>
 
         {/* Hero copy */}
@@ -169,7 +169,7 @@ export default function Register() {
               <span className="text-indigo-200">Escala sin límites.</span>
             </h1>
             <p className="mt-4 text-indigo-200 text-lg leading-relaxed">
-              Únete a cientos de agencias que ya gestionan sus clientes con AgencyOS.
+              Únete a cientos de agencias que ya gestionan sus clientes con Agenciesos.
             </p>
           </div>
           <ul className="space-y-3">
@@ -212,7 +212,7 @@ export default function Register() {
         <div className="w-full max-w-[400px]">
           <div className="mb-7">
             <h2 className="text-3xl font-black text-gray-900">Crear cuenta</h2>
-            <p className="text-gray-500 mt-1.5">Empieza a usar AgencyOS hoy, sin tarjeta de crédito.</p>
+            <p className="text-gray-500 mt-1.5">Empieza a usar Agenciesos hoy, sin tarjeta de crédito.</p>
           </div>
 
           {/* Global error */}

@@ -46,7 +46,7 @@ export default function SubscriptionSuccess() {
 
         <h1 className="text-3xl font-black text-gray-900 mb-2">¡Bienvenido a Pro!</h1>
         <p className="text-gray-500 mb-8 leading-relaxed">
-          Tu suscripción está activa. Tienes acceso completo a todas las herramientas de AgencyOS.
+          Tu suscripción está activa. Tienes acceso completo a todas las herramientas de Agenciesos.
         </p>
 
         {/* Features unlocked */}

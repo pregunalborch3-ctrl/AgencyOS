@@ -12,7 +12,7 @@ export default function Footer() {
           <div className="w-6 h-6 rounded-md bg-indigo-500 flex items-center justify-center">
             <Zap size={12} className="text-white" />
           </div>
-          <span className="text-sm font-black text-zinc-500">AgencyOS</span>
+          <span className="text-sm font-black text-zinc-500">Agenciesos</span>
           <span className="text-xs text-zinc-700">© {year}</span>
         </div>
 

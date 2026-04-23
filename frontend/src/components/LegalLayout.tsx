@@ -18,7 +18,7 @@ export default function LegalLayout({ title, lastUpdated, children }: LegalLayou
             <div className="w-7 h-7 rounded-lg bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
               <Zap size={14} className="text-white" />
             </div>
-            <span className="text-white font-black text-base tracking-tight">AgencyOS</span>
+            <span className="text-white font-black text-base tracking-tight">Agenciesos</span>
           </Link>
           <Link
             to="/"

@@ -7,21 +7,21 @@ export default function Terms() {
       <Section title="1. Información general">
         <p>
           Estos Términos y Condiciones (en adelante, «los Términos») regulan el acceso y uso del
-          servicio AgencyOS, titularidad de Roberto (en adelante, «AgencyOS», «nosotros» o «el
+          servicio Agenciesos, titularidad de Roberto (en adelante, «Agenciesos», «nosotros» o «el
           prestador»), con domicilio en España y correo de contacto{' '}
           <a href="mailto:pregunalborch3@gmail.com" className="text-indigo-400 hover:text-indigo-300 transition-colors">
             pregunalborch3@gmail.com
           </a>.
         </p>
         <p>
-          Al registrarte o utilizar AgencyOS, aceptas estos Términos en su totalidad. Si no estás de
+          Al registrarte o utilizar Agenciesos, aceptas estos Términos en su totalidad. Si no estás de
           acuerdo, no debes usar el servicio.
         </p>
       </Section>
 
       <Section title="2. Descripción del servicio">
         <p>
-          AgencyOS es una plataforma SaaS (Software como Servicio) que permite a agencias y
+          Agenciesos es una plataforma SaaS (Software como Servicio) que permite a agencias y
           profesionales del marketing digital:
         </p>
         <UL items={[
@@ -32,7 +32,7 @@ export default function Terms() {
         ]} />
         <p className="mt-2">
           El servicio utiliza modelos de inteligencia artificial de Anthropic (Claude) para generar
-          contenido. AgencyOS actúa como intermediario tecnológico y no garantiza resultados
+          contenido. Agenciesos actúa como intermediario tecnológico y no garantiza resultados
           comerciales específicos derivados del uso del contenido generado.
         </p>
       </Section>
@@ -50,7 +50,7 @@ export default function Terms() {
       <Section title="4. Condiciones de uso aceptable">
         <p>Queda expresamente prohibido:</p>
         <UL items={[
-          'Usar AgencyOS para generar contenido ilegal, fraudulento, difamatorio, discriminatorio o que infrinja derechos de terceros.',
+          'Usar Agenciesos para generar contenido ilegal, fraudulento, difamatorio, discriminatorio o que infrinja derechos de terceros.',
           'Intentar acceder de forma no autorizada a sistemas, cuentas o datos de otros usuarios.',
           'Realizar ingeniería inversa, descompilar o intentar extraer el código fuente del servicio.',
           'Usar el servicio para actividades de spam masivo o publicidad engañosa.',
@@ -66,7 +66,7 @@ export default function Terms() {
       <Section title="5. Precios y suscripción">
         <SubSection title="Plan y precio">
           <p>
-            AgencyOS ofrece una suscripción mensual de <strong className="text-zinc-300">49 USD/mes</strong>{' '}
+            Agenciesos ofrece una suscripción mensual de <strong className="text-zinc-300">49 USD/mes</strong>{' '}
             que incluye acceso completo a todas las funcionalidades de la plataforma.
           </p>
         </SubSection>
@@ -98,7 +98,7 @@ export default function Terms() {
         <p>
           Los pagos se procesan de forma segura a través de{' '}
           <strong className="text-zinc-300">Stripe</strong>, empresa certificada PCI DSS Level 1.
-          AgencyOS no almacena datos de tarjetas de crédito o débito en sus servidores.
+          Agenciesos no almacena datos de tarjetas de crédito o débito en sus servidores.
         </p>
         <UL items={[
           'Los cargos se realizan al inicio de cada período de facturación.',
@@ -139,13 +139,13 @@ export default function Terms() {
 
       <Section title="8. Contenido generado por IA">
         <p>
-          El contenido generado por AgencyOS (copies, análisis, estrategias, calendarios) es producido
+          El contenido generado por Agenciesos (copies, análisis, estrategias, calendarios) es producido
           por modelos de inteligencia artificial y tiene carácter orientativo:
         </p>
         <UL items={[
-          'AgencyOS no garantiza que el contenido generado sea preciso, completo, actualizado o adecuado para un propósito específico.',
+          'Agenciesos no garantiza que el contenido generado sea preciso, completo, actualizado o adecuado para un propósito específico.',
           'El usuario es responsable de revisar, adaptar y verificar el contenido antes de utilizarlo en campañas reales.',
-          'AgencyOS no se hace responsable de los resultados publicitarios o comerciales derivados del uso del contenido generado.',
+          'Agenciesos no se hace responsable de los resultados publicitarios o comerciales derivados del uso del contenido generado.',
           'El contenido generado no constituye asesoramiento legal, financiero ni médico.',
           'El usuario conserva la propiedad intelectual del contenido generado a partir de sus inputs, sujeto a las condiciones de uso de Anthropic.',
         ]} />
@@ -153,8 +153,8 @@ export default function Terms() {
 
       <Section title="9. Propiedad intelectual">
         <p>
-          La plataforma AgencyOS, incluyendo su diseño, código fuente, marcas, logotipos y metodologías,
-          son propiedad exclusiva de AgencyOS y están protegidos por las leyes de propiedad intelectual
+          La plataforma Agenciesos, incluyendo su diseño, código fuente, marcas, logotipos y metodologías,
+          son propiedad exclusiva de Agenciesos y están protegidos por las leyes de propiedad intelectual
           aplicables.
         </p>
         <p>
@@ -168,9 +168,9 @@ export default function Terms() {
           En la máxima medida permitida por la ley aplicable:
         </p>
         <UL items={[
-          'AgencyOS no será responsable de daños indirectos, incidentales, especiales o consecuentes derivados del uso o la imposibilidad de uso del servicio.',
-          'La responsabilidad total de AgencyOS frente al usuario no excederá en ningún caso el importe pagado en los 3 meses anteriores al evento que origina la reclamación.',
-          'AgencyOS no garantiza que el servicio esté disponible de forma ininterrumpida o libre de errores, aunque nos comprometemos a una disponibilidad objetivo del 99%.',
+          'Agenciesos no será responsable de daños indirectos, incidentales, especiales o consecuentes derivados del uso o la imposibilidad de uso del servicio.',
+          'La responsabilidad total de Agenciesos frente al usuario no excederá en ningún caso el importe pagado en los 3 meses anteriores al evento que origina la reclamación.',
+          'Agenciesos no garantiza que el servicio esté disponible de forma ininterrumpida o libre de errores, aunque nos comprometemos a una disponibilidad objetivo del 99%.',
           'No somos responsables de fallos causados por terceros proveedores (Stripe, Railway, Vercel, Anthropic) ni por causas de fuerza mayor.',
         ]} />
       </Section>
@@ -194,7 +194,7 @@ export default function Terms() {
 
       <Section title="12. Modificaciones del servicio">
         <p>
-          AgencyOS se reserva el derecho de modificar, suspender o interrumpir cualquier aspecto del
+          Agenciesos se reserva el derecho de modificar, suspender o interrumpir cualquier aspecto del
           servicio en cualquier momento. Para cambios significativos, te notificaremos con al menos
           30 días de antelación por correo electrónico.
         </p>
