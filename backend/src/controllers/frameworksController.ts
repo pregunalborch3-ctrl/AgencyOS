@@ -20,7 +20,12 @@ async function claudeJSON<T>(system: string, user: string): Promise<T> {
   })
   const raw = (msg.content[0] as { type: string; text: string }).text.trim()
   const clean = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
-  return JSON.parse(clean) as T
+  try {
+    return JSON.parse(clean) as T
+  } catch {
+    console.error('claudeJSON parse error — raw response:', raw)
+    throw new Error('La IA devolvió una respuesta inesperada. Por favor, inténtalo de nuevo.')
+  }
 }
 
 // ─── Framework 1: Análisis de Mercado ─────────────────────────────────────────

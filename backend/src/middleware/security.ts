@@ -50,6 +50,22 @@ export const authLimiter = rateLimit({
   },
 })
 
+// Content AI: 10 generaciones / hora por usuario autenticado
+export const contentLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req.user?.userId ?? req.ip ?? 'anonymous'),
+  handler(req, res) {
+    logSecurityEvent('CONTENT_RATE_LIMIT_EXCEEDED', req.ip ?? 'unknown', { userId: req.user?.userId })
+    res.status(429).json({
+      success: false,
+      error: 'Has alcanzado el límite de 10 generaciones por hora. Disponible de nuevo en 1 hora.',
+    })
+  },
+})
+
 // Frameworks AI: 20 llamadas / hora per IP
 export const frameworksLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -96,8 +112,9 @@ export function validateEnv(): void {
   let fatal = false
 
   const required: Record<string, string> = {
-    JWT_SECRET:   'Clave secreta para firmar tokens JWT',
-    DATABASE_URL: 'URL de conexión a la base de datos',
+    JWT_SECRET:             'Clave secreta para firmar tokens JWT',
+    DATABASE_URL:           'URL de conexión a la base de datos',
+    STRIPE_WEBHOOK_SECRET:  'Secreto para verificar la firma de los webhooks de Stripe',
   }
 
   for (const [key, desc] of Object.entries(required)) {
@@ -118,7 +135,7 @@ export function validateEnv(): void {
     process.exit(1)
   }
 
-  const optional = ['ANTHROPIC_API_KEY', 'STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'STRIPE_PRICE_ID', 'FRONTEND_URL']
+  const optional = ['ANTHROPIC_API_KEY', 'STRIPE_SECRET_KEY', 'STRIPE_PRICE_ID', 'FRONTEND_URL']
   const missing = optional.filter(k => !process.env[k])
   if (missing.length > 0) {
     console.warn(`  ⚠  Variables opcionales no configuradas: ${missing.join(', ')}`)
