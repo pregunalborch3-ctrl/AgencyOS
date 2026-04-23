@@ -1,7 +1,7 @@
 import { Resend } from "resend"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
-const FROM = "AgencyOS <hola@agenciesos.com>"
+const FROM = "Agenciesos <hola@agenciesos.com>"
 
 export async function sendWelcomeEmail(to: string, name: string): Promise<void> {
   if (!process.env.RESEND_API_KEY) {
@@ -12,14 +12,18 @@ export async function sendWelcomeEmail(to: string, name: string): Promise<void> 
   const { data, error } = await resend.emails.send({
     from: FROM,
     to: [to],
-    subject: "Bienvenido a AgencyOS 🚀",
+    subject: "Bienvenido a Agenciesos 🚀",
+    headers: {
+      'List-Unsubscribe': '<mailto:hola@agenciesos.com?subject=unsubscribe>',
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+    },
     html: `
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bienvenido a AgencyOS</title>
+  <title>Bienvenido a Agenciesos</title>
 </head>
 <body style="margin:0;padding:0;background-color:#0a0a0a;font-family:'Segoe UI',Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0a0a0a;padding:40px 20px;">
@@ -31,7 +35,7 @@ export async function sendWelcomeEmail(to: string, name: string): Promise<void> 
           <tr>
             <td style="padding:40px 40px 32px;text-align:center;border-bottom:1px solid #1f1f1f;">
               <div style="display:inline-block;background:linear-gradient(135deg,#a855f7,#6366f1);border-radius:12px;padding:12px 24px;">
-                <span style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.5px;">AgencyOS</span>
+                <span style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.5px;">Agenciesos</span>
               </div>
             </td>
           </tr>
@@ -43,7 +47,7 @@ export async function sendWelcomeEmail(to: string, name: string): Promise<void> 
                 Hola, ${name} 👋
               </h1>
               <p style="margin:0 0 24px;color:#a1a1aa;font-size:16px;line-height:1.6;">
-                Tu cuenta en <strong style="color:#ffffff;">AgencyOS</strong> está lista. Ahora tienes acceso a las herramientas de marketing más potentes para hacer crecer tu agencia.
+                Tu cuenta en <strong style="color:#ffffff;">Agenciesos</strong> está lista. Ahora tienes acceso a las herramientas de marketing más potentes para hacer crecer tu agencia.
               </p>
 
               <!-- Feature list -->
@@ -88,11 +92,11 @@ export async function sendWelcomeEmail(to: string, name: string): Promise<void> 
           <tr>
             <td style="padding:24px 40px;border-top:1px solid #1f1f1f;text-align:center;">
               <p style="margin:0;color:#52525b;font-size:13px;line-height:1.5;">
-                Recibiste este email porque creaste una cuenta en AgencyOS.<br/>
+                Recibiste este email porque creaste una cuenta en Agenciesos.<br/>
                 Si no fuiste tú, puedes ignorar este mensaje.
               </p>
               <p style="margin:12px 0 0;color:#3f3f46;font-size:12px;">
-                © ${new Date().getFullYear()} AgencyOS · hola@agenciesos.com
+                © ${new Date().getFullYear()} Agenciesos · hola@agenciesos.com
               </p>
             </td>
           </tr>
