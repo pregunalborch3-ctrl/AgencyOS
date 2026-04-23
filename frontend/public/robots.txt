@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /home
+Disallow: /dashboard
+Disallow: /settings
+
+Sitemap: https://agencyos-production-2aef.up.railway.app/sitemap.xml
