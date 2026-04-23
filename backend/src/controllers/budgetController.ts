@@ -1,15 +1,23 @@
 import { Request, Response } from 'express'
-import { v4 as uuid } from 'uuid'
+import { PrismaClient } from '@prisma/client'
 import type { Budget } from '../types'
 
-const budgets: Budget[] = []
+const prisma = new PrismaClient()
 
-export function getBudgets(_req: Request, res: Response): void {
+export async function getBudgets(req: Request, res: Response): Promise<void> {
+  const userId = req.user!.userId
+  const budgets = await prisma.budget.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+  })
   res.json({ success: true, data: budgets })
 }
 
-export function getBudget(req: Request, res: Response): void {
-  const budget = budgets.find((b) => b.id === req.params.id)
+export async function getBudget(req: Request, res: Response): Promise<void> {
+  const userId = req.user!.userId
+  const budget = await prisma.budget.findFirst({
+    where: { id: req.params.id, userId },
+  })
   if (!budget) {
     res.status(404).json({ success: false, error: 'Presupuesto no encontrado' })
     return
@@ -17,33 +25,53 @@ export function getBudget(req: Request, res: Response): void {
   res.json({ success: true, data: budget })
 }
 
-export function createBudget(req: Request, res: Response): void {
+export async function createBudget(req: Request, res: Response): Promise<void> {
+  const userId = req.user!.userId
   const body = req.body as Omit<Budget, 'id' | 'createdAt'>
   if (!body.projectName) {
     res.status(400).json({ success: false, error: 'projectName es requerido' })
     return
   }
-  const budget: Budget = { ...body, id: uuid(), createdAt: new Date().toISOString() }
-  budgets.push(budget)
+  const budget = await prisma.budget.create({
+    data: {
+      userId,
+      projectName: body.projectName,
+      client: body.client ?? '',
+      currency: body.currency ?? 'EUR',
+      items: (body.items ?? []) as object[],
+      agencyFeePercent: body.agencyFeePercent ?? 0,
+      taxPercent: body.taxPercent ?? 0,
+      notes: body.notes ?? '',
+    },
+  })
   res.status(201).json({ success: true, data: budget })
 }
 
-export function updateBudget(req: Request, res: Response): void {
-  const idx = budgets.findIndex((b) => b.id === req.params.id)
-  if (idx === -1) {
+export async function updateBudget(req: Request, res: Response): Promise<void> {
+  const userId = req.user!.userId
+  const existing = await prisma.budget.findFirst({
+    where: { id: req.params.id, userId },
+  })
+  if (!existing) {
     res.status(404).json({ success: false, error: 'Presupuesto no encontrado' })
     return
   }
-  budgets[idx] = { ...budgets[idx], ...req.body, id: req.params.id }
-  res.json({ success: true, data: budgets[idx] })
+  const updated = await prisma.budget.update({
+    where: { id: req.params.id },
+    data: req.body,
+  })
+  res.json({ success: true, data: updated })
 }
 
-export function deleteBudget(req: Request, res: Response): void {
-  const idx = budgets.findIndex((b) => b.id === req.params.id)
-  if (idx === -1) {
+export async function deleteBudget(req: Request, res: Response): Promise<void> {
+  const userId = req.user!.userId
+  const existing = await prisma.budget.findFirst({
+    where: { id: req.params.id, userId },
+  })
+  if (!existing) {
     res.status(404).json({ success: false, error: 'Presupuesto no encontrado' })
     return
   }
-  budgets.splice(idx, 1)
+  await prisma.budget.delete({ where: { id: req.params.id } })
   res.json({ success: true, data: null })
 }

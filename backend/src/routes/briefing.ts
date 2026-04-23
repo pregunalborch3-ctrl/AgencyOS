@@ -1,7 +1,10 @@
 import { Router } from 'express'
 import { getBriefings, getBriefing, createBriefing, updateBriefing, deleteBriefing } from '../controllers/briefingController'
+import { requireAuth } from '../middleware/authMiddleware'
 
 const router = Router()
+
+router.use(requireAuth)
 
 router.get('/', getBriefings)
 router.get('/:id', getBriefing)

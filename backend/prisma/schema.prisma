@@ -24,6 +24,8 @@ model User {
   cancelAtPeriodEnd  Boolean    @default(false)
   freeUsed           Boolean    @default(false)
   campaigns          Campaign[]
+  briefings          Briefing[]
+  budgets            Budget[]
 }
 
 model Campaign {
@@ -35,6 +37,50 @@ model Campaign {
   objective String
   data      Json
   createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Briefing {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientName      String
+  brand           String   @default("")
+  projectName     String
+  projectType     String   @default("")
+  objective       String   @default("")
+  targetAudience  String   @default("")
+  ageRange        String   @default("")
+  location        String   @default("")
+  keyMessage      String   @default("")
+  tone            String   @default("")
+  mandatories     String   @default("")
+  restrictions    String   @default("")
+  deliverables    String   @default("")
+  startDate       String   @default("")
+  endDate         String   @default("")
+  budget          String   @default("")
+  competitors     String   @default("")
+  references      String   @default("")
+  additionalNotes String   @default("")
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Budget {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectName      String
+  client           String   @default("")
+  currency         String   @default("EUR")
+  items            Json     @default("[]")
+  agencyFeePercent Float    @default(0)
+  taxPercent       Float    @default(0)
+  notes            String   @default("")
+  createdAt        DateTime @default(now())
 
   @@index([userId])
 }

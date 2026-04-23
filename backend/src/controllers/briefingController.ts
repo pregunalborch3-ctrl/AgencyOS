@@ -1,49 +1,89 @@
 import { Request, Response } from 'express'
-import { v4 as uuid } from 'uuid'
+import { PrismaClient } from '@prisma/client'
 import type { BriefingForm } from '../types'
 
-const briefings: BriefingForm[] = []
+const prisma = new PrismaClient()
 
-export function getBriefings(_req: Request, res: Response): void {
+export async function getBriefings(req: Request, res: Response): Promise<void> {
+  const userId = req.user!.userId
+  const briefings = await prisma.briefing.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+  })
   res.json({ success: true, data: briefings })
 }
 
-export function getBriefing(req: Request, res: Response): void {
-  const b = briefings.find((x) => x.id === req.params.id)
-  if (!b) {
+export async function getBriefing(req: Request, res: Response): Promise<void> {
+  const userId = req.user!.userId
+  const briefing = await prisma.briefing.findFirst({
+    where: { id: req.params.id, userId },
+  })
+  if (!briefing) {
     res.status(404).json({ success: false, error: 'Briefing no encontrado' })
     return
   }
-  res.json({ success: true, data: b })
+  res.json({ success: true, data: briefing })
 }
 
-export function createBriefing(req: Request, res: Response): void {
+export async function createBriefing(req: Request, res: Response): Promise<void> {
+  const userId = req.user!.userId
   const body = req.body as Omit<BriefingForm, 'id' | 'createdAt'>
   if (!body.clientName || !body.projectName) {
     res.status(400).json({ success: false, error: 'clientName y projectName son requeridos' })
     return
   }
-  const briefing: BriefingForm = { ...body, id: uuid(), createdAt: new Date().toISOString() }
-  briefings.push(briefing)
+  const briefing = await prisma.briefing.create({
+    data: {
+      userId,
+      clientName: body.clientName,
+      brand: body.brand ?? '',
+      projectName: body.projectName,
+      projectType: body.projectType ?? '',
+      objective: body.objective ?? '',
+      targetAudience: body.targetAudience ?? '',
+      ageRange: body.ageRange ?? '',
+      location: body.location ?? '',
+      keyMessage: body.keyMessage ?? '',
+      tone: body.tone ?? '',
+      mandatories: body.mandatories ?? '',
+      restrictions: body.restrictions ?? '',
+      deliverables: body.deliverables ?? '',
+      startDate: body.startDate ?? '',
+      endDate: body.endDate ?? '',
+      budget: body.budget ?? '',
+      competitors: body.competitors ?? '',
+      references: body.references ?? '',
+      additionalNotes: body.additionalNotes ?? '',
+    },
+  })
   res.status(201).json({ success: true, data: briefing })
 }
 
-export function updateBriefing(req: Request, res: Response): void {
-  const idx = briefings.findIndex((b) => b.id === req.params.id)
-  if (idx === -1) {
+export async function updateBriefing(req: Request, res: Response): Promise<void> {
+  const userId = req.user!.userId
+  const existing = await prisma.briefing.findFirst({
+    where: { id: req.params.id, userId },
+  })
+  if (!existing) {
     res.status(404).json({ success: false, error: 'Briefing no encontrado' })
     return
   }
-  briefings[idx] = { ...briefings[idx], ...req.body, id: req.params.id }
-  res.json({ success: true, data: briefings[idx] })
+  const updated = await prisma.briefing.update({
+    where: { id: req.params.id },
+    data: req.body,
+  })
+  res.json({ success: true, data: updated })
 }
 
-export function deleteBriefing(req: Request, res: Response): void {
-  const idx = briefings.findIndex((b) => b.id === req.params.id)
-  if (idx === -1) {
+export async function deleteBriefing(req: Request, res: Response): Promise<void> {
+  const userId = req.user!.userId
+  const existing = await prisma.briefing.findFirst({
+    where: { id: req.params.id, userId },
+  })
+  if (!existing) {
     res.status(404).json({ success: false, error: 'Briefing no encontrado' })
     return
   }
-  briefings.splice(idx, 1)
+  await prisma.briefing.delete({ where: { id: req.params.id } })
   res.json({ success: true, data: null })
 }
