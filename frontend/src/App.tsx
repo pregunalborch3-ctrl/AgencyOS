@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider }         from './contexts/AuthContext'
 import { SubscriptionProvider } from './contexts/SubscriptionContext'
 import ProtectedRoute           from './components/ProtectedRoute'
@@ -20,6 +20,7 @@ import ScalingRoadmap          from './pages/frameworks/ScalingRoadmap'
 import Privacy                 from './pages/legal/Privacy'
 import Terms                   from './pages/legal/Terms'
 import Cookies                 from './pages/legal/Cookies'
+import NotFound                from './pages/NotFound'
 
 export default function App() {
   return (
@@ -54,7 +55,7 @@ export default function App() {
               </Route>
             </Route>
 
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </SubscriptionProvider>
       </AuthProvider>

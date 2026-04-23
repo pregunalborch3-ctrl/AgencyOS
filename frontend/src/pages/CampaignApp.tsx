@@ -337,14 +337,33 @@ function LoadingState() {
     return () => { clearInterval(dotsTimer); clearInterval(stepTimer) }
   }, [])
 
+  const progress = Math.round(((step + 1) / LOADING_STEPS.length) * 100)
+
   return (
-    <div className="flex-1 flex flex-col items-center justify-center gap-10 py-20">
+    <div className="flex-1 flex flex-col items-center justify-center gap-8 py-20 px-6">
       <div className="relative">
         <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
           <Rocket size={28} className="text-indigo-400 animate-pulse" />
         </div>
         <div className="absolute inset-0 rounded-2xl animate-ping bg-indigo-500/10" style={{ animationDuration: '2s' }} />
       </div>
+
+      <div className="flex flex-col items-center gap-2 text-center">
+        <p className="text-white font-semibold text-base">Generando tu campaña con IA...</p>
+        <p className="text-zinc-500 text-xs">Esto tarda unos segundos</p>
+      </div>
+
+      {/* Barra de progreso */}
+      <div className="w-full max-w-xs flex flex-col gap-1.5">
+        <div className="w-full h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+          <div
+            className="h-full rounded-full bg-indigo-500 transition-all duration-700 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        <p className="text-right text-xs text-zinc-600">{progress}%</p>
+      </div>
+
       <div className="flex flex-col items-center gap-3 w-full max-w-xs">
         {LOADING_STEPS.map((msg, i) => (
           <div key={i} className={`flex items-center gap-3 w-full transition-all duration-500 ${
