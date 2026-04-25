@@ -1,99 +1,138 @@
-import { useState } from 'react'
-import { Plus, TrendingUp, TrendingDown, Minus, Globe, X } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Plus, Globe, X, Trash2, TrendingUp, TrendingDown, Lightbulb, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 import Header from '../components/Layout/Header'
-import type { Competitor, SocialMetrics, Platform } from '../types'
 
-const platformLabels: Record<Platform, string> = {
-  instagram: 'Instagram',
-  facebook: 'Facebook',
-  twitter: 'Twitter/X',
-  linkedin: 'LinkedIn',
-  tiktok: 'TikTok',
-  youtube: 'YouTube',
+const BASE = '/api'
+const TOKEN_KEY = 'agencyos_token'
+const token = () => localStorage.getItem(TOKEN_KEY) ?? ''
+
+interface CompetitorNote {
+  description: string
+  strengths: string[]
+  weaknesses: string[]
+  opportunities: string[]
 }
 
-const fmtNum = (n: number) =>
-  n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1_000 ? `${(n / 1_000).toFixed(1)}K` : String(n)
+interface Competitor {
+  id: string
+  name: string
+  url: string | null
+  notes: string | null
+  createdAt: string
+}
 
-const mockCompetitors: Competitor[] = [
-  {
-    id: '1',
-    name: 'Competitor Alpha',
-    website: 'https://alpha.com',
-    description: 'Agencia líder en digital marketing con fuerte presencia en Instagram y LinkedIn.',
-    metrics: [
-      { platform: 'instagram', followers: 125000, engagementRate: 4.2, postsPerWeek: 5, avgLikes: 5250, avgComments: 210 },
-      { platform: 'linkedin', followers: 28000, engagementRate: 2.8, postsPerWeek: 3, avgLikes: 784, avgComments: 56 },
-    ],
-    strengths: ['Gran comunidad en Instagram', 'Contenido de alta calidad', 'Respuesta rápida'],
-    weaknesses: ['Poca presencia en TikTok', 'Sin estrategia de video corto'],
-    opportunities: ['Mercado B2B sin explotar', 'Potencial en newsletters'],
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    name: 'Competitor Beta',
-    website: 'https://beta.com',
-    description: 'Especialistas en redes sociales para marcas de lujo y lifestyle.',
-    metrics: [
-      { platform: 'instagram', followers: 89000, engagementRate: 6.1, postsPerWeek: 7, avgLikes: 5429, avgComments: 320 },
-      { platform: 'tiktok', followers: 210000, engagementRate: 8.4, postsPerWeek: 10, avgLikes: 17640, avgComments: 890 },
-    ],
-    strengths: ['Alto engagement en TikTok', 'Viral frecuentemente', 'Estética cuidada'],
-    weaknesses: ['Menor reach en LinkedIn', 'Bajo número de followers en Facebook'],
-    opportunities: ['Expansion a YouTube Shorts', 'Colaboraciones con influencers mid-tier'],
-    createdAt: new Date().toISOString(),
-  },
-]
+function parseNotes(raw: string | null): CompetitorNote {
+  if (!raw) return { description: '', strengths: [''], weaknesses: [''], opportunities: [''] }
+  try {
+    return JSON.parse(raw) as CompetitorNote
+  } catch {
+    return { description: raw, strengths: [''], weaknesses: [''], opportunities: [''] }
+  }
+}
 
-const emptyCompetitor = (): Omit<Competitor, 'id' | 'createdAt'> => ({
-  name: '',
-  website: '',
-  description: '',
-  metrics: [{ platform: 'instagram', followers: 0, engagementRate: 0, postsPerWeek: 0, avgLikes: 0, avgComments: 0 }],
-  strengths: [''],
-  weaknesses: [''],
-  opportunities: [''],
-})
+async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, {
+    ...options,
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token()}`, ...(options?.headers ?? {}) },
+  })
+  const json = await res.json()
+  if (!res.ok || !json.success) throw new Error(json.error ?? 'Error en la solicitud')
+  return json.data as T
+}
+
+function emptyForm() {
+  return { name: '', url: '', description: '', strengths: [''], weaknesses: [''], opportunities: [''] }
+}
 
 export default function CompetitorAnalyzer() {
-  const [competitors, setCompetitors] = useState<Competitor[]>(mockCompetitors)
-  const [showModal, setShowModal] = useState(false)
-  const [newComp, setNewComp] = useState(emptyCompetitor())
-  const [selected, setSelected] = useState<string[]>(mockCompetitors.map((c) => c.id))
+  const [competitors, setCompetitors] = useState<Competitor[]>([])
+  const [loading,     setLoading]     = useState(true)
+  const [showModal,   setShowModal]   = useState(false)
+  const [saving,      setSaving]      = useState(false)
+  const [form,        setForm]        = useState(emptyForm())
+  const [editId,      setEditId]      = useState<string | null>(null)
+  const [selected,    setSelected]    = useState<string[]>([])
 
-  const addCompetitor = () => {
-    if (!newComp.name) return
-    const comp: Competitor = { ...newComp, id: Date.now().toString(), createdAt: new Date().toISOString() }
-    setCompetitors((c) => [...c, comp])
-    setSelected((s) => [...s, comp.id])
-    setShowModal(false)
-    setNewComp(emptyCompetitor())
+  useEffect(() => {
+    apiFetch<Competitor[]>('/competitor')
+      .then(data => { setCompetitors(data); setSelected(data.map(c => c.id)) })
+      .catch(() => toast.error('No se pudieron cargar los competidores.'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const openAdd = () => { setForm(emptyForm()); setEditId(null); setShowModal(true) }
+  const openEdit = (c: Competitor) => {
+    const n = parseNotes(c.notes)
+    setForm({ name: c.name, url: c.url ?? '', description: n.description, strengths: n.strengths.length ? n.strengths : [''], weaknesses: n.weaknesses.length ? n.weaknesses : [''], opportunities: n.opportunities.length ? n.opportunities : [''] })
+    setEditId(c.id)
+    setShowModal(true)
   }
 
-  const removeCompetitor = (id: string) => {
-    setCompetitors((c) => c.filter((x) => x.id !== id))
-    setSelected((s) => s.filter((x) => x !== id))
+  const saveCompetitor = async () => {
+    if (!form.name.trim()) { toast.error('El nombre es obligatorio.'); return }
+    setSaving(true)
+    const notes = JSON.stringify({
+      description: form.description,
+      strengths:   form.strengths.filter(Boolean),
+      weaknesses:  form.weaknesses.filter(Boolean),
+      opportunities: form.opportunities.filter(Boolean),
+    })
+    try {
+      if (editId) {
+        const updated = await apiFetch<Competitor>(`/competitor/${editId}`, {
+          method: 'PUT',
+          body: JSON.stringify({ name: form.name, url: form.url || null, notes }),
+        })
+        setCompetitors(cs => cs.map(c => c.id === editId ? updated : c))
+        toast.success('Competidor actualizado.')
+      } else {
+        const created = await apiFetch<Competitor>('/competitor', {
+          method: 'POST',
+          body: JSON.stringify({ name: form.name, url: form.url || null, notes }),
+        })
+        setCompetitors(cs => [created, ...cs])
+        setSelected(s => [...s, created.id])
+        toast.success('Competidor añadido.')
+      }
+      setShowModal(false)
+    } catch {
+      toast.error('No se pudo guardar el competidor.')
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const toggleSelect = (id: string) => {
-    setSelected((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id])
+  const deleteCompetitor = async (id: string) => {
+    try {
+      await apiFetch(`/competitor/${id}`, { method: 'DELETE' })
+      setCompetitors(cs => cs.filter(c => c.id !== id))
+      setSelected(s => s.filter(x => x !== id))
+      toast.success('Competidor eliminado.')
+    } catch {
+      toast.error('No se pudo eliminar.')
+    }
   }
 
-  const selectedComps = competitors.filter((c) => selected.includes(c.id))
+  const toggleSelect = (id: string) =>
+    setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id])
 
-  const getMetric = (comp: Competitor, platform: Platform, field: keyof SocialMetrics) => {
-    const m = comp.metrics.find((x) => x.platform === platform)
-    return m ? m[field] : null
-  }
+  const selectedComps = competitors.filter(c => selected.includes(c.id))
 
-  const allPlatforms = [...new Set(competitors.flatMap((c) => c.metrics.map((m) => m.platform)))]
+  const setListItem = (field: 'strengths' | 'weaknesses' | 'opportunities', idx: number, val: string) =>
+    setForm(f => ({ ...f, [field]: f[field].map((v, i) => i === idx ? val : v) }))
 
-  const totalFollowers = (comp: Competitor) => comp.metrics.reduce((s, m) => s + m.followers, 0)
-  const avgEngagement = (comp: Competitor) => {
-    if (comp.metrics.length === 0) return 0
-    return comp.metrics.reduce((s, m) => s + m.engagementRate, 0) / comp.metrics.length
-  }
+  const addListItem = (field: 'strengths' | 'weaknesses' | 'opportunities') =>
+    setForm(f => ({ ...f, [field]: [...f[field], ''] }))
+
+  const removeListItem = (field: 'strengths' | 'weaknesses' | 'opportunities', idx: number) =>
+    setForm(f => ({ ...f, [field]: f[field].filter((_, i) => i !== idx) || [''] }))
+
+  if (loading) return (
+    <div className="flex-1 flex items-center justify-center">
+      <Loader2 size={24} className="animate-spin text-indigo-400" />
+    </div>
+  )
 
   return (
     <div className="flex-1">
@@ -102,125 +141,68 @@ export default function CompetitorAnalyzer() {
         subtitle="Monitoriza y compara el rendimiento de tus competidores"
       />
       <div className="p-6 space-y-6">
-        {/* Competitors list */}
+        {/* Header row */}
         <div className="flex items-center justify-between">
           <h2 className="section-title">Competidores monitorizados</h2>
-          <button className="btn-primary" onClick={() => setShowModal(true)}>
+          <button className="btn-primary" onClick={openAdd}>
             <Plus size={16} /> Añadir competidor
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {competitors.map((comp) => (
-            <div
-              key={comp.id}
-              className={`card p-5 cursor-pointer transition-all ${
-                selected.includes(comp.id) ? 'ring-2 ring-indigo-500 shadow-md' : 'hover:shadow-md'
-              }`}
-              onClick={() => toggleSelect(comp.id)}
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h3 className="font-semibold text-gray-900">{comp.name}</h3>
-                  <a
-                    href={comp.website}
-                    className="text-xs text-indigo-500 flex items-center gap-1 mt-0.5"
-                    onClick={(e) => e.stopPropagation()}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <Globe size={10} /> {comp.website.replace('https://', '')}
-                  </a>
-                </div>
-                <button
-                  className="text-gray-300 hover:text-red-500 transition-colors p-1"
-                  onClick={(e) => { e.stopPropagation(); removeCompetitor(comp.id) }}
+        {competitors.length === 0 ? (
+          <div className="card p-12 text-center">
+            <TrendingUp size={32} className="text-gray-300 mx-auto mb-4" />
+            <h3 className="font-semibold text-gray-600 mb-2">Sin competidores aún</h3>
+            <p className="text-sm text-gray-400 mb-5">Añade tus primeros competidores para empezar el análisis.</p>
+            <button className="btn-primary mx-auto" onClick={openAdd}><Plus size={16} /> Añadir competidor</button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {competitors.map(comp => {
+              const n = parseNotes(comp.notes)
+              return (
+                <div
+                  key={comp.id}
+                  className={`card p-5 cursor-pointer transition-all ${selected.includes(comp.id) ? 'ring-2 ring-indigo-500 shadow-md' : 'hover:shadow-md'}`}
+                  onClick={() => toggleSelect(comp.id)}
                 >
-                  <X size={14} />
-                </button>
-              </div>
-              <p className="text-xs text-gray-500 mb-4 leading-relaxed">{comp.description}</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-gray-50 rounded-xl p-3 text-center">
-                  <p className="text-lg font-bold text-gray-900">{fmtNum(totalFollowers(comp))}</p>
-                  <p className="text-xs text-gray-500">Total seguidores</p>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900 truncate">{comp.name}</h3>
+                      {comp.url && (
+                        <a href={comp.url} className="text-xs text-indigo-500 flex items-center gap-1 mt-0.5"
+                          onClick={e => e.stopPropagation()} target="_blank" rel="noreferrer">
+                          <Globe size={10} /> {comp.url.replace(/https?:\/\//, '').split('/')[0]}
+                        </a>
+                      )}
+                    </div>
+                    <div className="flex gap-1 ml-2">
+                      <button className="text-gray-300 hover:text-indigo-500 transition-colors p-1" onClick={e => { e.stopPropagation(); openEdit(comp) }}>
+                        ✏️
+                      </button>
+                      <button className="text-gray-300 hover:text-red-500 transition-colors p-1" onClick={e => { e.stopPropagation(); deleteCompetitor(comp.id) }}>
+                        <X size={14} />
+                      </button>
+                    </div>
+                  </div>
+                  {n.description && <p className="text-xs text-gray-500 mb-3 leading-relaxed line-clamp-2">{n.description}</p>}
+                  <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                    <div className="bg-emerald-50 rounded-lg p-2">
+                      <p className="font-bold text-emerald-700">{n.strengths.filter(Boolean).length}</p>
+                      <p className="text-emerald-600">Fortalezas</p>
+                    </div>
+                    <div className="bg-red-50 rounded-lg p-2">
+                      <p className="font-bold text-red-700">{n.weaknesses.filter(Boolean).length}</p>
+                      <p className="text-red-600">Debilidades</p>
+                    </div>
+                    <div className="bg-amber-50 rounded-lg p-2">
+                      <p className="font-bold text-amber-700">{n.opportunities.filter(Boolean).length}</p>
+                      <p className="text-amber-600">Oportunidades</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="bg-indigo-50 rounded-xl p-3 text-center">
-                  <p className="text-lg font-bold text-indigo-600">{avgEngagement(comp).toFixed(1)}%</p>
-                  <p className="text-xs text-gray-500">Eng. promedio</p>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {comp.metrics.map((m) => (
-                  <span key={m.platform} className="badge bg-gray-100 text-gray-600 text-xs">
-                    {platformLabels[m.platform]}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Comparison table */}
-        {selectedComps.length >= 2 && (
-          <div>
-            <h2 className="section-title mb-4">Comparativa por plataforma</h2>
-            <div className="card overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-gray-50 border-b border-gray-100">
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        Plataforma / Métrica
-                      </th>
-                      {selectedComps.map((comp) => (
-                        <th key={comp.id} className="text-center px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                          {comp.name}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {allPlatforms.map((platform) => (
-                      <>
-                        <tr key={`${platform}-header`} className="bg-indigo-50/60">
-                          <td colSpan={selectedComps.length + 1} className="px-5 py-2 text-xs font-semibold text-indigo-700 uppercase tracking-wide">
-                            {platformLabels[platform]}
-                          </td>
-                        </tr>
-                        {(['followers', 'engagementRate', 'postsPerWeek', 'avgLikes'] as (keyof SocialMetrics)[]).map((field) => {
-                          const values = selectedComps.map((c) => getMetric(c, platform, field) as number | null)
-                          const max = Math.max(...values.filter((v): v is number => v !== null))
-                          return (
-                            <tr key={`${platform}-${field}`} className="hover:bg-gray-50">
-                              <td className="px-5 py-3 text-gray-600 capitalize">
-                                {({ followers: 'Seguidores', engagementRate: 'Engagement (%)', postsPerWeek: 'Posts/semana', avgLikes: 'Likes promedio' } as Record<string, string>)[field]}
-                              </td>
-                              {selectedComps.map((comp) => {
-                                const val = getMetric(comp, platform, field) as number | null
-                                const isMax = val !== null && val === max && max > 0
-                                return (
-                                  <td key={comp.id} className="text-center px-4 py-3">
-                                    {val !== null ? (
-                                      <span className={`font-medium ${isMax ? 'text-emerald-600' : 'text-gray-700'}`}>
-                                        {field === 'engagementRate' ? `${val}%` : fmtNum(val)}
-                                        {isMax && <TrendingUp size={12} className="inline ml-1" />}
-                                      </span>
-                                    ) : (
-                                      <span className="text-gray-300">—</span>
-                                    )}
-                                  </td>
-                                )
-                              })}
-                            </tr>
-                          )
-                        })}
-                      </>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+              )
+            })}
           </div>
         )}
 
@@ -229,105 +211,99 @@ export default function CompetitorAnalyzer() {
           <div>
             <h2 className="section-title mb-4">Análisis SWOT</h2>
             <div className={`grid gap-6 ${selectedComps.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
-              {selectedComps.map((comp) => (
-                <div key={comp.id} className="card p-5">
-                  <h3 className="font-semibold text-gray-900 mb-4">{comp.name}</h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-emerald-50 rounded-xl p-3">
-                      <p className="text-xs font-semibold text-emerald-700 uppercase mb-2 flex items-center gap-1">
-                        <TrendingUp size={12} /> Fortalezas
-                      </p>
-                      <ul className="space-y-1">
-                        {comp.strengths.filter(Boolean).map((s, i) => (
-                          <li key={i} className="text-xs text-emerald-800">• {s}</li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div className="bg-red-50 rounded-xl p-3">
-                      <p className="text-xs font-semibold text-red-700 uppercase mb-2 flex items-center gap-1">
-                        <TrendingDown size={12} /> Debilidades
-                      </p>
-                      <ul className="space-y-1">
-                        {comp.weaknesses.filter(Boolean).map((s, i) => (
-                          <li key={i} className="text-xs text-red-800">• {s}</li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div className="col-span-2 bg-amber-50 rounded-xl p-3">
-                      <p className="text-xs font-semibold text-amber-700 uppercase mb-2 flex items-center gap-1">
-                        <Minus size={12} /> Oportunidades para nosotros
-                      </p>
-                      <ul className="space-y-1">
-                        {comp.opportunities.filter(Boolean).map((s, i) => (
-                          <li key={i} className="text-xs text-amber-800">• {s}</li>
-                        ))}
-                      </ul>
+              {selectedComps.map(comp => {
+                const n = parseNotes(comp.notes)
+                return (
+                  <div key={comp.id} className="card p-5">
+                    <h3 className="font-semibold text-gray-900 mb-4">{comp.name}</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-emerald-50 rounded-xl p-3">
+                        <p className="text-xs font-semibold text-emerald-700 uppercase mb-2 flex items-center gap-1">
+                          <TrendingUp size={12} /> Fortalezas
+                        </p>
+                        <ul className="space-y-1">
+                          {n.strengths.filter(Boolean).map((s, i) => <li key={i} className="text-xs text-emerald-800">• {s}</li>)}
+                          {n.strengths.filter(Boolean).length === 0 && <li className="text-xs text-gray-400 italic">Sin datos</li>}
+                        </ul>
+                      </div>
+                      <div className="bg-red-50 rounded-xl p-3">
+                        <p className="text-xs font-semibold text-red-700 uppercase mb-2 flex items-center gap-1">
+                          <TrendingDown size={12} /> Debilidades
+                        </p>
+                        <ul className="space-y-1">
+                          {n.weaknesses.filter(Boolean).map((s, i) => <li key={i} className="text-xs text-red-800">• {s}</li>)}
+                          {n.weaknesses.filter(Boolean).length === 0 && <li className="text-xs text-gray-400 italic">Sin datos</li>}
+                        </ul>
+                      </div>
+                      <div className="col-span-2 bg-amber-50 rounded-xl p-3">
+                        <p className="text-xs font-semibold text-amber-700 uppercase mb-2 flex items-center gap-1">
+                          <Lightbulb size={12} /> Oportunidades para nosotros
+                        </p>
+                        <ul className="space-y-1">
+                          {n.opportunities.filter(Boolean).map((s, i) => <li key={i} className="text-xs text-amber-800">• {s}</li>)}
+                          {n.opportunities.filter(Boolean).length === 0 && <li className="text-xs text-gray-400 italic">Sin datos</li>}
+                        </ul>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         )}
       </div>
 
-      {/* Add competitor modal */}
+      {/* Add/Edit modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="card w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-semibold text-gray-900">Añadir competidor</h3>
+              <h3 className="font-semibold text-gray-900">{editId ? 'Editar competidor' : 'Añadir competidor'}</h3>
               <button className="btn-ghost p-1" onClick={() => setShowModal(false)}><X size={16} /></button>
             </div>
             <div className="space-y-4">
               <div>
                 <label className="label">Nombre *</label>
-                <input className="input" placeholder="ej. Agencia XYZ" value={newComp.name}
-                  onChange={(e) => setNewComp((c) => ({ ...c, name: e.target.value }))} />
+                <input className="input" placeholder="ej. Agencia XYZ" value={form.name}
+                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
               </div>
               <div>
                 <label className="label">Sitio web</label>
-                <input className="input" placeholder="https://..." value={newComp.website}
-                  onChange={(e) => setNewComp((c) => ({ ...c, website: e.target.value }))} />
+                <input className="input" placeholder="https://..." value={form.url}
+                  onChange={e => setForm(f => ({ ...f, url: e.target.value }))} />
               </div>
               <div>
                 <label className="label">Descripción</label>
-                <textarea className="input resize-none" rows={2} value={newComp.description}
-                  onChange={(e) => setNewComp((c) => ({ ...c, description: e.target.value }))} />
+                <textarea className="input resize-none" rows={2} placeholder="Qué hacen, en qué se especializan..."
+                  value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
               </div>
-              <div>
-                <label className="label">Plataforma principal</label>
-                <select className="select" value={newComp.metrics[0]?.platform || 'instagram'}
-                  onChange={(e) => setNewComp((c) => ({
-                    ...c,
-                    metrics: [{ ...c.metrics[0], platform: e.target.value as Platform }],
-                  }))}>
-                  {Object.entries(platformLabels).map(([v, l]) => (
-                    <option key={v} value={v}>{l}</option>
+
+              {(['strengths', 'weaknesses', 'opportunities'] as const).map(field => (
+                <div key={field}>
+                  <label className="label flex items-center gap-1.5">
+                    {field === 'strengths' ? '✅ Fortalezas' : field === 'weaknesses' ? '❌ Debilidades' : '💡 Oportunidades para nosotros'}
+                  </label>
+                  {form[field].map((val, idx) => (
+                    <div key={idx} className="flex gap-2 mb-1.5">
+                      <input className="input flex-1" placeholder="Escribe aquí..." value={val}
+                        onChange={e => setListItem(field, idx, e.target.value)} />
+                      {form[field].length > 1 && (
+                        <button className="text-gray-300 hover:text-red-500 p-1" onClick={() => removeListItem(field, idx)}>
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
                   ))}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="label">Seguidores</label>
-                  <input className="input" type="number" value={newComp.metrics[0]?.followers || 0}
-                    onChange={(e) => setNewComp((c) => ({
-                      ...c, metrics: [{ ...c.metrics[0], followers: Number(e.target.value) }],
-                    }))} />
+                  <button className="text-xs text-indigo-500 hover:text-indigo-700 font-medium mt-1" onClick={() => addListItem(field)}>
+                    + Añadir
+                  </button>
                 </div>
-                <div>
-                  <label className="label">Engagement (%)</label>
-                  <input className="input" type="number" step="0.1" value={newComp.metrics[0]?.engagementRate || 0}
-                    onChange={(e) => setNewComp((c) => ({
-                      ...c, metrics: [{ ...c.metrics[0], engagementRate: Number(e.target.value) }],
-                    }))} />
-                </div>
-              </div>
+              ))}
             </div>
             <div className="flex gap-3 mt-5">
               <button className="btn-secondary flex-1 justify-center" onClick={() => setShowModal(false)}>Cancelar</button>
-              <button className="btn-primary flex-1 justify-center" onClick={addCompetitor}>
-                <Plus size={16} /> Añadir
+              <button className="btn-primary flex-1 justify-center" onClick={saveCompetitor} disabled={saving}>
+                {saving ? <><Loader2 size={14} className="animate-spin" /> Guardando...</> : <><Plus size={16} /> {editId ? 'Guardar cambios' : 'Añadir'}</>}
               </button>
             </div>
           </div>

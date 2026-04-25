@@ -28,6 +28,7 @@ export interface User {
 
 export type PublicUser = Omit<User, "passwordHash">
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toUser(u: any): User {
   return {
     id: u.id,
@@ -79,8 +80,10 @@ export const UserStore = {
     return u ? toUser(u) : undefined
   },
 
-  async update(id: string, data: Partial<any>): Promise<User> {
-    const updateData: any = {}
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async update(id: string, data: Partial<Record<string, any>>): Promise<User> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updateData: Record<string, any> = {}
     if (data.lastLoginAt !== undefined) updateData.lastLoginAt = data.lastLoginAt ? new Date(data.lastLoginAt) : null
     if (data.stripeCustomerId !== undefined) updateData.stripeCustomerId = data.stripeCustomerId
     if (data.subscriptionId !== undefined) updateData.subscriptionId = data.subscriptionId

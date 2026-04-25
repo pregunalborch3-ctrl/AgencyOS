@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 import { stripe, PRICE_ID, PRICE_IDS, WEBHOOK_SECRET } from '../services/stripeService'
-import { UserStore } from '../models/User'
+import { UserStore, type SubStatus } from '../models/User'
 
 const FRONTEND = process.env.FRONTEND_URL ?? 'http://localhost:5173'
 
@@ -132,7 +132,7 @@ export async function handleWebhook(req: Request, res: Response): Promise<void> 
           stripeCustomerId: session.customer,
           subscription: {
             stripeSubscriptionId: sub.id,
-            status:              sub.status as any,
+            status:              sub.status as SubStatus,
             currentPeriodEnd:    new Date(sub.current_period_end * 1000).toISOString(),
             cancelAtPeriodEnd:   sub.cancel_at_period_end,
             priceId:             item?.price.id ?? PRICE_ID,
@@ -151,7 +151,7 @@ export async function handleWebhook(req: Request, res: Response): Promise<void> 
         UserStore.update(user.id, {
           subscription: {
             stripeSubscriptionId: sub.id,
-            status:              sub.status as any,
+            status:              sub.status as SubStatus,
             currentPeriodEnd:    new Date(sub.current_period_end * 1000).toISOString(),
             cancelAtPeriodEnd:   sub.cancel_at_period_end,
             priceId:             item?.price.id ?? PRICE_ID,

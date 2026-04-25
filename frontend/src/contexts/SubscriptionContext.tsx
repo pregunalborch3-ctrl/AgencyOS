@@ -55,12 +55,13 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const refetch = useCallback(async () => {
     if (!user) { setSubscription(null); setIsLoading(false); return }
     // Seed immediately from auth data so UI never shows stale "no subscription"
-    if (user.subscription) setSubscription(user.subscription as SubscriptionData)
+    const userAny = user as unknown as Record<string, unknown>
+    if (userAny.subscription) setSubscription(userAny.subscription as SubscriptionData)
     try {
       const data = await authFetch<SubscriptionData | null>('/subscription/status')
-      setSubscription(data ?? (user.subscription as SubscriptionData | null))
+      setSubscription(data ?? (userAny.subscription as SubscriptionData | null))
     } catch {
-      setSubscription(user.subscription as SubscriptionData | null)
+      setSubscription(userAny.subscription as SubscriptionData | null)
     } finally {
       setIsLoading(false)
     }

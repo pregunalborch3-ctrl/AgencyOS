@@ -2,8 +2,9 @@ import { useState } from 'react'
 import {
   Rocket, Loader2, Copy, Check, ChevronDown, Store,
   Target, Zap, Megaphone, Video, BarChart3, Users,
-  AlertCircle, Sparkles,
+  AlertCircle, Sparkles, Search, Download,
 } from 'lucide-react'
+import { toast } from 'sonner'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface ShortCopy  { hook: string; body: string; cta: string; type: string; platform: string }
@@ -268,6 +269,57 @@ function SegmentationSection({ seg }: { seg: Segmentation }) {
   )
 }
 
+// ─── Export to ad platforms (structured CSV) ─────────────────────────────────
+async function exportForPlatform(result: CampaignResult, platform: 'meta' | 'google' | 'tiktok') {
+  const { downloadCSV } = await import('../lib/exportUtils')
+
+  if (platform === 'meta') {
+    const rows: (string | number)[][] = [
+      ['Campaign Name', 'Ad Set Name', 'Ad Name', 'Primary Text', 'Headline', 'CTA'],
+      ...result.shortCopies.map((c, i) => [
+        `Campaign_${result.input.objective}`,
+        `AdSet_${result.input.niche}`,
+        `Ad_${c.type}_${i + 1}`,
+        c.body,
+        c.hook,
+        c.cta.replace(' →', ''),
+      ]),
+    ]
+    downloadCSV('meta_ads_export', rows)
+  }
+
+  if (platform === 'google') {
+    const rows: (string | number)[][] = [
+      ['Campaign', 'Ad Group', 'Headline 1', 'Headline 2', 'Description 1', 'Description 2', 'Final URL'],
+      ...result.shortCopies.map((c, i) => [
+        `Campaign_${result.input.objective}`,
+        `AdGroup_${result.input.niche}_${i + 1}`,
+        c.hook.slice(0, 30),
+        result.input.niche ?? '',
+        c.body.split('.')[0].slice(0, 90),
+        c.cta.replace(' →', '').slice(0, 90),
+        result.input.productUrl || '',
+      ]),
+    ]
+    downloadCSV('google_ads_export', rows)
+  }
+
+  if (platform === 'tiktok') {
+    const creative = result.creatives[0]?.structure?.map(s => `[${s.time}] ${s.action}`).join(' | ') ?? ''
+    const rows: (string | number)[][] = [
+      ['Ad Name', 'Ad Text', 'CTA Button', 'Hook (0-3s)', 'Script Summary'],
+      ...result.shortCopies.map((c, i) => [
+        `TikTok_Ad_${c.type}_${i + 1}`,
+        `${c.hook}\n\n${c.body}`,
+        c.cta.replace(' →', ''),
+        result.hooks[0]?.text ?? c.hook,
+        creative.slice(0, 200),
+      ]),
+    ]
+    downloadCSV('tiktok_ads_export', rows)
+  }
+}
+
 // ─── Tabs ─────────────────────────────────────────────────────────────────────
 const TABS = [
   { id: 'ads',       label: 'Anuncios',    icon: Megaphone },
@@ -304,9 +356,24 @@ export default function CampaignGenerator() {
   const [niche,              setNiche]              = useState('')
   const [objective,          setObjective]          = useState('')
   const [loading,            setLoading]            = useState(false)
+  const [analyzingUrl,       setAnalyzingUrl]       = useState(false)
   const [error,              setError]              = useState<string | null>(null)
   const [result,             setResult]             = useState<CampaignResult | null>(null)
   const [activeTab,          setActiveTab]          = useState('ads')
+
+  async function handleAnalyzeUrl() {
+    if (!productUrl.trim()) return
+    setAnalyzingUrl(true)
+    setError(null)
+    try {
+      const data = await apiFetch<{ suggestedDescription: string; productName: string }>('/campaigns/analyze-url', { url: productUrl })
+      if (data.suggestedDescription) setProductDescription(data.suggestedDescription)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo analizar la URL.')
+    } finally {
+      setAnalyzingUrl(false)
+    }
+  }
 
   async function handleGenerate() {
     if (!productDescription.trim() && !productUrl.trim()) {
@@ -325,11 +392,59 @@ export default function CampaignGenerator() {
       })
       setResult(data)
       setActiveTab('ads')
+      toast.success('¡Campaña generada con IA!')
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error generando la campaña.')
+      const msg = e instanceof Error ? e.message : 'Error generando la campaña.'
+      setError(msg)
+      if (msg === 'FREE_LIMIT_REACHED') {
+        toast.error('Has usado tu campaña gratuita. Suscríbete para continuar.')
+      } else {
+        toast.error(msg)
+      }
     } finally {
       setLoading(false)
     }
+  }
+
+  async function handleExportPDF() {
+    if (!result) return
+    const { downloadPDF } = await import('../lib/exportUtils')
+    const body = `
+      <h2>Anuncios cortos</h2>
+      ${result.shortCopies.map(c => `
+        <div class="card card-accent no-break">
+          <p><span class="tag tag-indigo">${c.type}</span> <span style="font-size:11px;color:#9ca3af">${c.platform}</span></p>
+          <h3 style="margin-top:8px">${c.hook}</h3>
+          <p>${c.body}</p>
+          <p><strong>${c.cta}</strong></p>
+        </div>`).join('')}
+      <h2>Hooks virales</h2>
+      ${result.hooks.map(h => `
+        <div class="card no-break">
+          <p><span class="tag tag-violet">${h.type}</span></p>
+          <h3>${h.text}</h3>
+          <p style="color:#6b7280;font-style:italic">${h.why}</p>
+        </div>`).join('')}
+      <h2>Segmentación de audiencia</h2>
+      <div class="card">
+        <p><strong>Perfil:</strong> ${result.segmentation.profile}</p>
+        <p><strong>Edad:</strong> ${result.segmentation.ageRange} · ${result.segmentation.gender}</p>
+        <p><strong>Intereses:</strong> ${result.segmentation.interests.join(', ')}</p>
+        <p><strong>Dolores:</strong> ${result.segmentation.pains.join(' | ')}</p>
+        <p><strong>Deseos:</strong> ${result.segmentation.desires.join(' | ')}</p>
+      </div>
+      <h2>Estructura de campaña</h2>
+      <div class="card"><p><strong>${result.campaignStructure.type}</strong></p></div>
+      <table>
+        <thead><tr><th>Fase</th><th>Objetivo</th><th>Audiencia</th><th>Budget</th></tr></thead>
+        <tbody>
+          ${result.campaignStructure.funnel.map(r => `<tr><td>${r.stage}</td><td>${r.objective}</td><td>${r.audience}</td><td>${r.budget}</td></tr>`).join('')}
+        </tbody>
+      </table>
+    `
+    const product = result.input.productDescription?.split(' ').slice(0, 3).join(' ') || 'Campaña'
+    downloadPDF(`Campaña — ${product}`, `Objetivo: ${result.input.objective} · Nicho: ${result.input.niche}`, body)
+    toast.success('PDF generado correctamente.')
   }
 
   return (
@@ -341,9 +456,17 @@ export default function CampaignGenerator() {
           <p className="text-zinc-500 text-sm mt-0.5">Introduce un producto o tienda y genera la campaña completa lista para lanzar.</p>
         </div>
         {result && (
-          <span className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-3 py-1.5 rounded-full font-semibold">
-            <Sparkles size={11} /> Campaña generada
-          </span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleExportPDF}
+              className="flex items-center gap-1.5 text-xs text-zinc-400 bg-zinc-800 border border-white/10 hover:border-white/20 px-3 py-1.5 rounded-full font-semibold transition-all"
+            >
+              <Download size={11} /> Exportar PDF
+            </button>
+            <span className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-3 py-1.5 rounded-full font-semibold">
+              <Sparkles size={11} /> Campaña generada
+            </span>
+          </div>
         )}
       </div>
 
@@ -370,13 +493,26 @@ export default function CampaignGenerator() {
               <label className="flex items-center gap-1.5 text-xs font-bold text-zinc-400 uppercase tracking-wider">
                 URL de la tienda <span className="text-zinc-600 normal-case font-normal">(opcional)</span>
               </label>
-              <input
-                type="url"
-                value={productUrl}
-                onChange={e => setProductUrl(e.target.value)}
-                placeholder="https://tienda.myshopify.com"
-                className="w-full px-3 py-2.5 bg-zinc-800 border border-white/5 rounded-xl text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/30 transition-all"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={productUrl}
+                  onChange={e => setProductUrl(e.target.value)}
+                  placeholder="https://tienda.myshopify.com"
+                  className="flex-1 min-w-0 px-3 py-2.5 bg-zinc-800 border border-white/5 rounded-xl text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/30 transition-all"
+                />
+                <button
+                  onClick={handleAnalyzeUrl}
+                  disabled={!productUrl.trim() || analyzingUrl}
+                  title="Analizar URL"
+                  className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-zinc-800 border border-white/5 text-zinc-400 hover:text-indigo-400 hover:border-indigo-500/40 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                >
+                  {analyzingUrl ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />}
+                </button>
+              </div>
+              {analyzingUrl && (
+                <p className="text-[10px] text-zinc-500">Analizando tienda...</p>
+              )}
             </div>
 
             {/* Niche */}
@@ -470,7 +606,7 @@ export default function CampaignGenerator() {
 
           {result && (
             <div className="flex-1 flex flex-col overflow-hidden">
-              {/* Tabs */}
+              {/* Tabs + export buttons */}
               <div className="flex items-center gap-1 px-6 py-3 border-b border-white/5 overflow-x-auto">
                 {TABS.map(tab => {
                   const Icon = tab.icon
@@ -488,6 +624,17 @@ export default function CampaignGenerator() {
                     </button>
                   )
                 })}
+                <div className="ml-auto flex items-center gap-1 pl-3 border-l border-white/5">
+                  {(['meta', 'google', 'tiktok'] as const).map(p => (
+                    <button
+                      key={p}
+                      onClick={() => { exportForPlatform(result, p); toast.success(`CSV para ${p === 'meta' ? 'Meta Ads' : p === 'google' ? 'Google Ads' : 'TikTok Ads'} descargado.`) }}
+                      className="text-[10px] font-bold px-2 py-1 rounded-md bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-all whitespace-nowrap"
+                    >
+                      {p === 'meta' ? '↓ Meta' : p === 'google' ? '↓ Google' : '↓ TikTok'}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Tab content */}

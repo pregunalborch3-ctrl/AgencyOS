@@ -7,31 +7,37 @@ import { v4 as uuid } from 'uuid'
 const prisma = new PrismaClient()
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-async function generateWithClaude(body: ContentRequest): Promise<string> {
-  const prompt = `Eres un experto en marketing digital y redes sociales.
-Genera un caption profesional y atractivo para ${body.platform} con estas características:
+async function generateThreeVariations(body: ContentRequest): Promise<string[]> {
+  const message = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 1500,
+    messages: [{
+      role: 'user',
+      content: `Eres un experto en marketing digital y redes sociales.
+Genera EXACTAMENTE 3 captions diferentes y profesionales para ${body.platform} con estas características:
 - Marca: ${body.brand}
 - Tema: ${body.topic}
 - Tono: ${body.tone || 'profesional y cercano'}
 - Keywords/hashtags: ${body.keywords}
 - Call to action: ${body.callToAction || 'genérico apropiado'}
 
-El caption debe:
+Cada caption debe:
 - Ser natural y no genérico
 - Incluir emojis relevantes
 - Terminar con hashtags
 - Estar optimizado para ${body.platform}
 - Tener entre 100-300 caracteres (sin hashtags)
+- Ser claramente distinto a los otros dos (diferente ángulo, tono o estructura)
 
-Responde SOLO con el caption, sin explicaciones.`
-
-  const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 500,
-    messages: [{ role: 'user', content: prompt }],
+Responde ÚNICAMENTE con este JSON (sin markdown, sin comentarios):
+{"captions": ["caption1", "caption2", "caption3"]}`,
+    }],
   })
 
-  return (message.content[0] as { text: string }).text
+  const raw = (message.content[0] as { text: string }).text.trim()
+  const clean = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
+  const parsed = JSON.parse(clean) as { captions: string[] }
+  return parsed.captions
 }
 
 export async function generateContent(req: Request, res: Response): Promise<void> {
@@ -44,11 +50,7 @@ export async function generateContent(req: Request, res: Response): Promise<void
   }
 
   try {
-    const captions = await Promise.all([
-      generateWithClaude(body),
-      generateWithClaude(body),
-      generateWithClaude(body),
-    ])
+    const captions = await generateThreeVariations(body)
 
     const variations: GeneratedContent[] = captions.map((caption) => ({
       id: uuid(),
@@ -64,8 +66,8 @@ export async function generateContent(req: Request, res: Response): Promise<void
 
     res.json({ success: true, data: variations })
   } catch (error) {
-    console.error('Error generando contenido con Claude:', error)
-    res.status(500).json({ success: false, error: 'Error al generar contenido con IA' })
+    const msg = error instanceof Error ? error.message : 'Error al generar contenido con IA'
+    res.status(500).json({ success: false, error: msg })
   }
 }
 

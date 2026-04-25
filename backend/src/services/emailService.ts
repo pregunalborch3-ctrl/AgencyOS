@@ -114,5 +114,5 @@ export async function sendWelcomeEmail(to: string, name: string): Promise<void> 
     console.error("[email] Error enviando bienvenida a", to, "→", error)
     throw new Error(error.message)
   }
-  console.log("[email] Bienvenida enviada →", to, "| id:", data?.id)
+  // email sent successfully
 }

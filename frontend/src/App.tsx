@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { Toaster } from 'sonner'
 import { AuthProvider }         from './contexts/AuthContext'
 import { SubscriptionProvider } from './contexts/SubscriptionContext'
 import ProtectedRoute           from './components/ProtectedRoute'
@@ -27,6 +28,7 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <SubscriptionProvider>
+          <Toaster position="bottom-right" richColors closeButton />
           <Routes>
             {/* Public */}
             <Route path="/"         element={<Landing />} />

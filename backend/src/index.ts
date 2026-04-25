@@ -22,6 +22,8 @@ import briefingRoutes     from './routes/briefing'
 import competitorRoutes   from './routes/competitor'
 import homeRoutes         from './routes/home'
 import frameworkRoutes    from './routes/frameworks'
+import settingsRoutes     from './routes/settings'
+import apiKeyRoutes       from './routes/apiKeys'
 
 const app  = express()
 const PORT = process.env.PORT ?? 3001
@@ -62,6 +64,8 @@ app.use('/api/briefing',     briefingRoutes)
 app.use('/api/competitor',   competitorRoutes)
 app.use('/api/home',         homeRoutes)
 app.use('/api/frameworks',   frameworkRoutes)
+app.use('/api/settings',     settingsRoutes)
+app.use('/api/apikeys',      apiKeyRoutes)
 
 // Health
 app.get('/api/health', (_req, res) => {
