@@ -102,7 +102,7 @@ const NICHE_DATA = {
 };
 const DEFAULT_NICHE = NICHE_DATA['ropa'];
 // ─── Claude JSON helper ───────────────────────────────────────────────────────
-const CLAUDE_TIMEOUT_MS = 30000;
+const CLAUDE_TIMEOUT_MS = 90000;
 async function claudeJSON(system, user) {
     const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('La IA tardó demasiado. Por favor, inténtalo de nuevo.')), CLAUDE_TIMEOUT_MS));
     const msg = await Promise.race([

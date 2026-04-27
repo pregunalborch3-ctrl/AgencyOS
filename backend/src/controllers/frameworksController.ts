@@ -11,7 +11,7 @@ function getClient(): Anthropic {
 }
 
 // ─── Shared helper ────────────────────────────────────────────────────────────
-const CLAUDE_TIMEOUT_MS = 30_000
+const CLAUDE_TIMEOUT_MS = 90_000
 
 async function claudeJSON<T>(system: string, user: string): Promise<T> {
   const timeout = new Promise<never>((_, reject) =>
