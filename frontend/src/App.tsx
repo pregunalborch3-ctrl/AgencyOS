@@ -23,6 +23,7 @@ import ScalingRoadmap          from './pages/frameworks/ScalingRoadmap'
 import Privacy                 from './pages/legal/Privacy'
 import Terms                   from './pages/legal/Terms'
 import Cookies                 from './pages/legal/Cookies'
+import PublicationCalendar     from './pages/PublicationCalendar'
 import NotFound                from './pages/NotFound'
 
 export default function App() {
@@ -58,6 +59,7 @@ export default function App() {
                 {/* Main app — paywall handled in-app */}
                 <Route path="/dashboard" element={<CampaignApp />} />
                 <Route path="/historial" element={<HistorialPage />} />
+                <Route path="/calendar"  element={<PublicationCalendar />} />
               </Route>
             </Route>
 

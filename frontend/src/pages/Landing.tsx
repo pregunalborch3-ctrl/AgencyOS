@@ -891,7 +891,7 @@ function Footer() {
           <Link to="/privacy" className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">Privacidad</Link>
           <Link to="/terms"   className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">Términos</Link>
           <Link to="/cookies" className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">Cookies</Link>
-          <a href="mailto:pregunalborch3@gmail.com" className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">Contacto</a>
+          <a href="mailto:hola@agenciesos.com?subject=Contacto%20Agenciesos" className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">Contacto</a>
         </div>
         <div className="flex items-center gap-6">
           <Link to="/login"    className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">Iniciar sesión</Link>

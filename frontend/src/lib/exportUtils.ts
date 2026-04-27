@@ -94,21 +94,33 @@ const PDF_STYLES = `
 // ─── Generate branded HTML document ───────────────────────────────────────────
 function buildDocument(title: string, subtitle: string, bodyHTML: string): string {
   const date = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })
+
+  // Read agency branding from localStorage
+  let agencyName = 'AgencyOS'
+  try {
+    const cfg = JSON.parse(localStorage.getItem('agencyos_agency_config') || 'null')
+    if (cfg?.name) agencyName = cfg.name
+  } catch { /* ignore */ }
+  const logo = localStorage.getItem('agencyos_logo')
+  const logoHtml = logo
+    ? `<img src="${logo}" style="width:40px;height:40px;object-fit:contain;border-radius:8px;">`
+    : `<div class="logo-badge">${agencyName.charAt(0).toUpperCase()}</div>`
+
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>${title} — AgencyOS</title>
+  <title>${title} — ${agencyName}</title>
   <style>${PDF_STYLES}</style>
 </head>
 <body>
   <div class="page">
     <div class="header">
       <div class="logo">
-        <div class="logo-badge">A</div>
+        ${logoHtml}
         <div>
-          <div class="logo-text">AgencyOS</div>
+          <div class="logo-text">${agencyName}</div>
           <div class="logo-sub">Sistema de campañas con IA</div>
         </div>
       </div>
@@ -121,7 +133,7 @@ function buildDocument(title: string, subtitle: string, bodyHTML: string): strin
     ${subtitle ? `<div class="doc-sub">${subtitle}</div>` : ''}
     ${bodyHTML}
     <div class="footer">
-      Generado con AgencyOS · agencyos.com · ${date}
+      Generado con ${agencyName} · agencyos.com · ${date}
     </div>
   </div>
 </body>

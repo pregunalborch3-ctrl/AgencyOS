@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  Rocket, Settings, LogOut, Clock,
+  Rocket, Settings, LogOut, Clock, CalendarDays,
   Globe2, Crosshair, Map, Flame, Layers, Zap,
   ShieldCheck, FileText, Cookie, MoreHorizontal, X,
 } from 'lucide-react'
@@ -63,9 +63,10 @@ export default function Sidebar() {
   const gradient = GRADIENTS[(user?.name?.charCodeAt(0) ?? 0) % GRADIENTS.length]
 
   const NAV_MAIN = [
-    { path: '/dashboard', icon: Rocket,   label: t('nav.campaign'), mobileLabel: t('nav.campaign_short') },
-    { path: '/historial', icon: Clock,    label: t('nav.history'),  mobileLabel: t('nav.history_short')  },
-    { path: '/settings',  icon: Settings, label: t('nav.settings'), mobileLabel: t('nav.settings_short') },
+    { path: '/dashboard', icon: Rocket,       label: t('nav.campaign'), mobileLabel: t('nav.campaign_short') },
+    { path: '/calendar',  icon: CalendarDays, label: t('nav.calendar'), mobileLabel: t('nav.calendar_short') },
+    { path: '/historial', icon: Clock,        label: t('nav.history'),  mobileLabel: t('nav.history_short')  },
+    { path: '/settings',  icon: Settings,     label: t('nav.settings'), mobileLabel: t('nav.settings_short') },
   ]
 
   const NAV_TOOLS = [

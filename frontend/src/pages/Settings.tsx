@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n'
 import {
@@ -6,7 +6,7 @@ import {
   AlertTriangle, Loader2, RefreshCw,
   Lock, Building2, Globe, Zap,
   CreditCard, Crown, AlertCircle, Sparkles,
-  Plus, Copy, Key, Code2,
+  Plus, Copy, Key, Code2, Upload, X,
 } from 'lucide-react'
 import Header from '../components/Layout/Header'
 import { useSubscription } from '../contexts/SubscriptionContext'
@@ -17,6 +17,7 @@ type SettingsSection = 'general' | 'seguridad' | 'facturacion' | 'api'
 interface AgencyConfig {
   name: string; email: string; website: string
   currency: string; timezone: string; language: string
+  niche: string
 }
 
 interface ApiKeyRecord {
@@ -26,20 +27,40 @@ interface ApiKeyRecord {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const AGENCY_KEY = 'agencyos_agency_config'
+const LOGO_KEY   = 'agencyos_logo'
 const TOKEN_KEY  = 'agencyos_token'
+
+const NICHES = [
+  { value: '',             label: '— Selecciona un nicho —' },
+  { value: 'moda',         label: 'Moda y lifestyle' },
+  { value: 'ecommerce',    label: 'E-commerce' },
+  { value: 'fitness',      label: 'Fitness y salud' },
+  { value: 'gastronomia',  label: 'Gastronomía y restauración' },
+  { value: 'tecnologia',   label: 'Tecnología y SaaS' },
+  { value: 'inmobiliaria', label: 'Inmobiliaria' },
+  { value: 'educacion',    label: 'Educación y cursos' },
+  { value: 'belleza',      label: 'Belleza y cosmética' },
+  { value: 'viajes',       label: 'Viajes y turismo' },
+  { value: 'servicios',    label: 'Servicios profesionales' },
+  { value: 'marketing',    label: 'Marketing y agencias' },
+  { value: 'otro',         label: 'Otro' },
+]
 
 const defaultAgency: AgencyConfig = {
   name: 'Mi Agencia', email: '', website: '',
   currency: 'EUR', timezone: 'Europe/Madrid', language: 'es',
+  niche: '',
 }
 
 // ─── General Section ──────────────────────────────────────────────────────────
 function GeneralSection() {
   const { t } = useTranslation()
-  const [form,    setForm]    = useState<AgencyConfig>(defaultAgency)
-  const [saved,   setSaved]   = useState(false)
-  const [saving,  setSaving]  = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [form,        setForm]        = useState<AgencyConfig>(defaultAgency)
+  const [saved,       setSaved]       = useState(false)
+  const [saving,      setSaving]      = useState(false)
+  const [loading,     setLoading]     = useState(true)
+  const [logoPreview, setLogoPreview] = useState<string>('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const token = () => localStorage.getItem(TOKEN_KEY) ?? ''
 
@@ -62,9 +83,41 @@ function GeneralSection() {
       setLoading(false)
     }
     fetchSettings().finally(() => setLoading(false))
+    // Load logo from localStorage (stored separately, device-specific)
+    setLogoPreview(localStorage.getItem(LOGO_KEY) ?? '')
   }, [])
 
   const set = (k: keyof AgencyConfig, v: string) => setForm(f => ({ ...f, [k]: v }))
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !file.type.startsWith('image/')) return
+    const reader = new FileReader()
+    reader.onload = (evt) => {
+      const dataUrl = evt.target?.result as string
+      const img = new Image()
+      img.onload = () => {
+        const MAX = 150
+        const scale = Math.min(MAX / img.width, MAX / img.height, 1)
+        const canvas = document.createElement('canvas')
+        canvas.width  = Math.round(img.width  * scale)
+        canvas.height = Math.round(img.height * scale)
+        canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
+        const compressed = canvas.toDataURL('image/jpeg', 0.75)
+        setLogoPreview(compressed)
+        localStorage.setItem(LOGO_KEY, compressed)
+      }
+      img.src = dataUrl
+    }
+    reader.readAsDataURL(file)
+    // Reset input so the same file can be re-selected
+    e.target.value = ''
+  }
+
+  const removeLogo = () => {
+    setLogoPreview('')
+    localStorage.removeItem(LOGO_KEY)
+  }
 
   const save = async () => {
     setSaving(true)
@@ -75,7 +128,6 @@ function GeneralSection() {
         body: JSON.stringify(form),
       })
       localStorage.setItem(AGENCY_KEY, JSON.stringify(form))
-      // Switch language immediately if changed
       if (form.language !== i18n.language) {
         localStorage.setItem('agencyos_language', form.language)
         await i18n.changeLanguage(form.language)
@@ -95,6 +147,46 @@ function GeneralSection() {
   return (
     <div className="card p-6 space-y-5">
       <h3 className="section-title">{t('settings.general.title')}</h3>
+
+      {/* Logo upload */}
+      <div>
+        <label className="label">Logo de la agencia</label>
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden bg-gray-50 flex-shrink-0">
+            {logoPreview
+              ? <img src={logoPreview} alt="Logo" className="w-full h-full object-contain" />
+              : <Upload size={20} className="text-gray-300" />
+            }
+          </div>
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="btn-secondary text-xs py-1.5 px-3"
+            >
+              <Upload size={13} /> {logoPreview ? 'Cambiar logo' : 'Subir logo'}
+            </button>
+            {logoPreview && (
+              <button
+                type="button"
+                onClick={removeLogo}
+                className="text-xs text-red-500 hover:text-red-700 font-medium flex items-center gap-1"
+              >
+                <X size={12} /> Eliminar logo
+              </button>
+            )}
+            <p className="text-[11px] text-gray-400">PNG, JPG · Aparece en los PDFs exportados</p>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleLogoUpload}
+          />
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5">
         <div>
           <label className="label">{t('settings.general.name')}</label>
@@ -110,6 +202,12 @@ function GeneralSection() {
             <Globe size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input className="input pl-8" placeholder="https://miagencia.com" value={form.website} onChange={e => set('website', e.target.value)} />
           </div>
+        </div>
+        <div>
+          <label className="label">Nicho principal</label>
+          <select className="select" value={form.niche} onChange={e => set('niche', e.target.value)}>
+            {NICHES.map(n => <option key={n.value} value={n.value}>{n.label}</option>)}
+          </select>
         </div>
         <div>
           <label className="label">{t('settings.general.currency')}</label>

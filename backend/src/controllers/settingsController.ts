@@ -8,6 +8,7 @@ interface AgencySettings {
   currency: string
   timezone: string
   language: string
+  niche: string
 }
 
 export async function getSettings(req: Request, res: Response): Promise<void> {
@@ -23,7 +24,7 @@ export async function updateSettings(req: Request, res: Response): Promise<void>
   const userId = req.user!.userId
   const settings = req.body as Partial<AgencySettings>
 
-  const allowed: (keyof AgencySettings)[] = ['name', 'email', 'website', 'currency', 'timezone', 'language']
+  const allowed: (keyof AgencySettings)[] = ['name', 'email', 'website', 'currency', 'timezone', 'language', 'niche']
   const clean: Partial<AgencySettings> = {}
   for (const key of allowed) {
     if (settings[key] !== undefined) clean[key] = settings[key]

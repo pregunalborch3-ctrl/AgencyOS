@@ -28,7 +28,7 @@ export default function Footer() {
             Cookies
           </Link>
           <a
-            href="mailto:pregunalborch3@gmail.com"
+            href="mailto:hola@agenciesos.com?subject=Contacto%20Agenciesos"
             className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
           >
             Contacto
