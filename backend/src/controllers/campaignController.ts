@@ -117,17 +117,31 @@ async function claudeJSON<T>(system: string, user: string): Promise<T> {
   const msg = await Promise.race([
     getClient().messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 4000,
+      max_tokens: 6000,
       system,
       messages: [{ role: 'user', content: user }],
     }),
     timeout,
   ])
+
+  if (msg.stop_reason === 'max_tokens') {
+    console.error('[claudeJSON] stop_reason=max_tokens — respuesta truncada. usage:', msg.usage)
+    throw new Error('La respuesta de la IA fue demasiado larga. Inténtalo de nuevo.')
+  }
+
   const raw = (msg.content[0] as { type: string; text: string }).text.trim()
-  const clean = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
+  // Robust JSON extraction: find outermost { ... } regardless of surrounding text
+  const first = raw.indexOf('{')
+  const last  = raw.lastIndexOf('}')
+  if (first === -1 || last === -1) {
+    console.error('[claudeJSON] No JSON object found. stop_reason:', msg.stop_reason, 'raw:', raw.slice(0, 300))
+    throw new Error('La IA devolvió una respuesta inesperada. Inténtalo de nuevo.')
+  }
+  const clean = raw.slice(first, last + 1)
   try {
     return JSON.parse(clean) as T
-  } catch {
+  } catch (e) {
+    console.error('[claudeJSON] JSON.parse failed. stop_reason:', msg.stop_reason, 'usage:', msg.usage, 'raw:', raw.slice(0, 500))
     throw new Error('La IA devolvió una respuesta inesperada. Inténtalo de nuevo.')
   }
 }
