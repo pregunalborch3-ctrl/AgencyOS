@@ -8,6 +8,7 @@ export interface JwtPayload {
   email: string
   name: string
   role: string
+  pwv?: string  // password version — first 16 hex chars of SHA-256(passwordHash); absent for API key auth
 }
 
 // Extend Express Request
@@ -65,6 +66,12 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     const user = await UserStore.findById(payload.userId)
     if (!user) {
       res.status(401).json({ success: false, error: 'Usuario no encontrado.' })
+      return
+    }
+    // Invalidate tokens issued before a password change
+    const currentPwv = crypto.createHash('sha256').update(user.passwordHash).digest('hex').slice(0, 16)
+    if (payload.pwv && payload.pwv !== currentPwv) {
+      res.status(401).json({ success: false, error: 'Sesión inválida. Por favor inicia sesión de nuevo.' })
       return
     }
     req.user = payload

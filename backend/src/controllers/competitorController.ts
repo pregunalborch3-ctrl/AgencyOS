@@ -35,6 +35,8 @@ export async function createCompetitor(req: Request, res: Response): Promise<voi
   res.status(201).json({ success: true, data: competitor })
 }
 
+const COMPETITOR_ALLOWED = ['name', 'url', 'notes'] as const
+
 export async function updateCompetitor(req: Request, res: Response): Promise<void> {
   const userId = req.user!.userId
   const existing = await prisma.competitor.findFirst({ where: { id: req.params.id, userId } })
@@ -42,9 +44,14 @@ export async function updateCompetitor(req: Request, res: Response): Promise<voi
     res.status(404).json({ success: false, error: 'Competidor no encontrado' })
     return
   }
+  const body = req.body as Record<string, unknown>
+  const clean: Record<string, unknown> = {}
+  for (const key of COMPETITOR_ALLOWED) {
+    if (body[key] !== undefined) clean[key] = body[key]
+  }
   const updated = await prisma.competitor.update({
     where: { id: req.params.id },
-    data: req.body,
+    data: clean,
   })
   res.json({ success: true, data: updated })
 }

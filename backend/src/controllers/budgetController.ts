@@ -47,6 +47,8 @@ export async function createBudget(req: Request, res: Response): Promise<void> {
   res.status(201).json({ success: true, data: budget })
 }
 
+const BUDGET_ALLOWED = ['projectName', 'client', 'currency', 'items', 'agencyFeePercent', 'taxPercent', 'notes'] as const
+
 export async function updateBudget(req: Request, res: Response): Promise<void> {
   const userId = req.user!.userId
   const existing = await prisma.budget.findFirst({
@@ -56,9 +58,14 @@ export async function updateBudget(req: Request, res: Response): Promise<void> {
     res.status(404).json({ success: false, error: 'Presupuesto no encontrado' })
     return
   }
+  const body = req.body as Record<string, unknown>
+  const clean: Record<string, unknown> = {}
+  for (const key of BUDGET_ALLOWED) {
+    if (body[key] !== undefined) clean[key] = body[key]
+  }
   const updated = await prisma.budget.update({
     where: { id: req.params.id },
-    data: req.body,
+    data: clean,
   })
   res.json({ success: true, data: updated })
 }

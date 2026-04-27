@@ -25,6 +25,8 @@ export async function createPost(req: Request, res: Response): Promise<void> {
   res.status(201).json({ success: true, data: post })
 }
 
+const CALENDAR_ALLOWED = ['title', 'date', 'platform', 'content', 'status'] as const
+
 export async function updatePost(req: Request, res: Response): Promise<void> {
   const userId = req.user!.userId
   const existing = await prisma.calendarPost.findFirst({ where: { id: req.params.id, userId } })
@@ -32,9 +34,14 @@ export async function updatePost(req: Request, res: Response): Promise<void> {
     res.status(404).json({ success: false, error: 'Post no encontrado' })
     return
   }
+  const body = req.body as Record<string, unknown>
+  const clean: Record<string, unknown> = {}
+  for (const key of CALENDAR_ALLOWED) {
+    if (body[key] !== undefined) clean[key] = body[key]
+  }
   const updated = await prisma.calendarPost.update({
     where: { id: req.params.id },
-    data: req.body,
+    data: clean,
   })
   res.json({ success: true, data: updated })
 }

@@ -105,13 +105,24 @@ const NICHE_DATA: Record<string, {
 const DEFAULT_NICHE = NICHE_DATA['ropa']
 
 // ─── Claude JSON helper ───────────────────────────────────────────────────────
+const CLAUDE_TIMEOUT_MS = 30_000
+
 async function claudeJSON<T>(system: string, user: string): Promise<T> {
-  const msg = await getClient().messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 4000,
-    system,
-    messages: [{ role: 'user', content: user }],
-  })
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(
+      () => reject(new Error('La IA tardó demasiado. Por favor, inténtalo de nuevo.')),
+      CLAUDE_TIMEOUT_MS,
+    ),
+  )
+  const msg = await Promise.race([
+    getClient().messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4000,
+      system,
+      messages: [{ role: 'user', content: user }],
+    }),
+    timeout,
+  ])
   const raw = (msg.content[0] as { type: string; text: string }).text.trim()
   const clean = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
   try {
@@ -466,14 +477,22 @@ export async function saveCampaign(req: Request, res: Response): Promise<void> {
 export async function getCampaigns(req: Request, res: Response): Promise<void> {
   try {
     const userId = req.user!.userId
+    const limit  = Math.min(Number(req.query.limit) || 20, 100)
+    const cursor = req.query.cursor as string | undefined
 
     const campaigns = await prisma.campaign.findMany({
-      where: { userId },
+      where:   { userId },
       orderBy: { createdAt: 'desc' },
-      select: { id: true, name: true, niche: true, objective: true, createdAt: true, data: true }
+      take:    limit + 1,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      select:  { id: true, name: true, niche: true, objective: true, createdAt: true, data: true },
     })
 
-    res.json({ success: true, data: campaigns })
+    const hasMore    = campaigns.length > limit
+    const items      = hasMore ? campaigns.slice(0, limit) : campaigns
+    const nextCursor = hasMore ? items[items.length - 1].id : null
+
+    res.json({ success: true, data: items, meta: { hasMore, nextCursor } })
   } catch {
     res.status(500).json({ success: false, error: 'Error al obtener las campañas.' })
   }

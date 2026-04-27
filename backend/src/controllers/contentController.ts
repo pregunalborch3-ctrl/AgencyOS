@@ -7,13 +7,19 @@ import { v4 as uuid } from 'uuid'
 const prisma = new PrismaClient()
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
+const CLAUDE_TIMEOUT_MS = 30_000
+
 async function generateThreeVariations(body: ContentRequest): Promise<string[]> {
-  const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 1500,
-    messages: [{
-      role: 'user',
-      content: `Eres un experto en marketing digital y redes sociales.
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error('La IA tardó demasiado. Por favor, inténtalo de nuevo.')), CLAUDE_TIMEOUT_MS),
+  )
+  const message = await Promise.race([
+    client.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1500,
+      messages: [{
+        role: 'user',
+        content: `Eres un experto en marketing digital y redes sociales.
 Genera EXACTAMENTE 3 captions diferentes y profesionales para ${body.platform} con estas características:
 - Marca: ${body.brand}
 - Tema: ${body.topic}
@@ -31,8 +37,10 @@ Cada caption debe:
 
 Responde ÚNICAMENTE con este JSON (sin markdown, sin comentarios):
 {"captions": ["caption1", "caption2", "caption3"]}`,
-    }],
-  })
+      }],
+    }),
+    timeout,
+  ])
 
   const raw = (message.content[0] as { text: string }).text.trim()
   const clean = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()

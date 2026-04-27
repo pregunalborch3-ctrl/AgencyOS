@@ -11,13 +11,24 @@ function getClient(): Anthropic {
 }
 
 // ─── Shared helper ────────────────────────────────────────────────────────────
+const CLAUDE_TIMEOUT_MS = 30_000
+
 async function claudeJSON<T>(system: string, user: string): Promise<T> {
-  const msg = await getClient().messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 3000,
-    system,
-    messages: [{ role: 'user', content: user }],
-  })
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(
+      () => reject(new Error('La IA tardó demasiado. Por favor, inténtalo de nuevo.')),
+      CLAUDE_TIMEOUT_MS,
+    ),
+  )
+  const msg = await Promise.race([
+    getClient().messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 3000,
+      system,
+      messages: [{ role: 'user', content: user }],
+    }),
+    timeout,
+  ])
   const raw = (msg.content[0] as { type: string; text: string }).text.trim()
   const clean = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
   try {

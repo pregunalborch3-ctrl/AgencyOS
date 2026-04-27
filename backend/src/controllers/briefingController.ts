@@ -4,13 +4,30 @@ import type { BriefingForm } from '../types'
 
 const prisma = new PrismaClient()
 
+const BRIEFING_ALLOWED_FIELDS = [
+  'clientName', 'brand', 'projectName', 'projectType', 'objective',
+  'targetAudience', 'ageRange', 'location', 'keyMessage', 'tone',
+  'mandatories', 'restrictions', 'deliverables', 'startDate', 'endDate',
+  'budget', 'competitors', 'references', 'additionalNotes',
+] as const
+
 export async function getBriefings(req: Request, res: Response): Promise<void> {
   const userId = req.user!.userId
+  const limit  = Math.min(Number(req.query.limit) || 20, 100)
+  const cursor = req.query.cursor as string | undefined
+
   const briefings = await prisma.briefing.findMany({
-    where: { userId },
+    where:   { userId },
     orderBy: { createdAt: 'desc' },
+    take:    limit + 1,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
   })
-  res.json({ success: true, data: briefings })
+
+  const hasMore    = briefings.length > limit
+  const items      = hasMore ? briefings.slice(0, limit) : briefings
+  const nextCursor = hasMore ? items[items.length - 1].id : null
+
+  res.json({ success: true, data: items, meta: { hasMore, nextCursor } })
 }
 
 export async function getBriefing(req: Request, res: Response): Promise<void> {
@@ -68,9 +85,15 @@ export async function updateBriefing(req: Request, res: Response): Promise<void>
     res.status(404).json({ success: false, error: 'Briefing no encontrado' })
     return
   }
+  const body  = req.body as Record<string, string>
+  const clean: Record<string, string> = {}
+  for (const key of BRIEFING_ALLOWED_FIELDS) {
+    if (body[key] !== undefined) clean[key] = body[key]
+  }
+
   const updated = await prisma.briefing.update({
     where: { id: req.params.id },
-    data: req.body,
+    data: clean,
   })
   res.json({ success: true, data: updated })
 }

@@ -1,5 +1,32 @@
 import { Request, Response } from 'express'
 
+// ─── SSRF protection ──────────────────────────────────────────────────────────
+const BLOCKED_HOSTNAMES = new Set([
+  'localhost', '127.0.0.1', '::1', '0.0.0.0',
+  // Cloud metadata endpoints
+  '169.254.169.254', 'metadata.google.internal', 'metadata.azure.com',
+])
+
+const PRIVATE_IP_RE = [
+  /^127\./,
+  /^10\./,
+  /^172\.(1[6-9]|2[0-9]|3[01])\./,
+  /^192\.168\./,
+  /^169\.254\./,
+  /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./,
+  /^0\./,
+  /^::1$/,
+  /^fc[\da-f]{2}:/i,
+  /^fd[\da-f]{2}:/i,
+  /^fe80:/i,
+]
+
+function isSsrfTarget(hostname: string): boolean {
+  const h = hostname.toLowerCase().replace(/\.+$/, '')
+  if (BLOCKED_HOSTNAMES.has(h)) return true
+  return PRIVATE_IP_RE.some(re => re.test(h))
+}
+
 interface ShopifyAnalysis {
   productName: string
   description: string
@@ -56,6 +83,16 @@ export async function analyzeShopifyUrl(req: Request, res: Response): Promise<vo
     parsedUrl = new URL(url.startsWith('http') ? url : `https://${url}`)
   } catch {
     res.status(400).json({ success: false, error: 'URL no válida.' })
+    return
+  }
+
+  if (parsedUrl.protocol !== 'https:') {
+    res.status(400).json({ success: false, error: 'Solo se permiten URLs con HTTPS.' })
+    return
+  }
+
+  if (isSsrfTarget(parsedUrl.hostname)) {
+    res.status(400).json({ success: false, error: 'URL no permitida.' })
     return
   }
 

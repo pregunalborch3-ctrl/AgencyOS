@@ -115,10 +115,13 @@ export async function handleWebhook(req: Request, res: Response): Promise<void> 
   let event: any
   try {
     event = stripe.webhooks.constructEvent(req.body as Buffer, sig, WEBHOOK_SECRET)
-  } catch {
+  } catch (err) {
+    console.error('[webhook] Signature verification failed:', err instanceof Error ? err.message : err)
     res.status(400).json({ error: 'Webhook signature invalid.' })
     return
   }
+
+  console.log(`[webhook] Received: ${event.type} — id: ${event.id}`)
 
   try {
     switch (event.type) {
@@ -126,9 +129,13 @@ export async function handleWebhook(req: Request, res: Response): Promise<void> 
         const session = event.data.object
         if (session.mode !== 'subscription') break
         const userId = session.client_reference_id ?? ''
-        const sub    = await stripe.subscriptions.retrieve(session.subscription) as any
-        const item   = sub.items.data[0]
-        UserStore.update(userId, {
+        if (!userId) {
+          console.error('[webhook] checkout.session.completed: missing client_reference_id', { sessionId: session.id })
+          break
+        }
+        const sub  = await stripe.subscriptions.retrieve(session.subscription) as any
+        const item = sub.items.data[0]
+        await UserStore.update(userId, {
           stripeCustomerId: session.customer,
           subscription: {
             stripeSubscriptionId: sub.id,
@@ -139,6 +146,7 @@ export async function handleWebhook(req: Request, res: Response): Promise<void> 
             trialEnd:            sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null,
           },
         })
+        console.log(`[webhook] checkout.session.completed: user ${userId} → subscription ${sub.id} (${sub.status})`)
         break
       }
 
@@ -146,9 +154,13 @@ export async function handleWebhook(req: Request, res: Response): Promise<void> 
       case 'customer.subscription.deleted': {
         const sub  = event.data.object
         const user = await UserStore.findByStripeCustomerId(sub.customer)
-        if (!user) break
-        const item = sub.items.data[0]
-        UserStore.update(user.id, {
+        if (!user) {
+          console.error(`[webhook] ${event.type}: no user found for customer ${sub.customer}`)
+          break
+        }
+        const item    = sub.items.data[0]
+        const isGone  = event.type === 'customer.subscription.deleted' || sub.status === 'canceled'
+        await UserStore.update(user.id, {
           subscription: {
             stripeSubscriptionId: sub.id,
             status:              sub.status as SubStatus,
@@ -157,22 +169,33 @@ export async function handleWebhook(req: Request, res: Response): Promise<void> 
             priceId:             item?.price.id ?? PRICE_ID,
             trialEnd:            sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null,
           },
+          // Reset free campaign gate when subscription is truly canceled
+          ...(isGone ? { freeUsed: false } : {}),
         })
+        console.log(`[webhook] ${event.type}: user ${user.id} → status ${sub.status}${isGone ? ' (freeUsed reset)' : ''}`)
         break
       }
 
       case 'invoice.payment_failed': {
         const invoice = event.data.object
         const user    = await UserStore.findByStripeCustomerId(invoice.customer)
-        if (!user?.subscription) break
-        UserStore.update(user.id, {
+        if (!user?.subscription) {
+          console.error('[webhook] invoice.payment_failed: no user/subscription for customer', invoice.customer)
+          break
+        }
+        await UserStore.update(user.id, {
           subscription: { ...user.subscription, status: 'past_due' },
         })
+        console.log(`[webhook] invoice.payment_failed: user ${user.id} → past_due`)
         break
       }
+
+      default:
+        console.log(`[webhook] Unhandled event type: ${event.type}`)
     }
   } catch (err) {
-    console.error('Webhook handler error:', err)
+    console.error(`[webhook] Handler error for ${event.type} (id: ${event.id}):`, err)
+    // Still respond 200 so Stripe does not retry — log the failure for manual reconciliation
   }
 
   res.json({ received: true })

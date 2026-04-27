@@ -19,14 +19,20 @@ export async function getDailyTip(req: Request, res: Response): Promise<void> {
       return
     }
 
-    const msg = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 120,
-      messages: [{
-        role: 'user',
-        content: 'Dame un consejo de marketing digital breve y accionable para agencias que gestionan campañas de Meta Ads y TikTok. Máximo 2 frases cortas. En español. Solo el consejo, sin introducción ni comillas.',
-      }],
-    })
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('timeout')), 10_000),
+    )
+    const msg = await Promise.race([
+      anthropic.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 120,
+        messages: [{
+          role: 'user',
+          content: 'Dame un consejo de marketing digital breve y accionable para agencias que gestionan campañas de Meta Ads y TikTok. Máximo 2 frases cortas. En español. Solo el consejo, sin introducción ni comillas.',
+        }],
+      }),
+      timeout,
+    ])
 
     const tip = (msg.content[0] as { type: string; text: string }).text.trim()
     tipCache = { date: today, tip }

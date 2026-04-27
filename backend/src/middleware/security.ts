@@ -66,14 +66,15 @@ export const contentLimiter = rateLimit({
   },
 })
 
-// Frameworks AI: 20 llamadas / hora per IP
+// Frameworks AI: 20 llamadas / hora por usuario autenticado (o IP si no hay token)
 export const frameworksLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => req.user?.userId ?? req.ip ?? 'anonymous',
   handler(req, res) {
-    logSecurityEvent('FRAMEWORKS_RATE_LIMIT_EXCEEDED', req.ip ?? 'unknown', { path: req.path })
+    logSecurityEvent('FRAMEWORKS_RATE_LIMIT_EXCEEDED', req.ip ?? 'unknown', { userId: req.user?.userId, path: req.path })
     res.status(429).json({
       success: false,
       error: 'Has alcanzado el límite de análisis IA por hora. Disponible de nuevo en 1 hora.',

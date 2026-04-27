@@ -846,7 +846,7 @@ function buildCampaignHTML(result: CampaignResult, productName: string): string 
 export default function CampaignApp() {
   const location = useLocation()
   const navigate  = useNavigate()
-  const { isActive } = useSubscription()
+  const { isActive, subscribe } = useSubscription()
   const { token } = useAuth()
 
   const [input,     setInput]     = useState('')
@@ -1092,7 +1092,7 @@ export default function CampaignApp() {
       {isLoad && <LoadingState />}
 
       {/* ── Paywall ─────────────────────────────────────────────────────── */}
-      {isPaywall && <PaywallScreen onUpgrade={() => navigate('/settings')} />}
+      {isPaywall && <PaywallScreen onUpgrade={() => subscribe().catch(() => navigate('/settings'))} />}
 
       {/* ── Result ──────────────────────────────────────────────────────── */}
       {isResult && result && (

@@ -140,3 +140,14 @@ model ApiKey {
 
   @@index([userId])
 }
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
