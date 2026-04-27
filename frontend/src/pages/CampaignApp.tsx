@@ -299,7 +299,7 @@ async function generateCampaign(params: {
   const timer = setTimeout(() => {
     console.warn('[campaign] AbortController fired at', Date.now() - t0, 'ms')
     controller.abort()
-  }, 95_000)
+  }, 120_000)
 
   let res: Response
   try {
@@ -384,7 +384,7 @@ function LoadingState() {
     return () => { clearInterval(dotsTimer); clearInterval(stepTimer); clearInterval(elapsedTimer) }
   }, [])
 
-  const progress = Math.min(Math.round((elapsed / 70) * 100), 95)
+  const progress = Math.min(Math.round((elapsed / 110) * 100), 95)
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-8 py-20 px-6">

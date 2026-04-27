@@ -105,7 +105,7 @@ const NICHE_DATA: Record<string, {
 const DEFAULT_NICHE = NICHE_DATA['ropa']
 
 // ─── Claude JSON helper ───────────────────────────────────────────────────────
-const CLAUDE_TIMEOUT_MS = 90_000
+const CLAUDE_TIMEOUT_MS = 120_000
 
 async function claudeJSON<T>(system: string, user: string): Promise<T> {
   const timeout = new Promise<never>((_, reject) =>
@@ -117,7 +117,7 @@ async function claudeJSON<T>(system: string, user: string): Promise<T> {
   const msg = await Promise.race([
     getClient().messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 6000,
+      max_tokens: 4500,
       system,
       messages: [{ role: 'user', content: user }],
     }),
@@ -179,122 +179,56 @@ async function generateCreativesWithClaude(
     hooks: Hook[]
     creatives: Creative[]
   }>(
-    'Eres un experto copywriter en marketing de performance y publicidad de pago (Meta Ads, TikTok Ads, Google Ads). Escribes copy que convierte, no que suena bonito. Responde ÚNICAMENTE con JSON válido, sin markdown, sin comentarios.',
-    `Crea material publicitario completo para este producto/tienda:
+    'Eres copywriter experto en Meta Ads y TikTok Ads. Escribes copy que convierte. Responde SOLO con JSON válido, sin markdown.',
+    `Material publicitario para:
 
 PRODUCTO: "${product}"
 NICHO: ${niche.profile}
-OBJETIVO DE CAMPAÑA: ${objective} (${objective === 'ventas' ? 'maximizar compras directas' : objective === 'leads' ? 'captar contactos cualificados' : 'llevar tráfico a la web'})
-ESTILO: ${campaignStyle || 'performance'}
-VARIANTE/TONO: ${variantContext[variant] ?? variantContext['']}
+OBJETIVO: ${objective}
+TONO: ${variantContext[variant] ?? variantContext['']}
+DOLORES: ${niche.pains.slice(0, 3).join(' | ')}
+DESEOS: ${niche.desires.slice(0, 3).join(' | ')}
+CTAs (usa solo estos): ${ctas.join(', ')}
 
-CONTEXTO DEL CLIENTE IDEAL:
-- Dolores principales: ${niche.pains.join(' | ')}
-- Deseos principales: ${niche.desires.join(' | ')}
-- Perfil: ${niche.profile}
-
-CTAs disponibles (usa solo estos): ${ctas.join(', ')}
-
-Devuelve EXACTAMENTE este JSON:
+JSON requerido (todo en español, específico para "${product}", sin textos genéricos):
 {
   "shortCopies": [
-    {
-      "type": "Curiosidad",
-      "platform": "Meta Ads · Feed",
-      "hook": "titular que para el scroll (máx 12 palabras)",
-      "body": "cuerpo del anuncio (2-3 frases, máx 80 palabras)",
-      "cta": "uno de los CTAs disponibles"
-    },
-    {
-      "type": "Problema–Solución",
-      "platform": "Meta Ads · Stories",
-      "hook": "...",
-      "body": "...",
-      "cta": "..."
-    },
-    {
-      "type": "Prueba Social",
-      "platform": "TikTok Ads",
-      "hook": "...",
-      "body": "...",
-      "cta": "..."
-    },
-    {
-      "type": "Urgencia",
-      "platform": "Meta Ads · Reels",
-      "hook": "...",
-      "body": "...",
-      "cta": "..."
-    },
-    {
-      "type": "Identidad",
-      "platform": "Meta Ads · Feed",
-      "hook": "...",
-      "body": "...",
-      "cta": "..."
-    }
+    { "type": "Curiosidad",       "platform": "Meta Ads · Feed",    "hook": "titular máx 10 palabras", "body": "2-3 frases máx 60 palabras", "cta": "de los CTAs" },
+    { "type": "Problema–Solución","platform": "Meta Ads · Stories", "hook": "...", "body": "...", "cta": "..." },
+    { "type": "Prueba Social",    "platform": "TikTok Ads",         "hook": "...", "body": "...", "cta": "..." },
+    { "type": "Urgencia",         "platform": "Meta Ads · Reels",   "hook": "...", "body": "...", "cta": "..." }
   ],
   "longCopies": [
-    {
-      "format": "Storytelling emocional",
-      "platform": "Meta Ads · Feed largo",
-      "content": "copy largo de 150-220 palabras en formato storytelling. Usa saltos de línea para legibilidad. Empieza con una historia real de un cliente."
-    },
-    {
-      "format": "Problema–Agitación–Solución",
-      "platform": "Meta Ads · Video Copy",
-      "content": "copy largo de 150-220 palabras en formato PAS. Agita el dolor antes de presentar la solución."
-    }
+    { "format": "Storytelling",            "platform": "Meta Ads · Feed",  "content": "80-120 palabras, storytelling emocional, saltos de línea" },
+    { "format": "Problema–Agitación–Solución", "platform": "Meta Ads · Video", "content": "80-120 palabras, formato PAS" }
   ],
   "hooks": [
-    { "type": "Curiosidad extrema", "text": "hook listo para usar (máx 10 palabras)", "why": "por qué funciona psicológicamente (1 frase)" },
-    { "type": "Dolor directo", "text": "...", "why": "..." },
-    { "type": "FOMO + Prueba social", "text": "...", "why": "..." },
-    { "type": "Transformación", "text": "...", "why": "..." },
-    { "type": "Patrón de interrupción", "text": "...", "why": "..." }
+    { "type": "Curiosidad extrema", "text": "máx 8 palabras", "why": "razón psicológica en 5 palabras" },
+    { "type": "Dolor directo",      "text": "...", "why": "..." },
+    { "type": "FOMO + Social",      "text": "...", "why": "..." },
+    { "type": "Transformación",     "text": "...", "why": "..." }
   ],
   "creatives": [
     {
-      "format": "UGC — Testimonial espontáneo",
-      "platform": "TikTok / Reels",
-      "duration": "15–20 segundos",
+      "format": "UGC — Testimonial", "platform": "TikTok / Reels", "duration": "15–20s",
       "structure": [
-        { "time": "0–3s", "action": "descripción de lo que ocurre en pantalla" },
-        { "time": "3–7s", "action": "..." },
-        { "time": "7–12s", "action": "..." },
-        { "time": "12–15s", "action": "..." },
-        { "time": "15–20s", "action": "..." }
+        { "time": "0–3s",  "action": "descripción concisa" },
+        { "time": "3–8s",  "action": "..." },
+        { "time": "8–14s", "action": "..." },
+        { "time": "14–20s","action": "CTA final" }
       ]
     },
     {
-      "format": "Before/After — Transformación visual",
-      "platform": "TikTok / Reels / Meta Stories",
-      "duration": "10–15 segundos",
+      "format": "Before/After", "platform": "TikTok / Reels / Stories", "duration": "10–15s",
       "structure": [
-        { "time": "0–2s", "action": "..." },
-        { "time": "2–5s", "action": "..." },
-        { "time": "5–10s", "action": "..." },
-        { "time": "10–13s", "action": "..." },
-        { "time": "13–15s", "action": "..." }
-      ]
-    },
-    {
-      "format": "Hook educacional agresivo",
-      "platform": "TikTok Ads / YouTube Pre-roll",
-      "duration": "20–30 segundos",
-      "structure": [
-        { "time": "0–3s", "action": "..." },
-        { "time": "3–8s", "action": "..." },
-        { "time": "8–15s", "action": "..." },
-        { "time": "15–22s", "action": "..." },
-        { "time": "22–28s", "action": "..." },
-        { "time": "28–30s", "action": "..." }
+        { "time": "0–3s",  "action": "antes — problema visible" },
+        { "time": "3–7s",  "action": "producto en acción" },
+        { "time": "7–12s", "action": "después — resultado" },
+        { "time": "12–15s","action": "CTA con oferta" }
       ]
     }
   ]
-}
-
-Todo el contenido en español. Adapta CADA pieza específicamente al producto "${product}". No uses textos genéricos.`,
+}`,
   )
 
   return data

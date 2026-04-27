@@ -18,7 +18,7 @@ function getClient() {
     return new sdk_1.default({ apiKey: key });
 }
 // ─── Shared helper ────────────────────────────────────────────────────────────
-const CLAUDE_TIMEOUT_MS = 90000;
+const CLAUDE_TIMEOUT_MS = 120000;
 async function claudeJSON(system, user) {
     const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('La IA tardó demasiado. Por favor, inténtalo de nuevo.')), CLAUDE_TIMEOUT_MS));
     const msg = await Promise.race([
