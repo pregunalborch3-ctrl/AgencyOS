@@ -281,14 +281,26 @@ async function generateCampaign(params: {
   productDescription: string; productUrl: string
   niche: string; objective: string; campaignStyle: string; variant?: string
 }): Promise<CampaignResult> {
-  const res = await fetch('/api/campaigns/generate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}` },
-    body: JSON.stringify(params),
-  })
-  const data = await res.json()
-  if (!res.ok || !data.success) throw new Error(data.error ?? 'Error generando la campaña')
-  return data.data as CampaignResult
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 95_000)
+  try {
+    const res = await fetch('/api/campaigns/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}` },
+      body: JSON.stringify(params),
+      signal: controller.signal,
+    })
+    const data = await res.json()
+    if (!res.ok || !data.success) throw new Error(data.error ?? 'Error generando la campaña')
+    return data.data as CampaignResult
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new Error('La IA tardó demasiado. Por favor, inténtalo de nuevo.')
+    }
+    throw err
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 // ─── Copy button ──────────────────────────────────────────────────────────────
