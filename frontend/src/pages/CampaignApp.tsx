@@ -242,10 +242,13 @@ const STYLES = [
   { value: 'branding',    label: 'Branding' },
 ]
 const LOADING_STEPS = [
-  'Analizando tienda...',
+  'Analizando tu producto...',
   'Detectando cliente ideal...',
   'Identificando ángulos de venta...',
-  'Generando anuncios y hooks...',
+  'Escribiendo anuncios y hooks...',
+  'Generando guiones de creativos...',
+  'Preparando estructura de campaña...',
+  'Finalizando...',
 ]
 const TABS = [
   { id: 'ads',       label: 'Anuncios',  icon: Megaphone },
@@ -277,30 +280,59 @@ function extractProductName(input: string): string {
 }
 
 // ─── API ──────────────────────────────────────────────────────────────────────
+// In production the Vercel rewrite proxy cuts long-running requests (~30s).
+// We call Railway directly from the browser to bypass it entirely.
+// In dev (localhost) we use relative URLs so Vite proxy handles them.
+const BACKEND_ORIGIN = window.location.hostname === 'localhost'
+  ? ''
+  : 'https://agencyos-production-2aef.up.railway.app'
+
 async function generateCampaign(params: {
   productDescription: string; productUrl: string
   niche: string; objective: string; campaignStyle: string; variant?: string
 }): Promise<CampaignResult> {
+  const url = `${BACKEND_ORIGIN}/api/campaigns/generate`
+  const t0  = Date.now()
+  console.log('[campaign] fetch START', url, new Date().toISOString())
+
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), 95_000)
+  const timer = setTimeout(() => {
+    console.warn('[campaign] AbortController fired at', Date.now() - t0, 'ms')
+    controller.abort()
+  }, 95_000)
+
+  let res: Response
   try {
-    const res = await fetch('/api/campaigns/generate', {
+    res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}` },
       body: JSON.stringify(params),
       signal: controller.signal,
     })
-    const data = await res.json()
-    if (!res.ok || !data.success) throw new Error(data.error ?? 'Error generando la campaña')
-    return data.data as CampaignResult
+    console.log('[campaign] fetch RESOLVED', res.status, Date.now() - t0, 'ms')
   } catch (err) {
+    const ms = Date.now() - t0
     if (err instanceof Error && err.name === 'AbortError') {
+      console.error('[campaign] AbortError after', ms, 'ms')
       throw new Error('La IA tardó demasiado. Por favor, inténtalo de nuevo.')
     }
+    console.error('[campaign] fetch ERROR after', ms, 'ms — name:', (err as Error)?.name, 'message:', (err as Error)?.message)
     throw err
   } finally {
     clearTimeout(timer)
   }
+
+  let data: { success: boolean; error?: string; data?: CampaignResult }
+  try {
+    data = await res.json()
+    console.log('[campaign] JSON parsed — success:', data.success, 'error:', data.error)
+  } catch (err) {
+    console.error('[campaign] res.json() FAILED — status was', res.status, 'error:', (err as Error)?.message)
+    throw new Error('Respuesta inválida del servidor. Inténtalo de nuevo.')
+  }
+
+  if (!res.ok || !data.success) throw new Error(data.error ?? 'Error generando la campaña')
+  return data.data as CampaignResult
 }
 
 // ─── Copy button ──────────────────────────────────────────────────────────────
@@ -340,16 +372,19 @@ function Select({ value, onChange, options, placeholder }: {
 
 // ─── Loading animation ────────────────────────────────────────────────────────
 function LoadingState() {
-  const [step, setStep] = useState(0)
-  const [dots, setDots] = useState('')
+  const [step,    setStep]    = useState(0)
+  const [dots,    setDots]    = useState('')
+  const [elapsed, setElapsed] = useState(0)
 
   useEffect(() => {
-    const dotsTimer = setInterval(() => setDots(d => d.length >= 3 ? '' : d + '.'), 400)
-    const stepTimer  = setInterval(() => setStep(s => s < LOADING_STEPS.length - 1 ? s + 1 : s), 1400)
-    return () => { clearInterval(dotsTimer); clearInterval(stepTimer) }
+    const dotsTimer    = setInterval(() => setDots(d => d.length >= 3 ? '' : d + '.'), 400)
+    // Advance one step every ~8s so the last step lands around 55s
+    const stepTimer    = setInterval(() => setStep(s => s < LOADING_STEPS.length - 1 ? s + 1 : s), 8_000)
+    const elapsedTimer = setInterval(() => setElapsed(e => e + 1), 1_000)
+    return () => { clearInterval(dotsTimer); clearInterval(stepTimer); clearInterval(elapsedTimer) }
   }, [])
 
-  const progress = Math.round(((step + 1) / LOADING_STEPS.length) * 100)
+  const progress = Math.min(Math.round((elapsed / 70) * 100), 95)
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-8 py-20 px-6">
@@ -362,18 +397,21 @@ function LoadingState() {
 
       <div className="flex flex-col items-center gap-2 text-center">
         <p className="text-white font-semibold text-base">Generando tu campaña con IA...</p>
-        <p className="text-zinc-500 text-xs">Esto tarda unos segundos</p>
+        <p className="text-zinc-500 text-xs">La IA tarda entre 30 y 90 segundos — no cierres la página</p>
       </div>
 
       {/* Barra de progreso */}
       <div className="w-full max-w-xs flex flex-col gap-1.5">
         <div className="w-full h-1.5 rounded-full bg-zinc-800 overflow-hidden">
           <div
-            className="h-full rounded-full bg-indigo-500 transition-all duration-700 ease-out"
+            className="h-full rounded-full bg-indigo-500 transition-all duration-1000 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
-        <p className="text-right text-xs text-zinc-600">{progress}%</p>
+        <div className="flex justify-between text-xs text-zinc-600">
+          <span>{progress}%</span>
+          <span>{elapsed}s</span>
+        </div>
       </div>
 
       <div className="flex flex-col items-center gap-3 w-full max-w-xs">
