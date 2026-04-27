@@ -5,48 +5,64 @@ exports.getCompetitor = getCompetitor;
 exports.createCompetitor = createCompetitor;
 exports.updateCompetitor = updateCompetitor;
 exports.deleteCompetitor = deleteCompetitor;
-const uuid_1 = require("uuid");
-const competitors = [];
-function getCompetitors(_req, res) {
+const client_1 = require("@prisma/client");
+const prisma = new client_1.PrismaClient();
+async function getCompetitors(req, res) {
+    const userId = req.user.userId;
+    const competitors = await prisma.competitor.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+    });
     res.json({ success: true, data: competitors });
 }
-function getCompetitor(req, res) {
-    const c = competitors.find((x) => x.id === req.params.id);
-    if (!c) {
+async function getCompetitor(req, res) {
+    const userId = req.user.userId;
+    const competitor = await prisma.competitor.findFirst({ where: { id: req.params.id, userId } });
+    if (!competitor) {
         res.status(404).json({ success: false, error: 'Competidor no encontrado' });
         return;
     }
-    res.json({ success: true, data: c });
+    res.json({ success: true, data: competitor });
 }
-function createCompetitor(req, res) {
-    const body = req.body;
-    if (!body.name) {
+async function createCompetitor(req, res) {
+    const userId = req.user.userId;
+    const { name, url, notes } = req.body;
+    if (!name) {
         res.status(400).json({ success: false, error: 'name es requerido' });
         return;
     }
-    const competitor = {
-        ...body,
-        id: (0, uuid_1.v4)(),
-        createdAt: new Date().toISOString(),
-    };
-    competitors.push(competitor);
+    const competitor = await prisma.competitor.create({
+        data: { userId, name, url: url ?? null, notes: notes ?? null },
+    });
     res.status(201).json({ success: true, data: competitor });
 }
-function updateCompetitor(req, res) {
-    const idx = competitors.findIndex((c) => c.id === req.params.id);
-    if (idx === -1) {
+const COMPETITOR_ALLOWED = ['name', 'url', 'notes'];
+async function updateCompetitor(req, res) {
+    const userId = req.user.userId;
+    const existing = await prisma.competitor.findFirst({ where: { id: req.params.id, userId } });
+    if (!existing) {
         res.status(404).json({ success: false, error: 'Competidor no encontrado' });
         return;
     }
-    competitors[idx] = { ...competitors[idx], ...req.body, id: req.params.id };
-    res.json({ success: true, data: competitors[idx] });
+    const body = req.body;
+    const clean = {};
+    for (const key of COMPETITOR_ALLOWED) {
+        if (body[key] !== undefined)
+            clean[key] = body[key];
+    }
+    const updated = await prisma.competitor.update({
+        where: { id: req.params.id },
+        data: clean,
+    });
+    res.json({ success: true, data: updated });
 }
-function deleteCompetitor(req, res) {
-    const idx = competitors.findIndex((c) => c.id === req.params.id);
-    if (idx === -1) {
+async function deleteCompetitor(req, res) {
+    const userId = req.user.userId;
+    const existing = await prisma.competitor.findFirst({ where: { id: req.params.id, userId } });
+    if (!existing) {
         res.status(404).json({ success: false, error: 'Competidor no encontrado' });
         return;
     }
-    competitors.splice(idx, 1);
+    await prisma.competitor.delete({ where: { id: req.params.id } });
     res.json({ success: true, data: null });
 }

@@ -2,7 +2,12 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const campaignController_1 = require("../controllers/campaignController");
+const shopifyController_1 = require("../controllers/shopifyController");
 const authMiddleware_1 = require("../middleware/authMiddleware");
 const router = (0, express_1.Router)();
 router.post('/generate', authMiddleware_1.requireAuth, campaignController_1.generateCampaign);
+router.post('/analyze-url', authMiddleware_1.requireAuth, shopifyController_1.analyzeShopifyUrl);
+router.post('/', authMiddleware_1.requireAuth, campaignController_1.saveCampaign);
+router.get('/', authMiddleware_1.requireAuth, campaignController_1.getCampaigns);
+router.delete('/:id', authMiddleware_1.requireAuth, campaignController_1.deleteCampaign);
 exports.default = router;

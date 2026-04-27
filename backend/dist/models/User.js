@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserStore = exports.prisma = void 0;
 const client_1 = require("@prisma/client");
 exports.prisma = new client_1.PrismaClient();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toUser(u) {
     return {
         id: u.id,
@@ -21,6 +22,7 @@ function toUser(u) {
             priceId: u.priceId ?? "",
             trialEnd: u.trialEnd ? u.trialEnd.toISOString() : null,
         } : null,
+        freeUsed: u.freeUsed ?? false,
     };
 }
 exports.UserStore = {
@@ -48,7 +50,9 @@ exports.UserStore = {
         const u = await exports.prisma.user.findFirst({ where: { stripeCustomerId: customerId } });
         return u ? toUser(u) : undefined;
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async update(id, data) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const updateData = {};
         if (data.lastLoginAt !== undefined)
             updateData.lastLoginAt = data.lastLoginAt ? new Date(data.lastLoginAt) : null;
@@ -66,6 +70,8 @@ exports.UserStore = {
             updateData.priceId = data.priceId;
         if (data.cancelAtPeriodEnd !== undefined)
             updateData.cancelAtPeriodEnd = data.cancelAtPeriodEnd;
+        if (data.freeUsed !== undefined)
+            updateData.freeUsed = data.freeUsed;
         if (data.subscription !== undefined) {
             const sub = data.subscription;
             if (sub) {

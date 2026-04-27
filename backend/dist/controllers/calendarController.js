@@ -4,48 +4,55 @@ exports.getPosts = getPosts;
 exports.createPost = createPost;
 exports.updatePost = updatePost;
 exports.deletePost = deletePost;
-const uuid_1 = require("uuid");
-const posts = [
-    {
-        id: (0, uuid_1.v4)(),
-        title: 'Lanzamiento campaña verano',
-        content: '¡El verano llegó! Descubre nuestra nueva colección...',
-        platform: 'instagram',
-        status: 'programado',
-        scheduledAt: new Date(2026, 3, 15, 10, 0).toISOString(),
-        tags: ['verano', 'colección'],
-    },
-];
-function getPosts(_req, res) {
+const client_1 = require("@prisma/client");
+const prisma = new client_1.PrismaClient();
+async function getPosts(req, res) {
+    const userId = req.user.userId;
+    const posts = await prisma.calendarPost.findMany({
+        where: { userId },
+        orderBy: { date: 'asc' },
+    });
     res.json({ success: true, data: posts });
 }
-function createPost(req, res) {
-    const body = req.body;
-    if (!body.title || !body.platform || !body.scheduledAt) {
-        res.status(400).json({ success: false, error: 'title, platform y scheduledAt son requeridos' });
+async function createPost(req, res) {
+    const userId = req.user.userId;
+    const { title, date, platform, content, status } = req.body;
+    if (!title || !date || !platform || !content) {
+        res.status(400).json({ success: false, error: 'title, date, platform y content son requeridos' });
         return;
     }
-    const post = { ...body, id: (0, uuid_1.v4)() };
-    posts.push(post);
+    const post = await prisma.calendarPost.create({
+        data: { userId, title, date, platform, content, status: status ?? 'draft' },
+    });
     res.status(201).json({ success: true, data: post });
 }
-function updatePost(req, res) {
-    const { id } = req.params;
-    const idx = posts.findIndex((p) => p.id === id);
-    if (idx === -1) {
+const CALENDAR_ALLOWED = ['title', 'date', 'platform', 'content', 'status'];
+async function updatePost(req, res) {
+    const userId = req.user.userId;
+    const existing = await prisma.calendarPost.findFirst({ where: { id: req.params.id, userId } });
+    if (!existing) {
         res.status(404).json({ success: false, error: 'Post no encontrado' });
         return;
     }
-    posts[idx] = { ...posts[idx], ...req.body, id };
-    res.json({ success: true, data: posts[idx] });
+    const body = req.body;
+    const clean = {};
+    for (const key of CALENDAR_ALLOWED) {
+        if (body[key] !== undefined)
+            clean[key] = body[key];
+    }
+    const updated = await prisma.calendarPost.update({
+        where: { id: req.params.id },
+        data: clean,
+    });
+    res.json({ success: true, data: updated });
 }
-function deletePost(req, res) {
-    const { id } = req.params;
-    const idx = posts.findIndex((p) => p.id === id);
-    if (idx === -1) {
+async function deletePost(req, res) {
+    const userId = req.user.userId;
+    const existing = await prisma.calendarPost.findFirst({ where: { id: req.params.id, userId } });
+    if (!existing) {
         res.status(404).json({ success: false, error: 'Post no encontrado' });
         return;
     }
-    posts.splice(idx, 1);
+    await prisma.calendarPost.delete({ where: { id: req.params.id } });
     res.json({ success: true, data: null });
 }

@@ -10,8 +10,8 @@ const stripeService_1 = require("../services/stripeService");
 const User_1 = require("../models/User");
 const FRONTEND = process.env.FRONTEND_URL ?? 'http://localhost:5173';
 // ─── GET /api/subscription/status ────────────────────────────────────────────
-function getStatus(req, res) {
-    const user = User_1.UserStore.findById(req.user.userId);
+async function getStatus(req, res) {
+    const user = await User_1.UserStore.findById(req.user.userId);
     if (!user) {
         res.status(404).json({ success: false, error: 'Usuario no encontrado.' });
         return;
@@ -20,12 +20,17 @@ function getStatus(req, res) {
 }
 // ─── POST /api/subscription/checkout ─────────────────────────────────────────
 async function createCheckoutSession(req, res) {
-    const user = User_1.UserStore.findById(req.user.userId);
+    const user = await User_1.UserStore.findById(req.user.userId);
     if (!user) {
         res.status(404).json({ success: false, error: 'Usuario no encontrado.' });
         return;
     }
-    if (!stripeService_1.PRICE_ID || stripeService_1.PRICE_ID.startsWith('price_REEMPLAZA')) {
+    const { priceId: requestedPriceId } = req.body;
+    const allowedIds = Object.values(stripeService_1.PRICE_IDS).filter(Boolean);
+    const priceId = (requestedPriceId && allowedIds.includes(requestedPriceId))
+        ? requestedPriceId
+        : (stripeService_1.PRICE_IDS.starter || stripeService_1.PRICE_ID);
+    if (!priceId || priceId.startsWith('price_REEMPLAZA')) {
         res.status(503).json({ success: false, error: 'Stripe no está configurado en el servidor.' });
         return;
     }
@@ -41,7 +46,7 @@ async function createCheckoutSession(req, res) {
     const session = await stripeService_1.stripe.checkout.sessions.create({
         customer: customerId,
         payment_method_types: ['card'],
-        line_items: [{ price: stripeService_1.PRICE_ID, quantity: 1 }],
+        line_items: [{ price: priceId, quantity: 1 }],
         mode: 'subscription',
         subscription_data: {
             trial_period_days: 14,
@@ -56,7 +61,7 @@ async function createCheckoutSession(req, res) {
 }
 // ─── POST /api/subscription/portal ───────────────────────────────────────────
 async function createPortalSession(req, res) {
-    const user = User_1.UserStore.findById(req.user.userId);
+    const user = await User_1.UserStore.findById(req.user.userId);
     if (!user?.stripeCustomerId) {
         res.status(400).json({ success: false, error: 'No tienes una suscripción activa.' });
         return;
@@ -69,7 +74,7 @@ async function createPortalSession(req, res) {
 }
 // ─── POST /api/subscription/cancel ───────────────────────────────────────────
 async function cancelSubscription(req, res) {
-    const user = User_1.UserStore.findById(req.user.userId);
+    const user = await User_1.UserStore.findById(req.user.userId);
     if (!user?.subscription?.stripeSubscriptionId) {
         res.status(400).json({ success: false, error: 'No tienes una suscripción activa.' });
         return;
@@ -86,7 +91,7 @@ async function cancelSubscription(req, res) {
 }
 // ─── POST /api/subscription/reactivate ───────────────────────────────────────
 async function reactivateSubscription(req, res) {
-    const user = User_1.UserStore.findById(req.user.userId);
+    const user = await User_1.UserStore.findById(req.user.userId);
     if (!user?.subscription?.stripeSubscriptionId) {
         res.status(400).json({ success: false, error: 'No tienes una suscripción para reactivar.' });
         return;
@@ -105,10 +110,12 @@ async function handleWebhook(req, res) {
     try {
         event = stripeService_1.stripe.webhooks.constructEvent(req.body, sig, stripeService_1.WEBHOOK_SECRET);
     }
-    catch {
+    catch (err) {
+        console.error('[webhook] Signature verification failed:', err instanceof Error ? err.message : err);
         res.status(400).json({ error: 'Webhook signature invalid.' });
         return;
     }
+    console.log(`[webhook] Received: ${event.type} — id: ${event.id}`);
     try {
         switch (event.type) {
             case 'checkout.session.completed': {
@@ -116,9 +123,13 @@ async function handleWebhook(req, res) {
                 if (session.mode !== 'subscription')
                     break;
                 const userId = session.client_reference_id ?? '';
+                if (!userId) {
+                    console.error('[webhook] checkout.session.completed: missing client_reference_id', { sessionId: session.id });
+                    break;
+                }
                 const sub = await stripeService_1.stripe.subscriptions.retrieve(session.subscription);
                 const item = sub.items.data[0];
-                User_1.UserStore.update(userId, {
+                await User_1.UserStore.update(userId, {
                     stripeCustomerId: session.customer,
                     subscription: {
                         stripeSubscriptionId: sub.id,
@@ -129,16 +140,20 @@ async function handleWebhook(req, res) {
                         trialEnd: sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null,
                     },
                 });
+                console.log(`[webhook] checkout.session.completed: user ${userId} → subscription ${sub.id} (${sub.status})`);
                 break;
             }
             case 'customer.subscription.updated':
             case 'customer.subscription.deleted': {
                 const sub = event.data.object;
-                const user = User_1.UserStore.findByStripeCustomerId(sub.customer);
-                if (!user)
+                const user = await User_1.UserStore.findByStripeCustomerId(sub.customer);
+                if (!user) {
+                    console.error(`[webhook] ${event.type}: no user found for customer ${sub.customer}`);
                     break;
+                }
                 const item = sub.items.data[0];
-                User_1.UserStore.update(user.id, {
+                const isGone = event.type === 'customer.subscription.deleted' || sub.status === 'canceled';
+                await User_1.UserStore.update(user.id, {
                     subscription: {
                         stripeSubscriptionId: sub.id,
                         status: sub.status,
@@ -147,23 +162,32 @@ async function handleWebhook(req, res) {
                         priceId: item?.price.id ?? stripeService_1.PRICE_ID,
                         trialEnd: sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null,
                     },
+                    // Reset free campaign gate when subscription is truly canceled
+                    ...(isGone ? { freeUsed: false } : {}),
                 });
+                console.log(`[webhook] ${event.type}: user ${user.id} → status ${sub.status}${isGone ? ' (freeUsed reset)' : ''}`);
                 break;
             }
             case 'invoice.payment_failed': {
                 const invoice = event.data.object;
-                const user = User_1.UserStore.findByStripeCustomerId(invoice.customer);
-                if (!user?.subscription)
+                const user = await User_1.UserStore.findByStripeCustomerId(invoice.customer);
+                if (!user?.subscription) {
+                    console.error('[webhook] invoice.payment_failed: no user/subscription for customer', invoice.customer);
                     break;
-                User_1.UserStore.update(user.id, {
+                }
+                await User_1.UserStore.update(user.id, {
                     subscription: { ...user.subscription, status: 'past_due' },
                 });
+                console.log(`[webhook] invoice.payment_failed: user ${user.id} → past_due`);
                 break;
             }
+            default:
+                console.log(`[webhook] Unhandled event type: ${event.type}`);
         }
     }
     catch (err) {
-        console.error('Webhook handler error:', err);
+        console.error(`[webhook] Handler error for ${event.type} (id: ${event.id}):`, err);
+        // Still respond 200 so Stripe does not retry — log the failure for manual reconciliation
     }
     res.json({ received: true });
 }

@@ -1,8 +1,23 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateCampaign = generateCampaign;
+exports.saveCampaign = saveCampaign;
+exports.getCampaigns = getCampaigns;
+exports.deleteCampaign = deleteCampaign;
 const uuid_1 = require("uuid");
-// ─── Niche data ───────────────────────────────────────────────────────────────
+const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
+const User_1 = require("../models/User");
+// ─── Anthropic client (lazy — reads env at call time) ─────────────────────────
+function getClient() {
+    const key = process.env.ANTHROPIC_API_KEY;
+    if (!key)
+        throw new Error('ANTHROPIC_API_KEY no está configurada.');
+    return new sdk_1.default({ apiKey: key });
+}
+// ─── Niche data (used as context for Claude) ──────────────────────────────────
 const NICHE_DATA = {
     ropa: {
         pains: ['gastar dinero en ropa que no sienta bien', 'no encontrar su estilo', 'comprar online y que no sea lo que esperaba', 'las tallas no ser fiables'],
@@ -10,8 +25,7 @@ const NICHE_DATA = {
         profile: 'Mujeres/hombres 22–38 interesados en moda y lifestyle',
         interests: ['Moda', 'Zara', 'H&M', 'Instagram Fashion', 'Tendencias', 'Compras online'],
         behaviors: ['Compradores de moda online', 'Usuarios activos de Instagram', 'Compradores frecuentes'],
-        ageRange: '22–38',
-        gender: 'Principalmente mujeres (65%), hombres (35%)',
+        ageRange: '22–38', gender: 'Principalmente mujeres (65%), hombres (35%)',
     },
     calzado: {
         pains: ['zapatillas que se desgastan rápido', 'pies doloridos al final del día', 'no encontrar calzado cómodo Y estético', 'tallas que no corresponden'],
@@ -19,8 +33,7 @@ const NICHE_DATA = {
         profile: 'Adultos 25–45 que priorizan calidad y comodidad',
         interests: ['Running', 'Sneakers', 'Lifestyle', 'Fitness', 'Moda urbana'],
         behaviors: ['Compradores de calzado deportivo', 'Interesados en bienestar', 'Compradores de marca'],
-        ageRange: '25–45',
-        gender: 'Mixto (55% hombres, 45% mujeres)',
+        ageRange: '25–45', gender: 'Mixto (55% hombres, 45% mujeres)',
     },
     belleza: {
         pains: ['productos que prometen mucho y no cumplen', 'piel sensible que reacciona mal', 'gastar dinero en rutinas que no funcionan', 'no saber qué productos usar'],
@@ -28,8 +41,7 @@ const NICHE_DATA = {
         profile: 'Mujeres 20–40 interesadas en skincare y autocuidado',
         interests: ['Skincare', 'Belleza natural', 'Bienestar', 'YouTube Beauty', 'TikTok Beauty'],
         behaviors: ['Compradoras de cosméticos online', 'Usuarias frecuentes de redes', 'Interesadas en bienestar'],
-        ageRange: '20–40',
-        gender: 'Principalmente mujeres (85%)',
+        ageRange: '20–40', gender: 'Principalmente mujeres (85%)',
     },
     fitness: {
         pains: ['empezar y dejarlo a las 2 semanas', 'no ver resultados después de meses', 'no saber qué entrenar', 'suplementos caros que no funcionan'],
@@ -37,8 +49,7 @@ const NICHE_DATA = {
         profile: 'Adultos 25–40 activos o que quieren empezar a serlo',
         interests: ['Gym', 'Fitness', 'Nutrición deportiva', 'CrossFit', 'Running', 'Suplementación'],
         behaviors: ['Compradores de suplementos', 'Usuarios de apps de fitness', 'Interesados en deporte'],
-        ageRange: '25–40',
-        gender: 'Mixto (60% hombres, 40% mujeres)',
+        ageRange: '25–40', gender: 'Mixto (60% hombres, 40% mujeres)',
     },
     hogar: {
         pains: ['casa que no refleja quién eres', 'productos de decoración caros y de baja calidad', 'no saber cómo combinar estilos', 'muebles que no duran'],
@@ -46,8 +57,7 @@ const NICHE_DATA = {
         profile: 'Adultos 28–45 con hogar propio o en proceso de decorarlo',
         interests: ['Decoración', 'Interiorismo', 'Pinterest Home', 'DIY', 'Lifestyle'],
         behaviors: ['Compradores de hogar online', 'Usuarios de Pinterest', 'Interesados en decoración'],
-        ageRange: '28–45',
-        gender: 'Principalmente mujeres (70%)',
+        ageRange: '28–45', gender: 'Principalmente mujeres (70%)',
     },
     tecnologia: {
         pains: ['dispositivos lentos que ralentizan su trabajo', 'gadgets que se rompen al año', 'no saber qué tecnología elegir', 'pagar demasiado por algo que no necesitan'],
@@ -55,8 +65,7 @@ const NICHE_DATA = {
         profile: 'Profesionales y entusiastas de la tecnología 25–45',
         interests: ['Tech', 'Gadgets', 'Productividad', 'Apple', 'Android', 'Gaming'],
         behaviors: ['Early adopters', 'Compradores de electrónica online', 'Profesionales digitales'],
-        ageRange: '25–45',
-        gender: 'Principalmente hombres (65%)',
+        ageRange: '25–45', gender: 'Principalmente hombres (65%)',
     },
     alimentacion: {
         pains: ['comer sano es complicado y caro', 'no tener tiempo para cocinar bien', 'no saber qué es realmente saludable', 'perder peso y recuperarlo'],
@@ -64,8 +73,7 @@ const NICHE_DATA = {
         profile: 'Adultos 28–50 conscientes de su salud y bienestar',
         interests: ['Nutrición', 'Vida saludable', 'Recetas', 'Bienestar', 'Dieta mediterránea'],
         behaviors: ['Compradores de productos saludables', 'Interesados en bienestar', 'Usuarios de apps de dieta'],
-        ageRange: '28–50',
-        gender: 'Principalmente mujeres (60%)',
+        ageRange: '28–50', gender: 'Principalmente mujeres (60%)',
     },
     joyeria: {
         pains: ['joyería cara que se oxida', 'regalo genérico sin significado', 'no encontrar piezas únicas', 'metales que irritan la piel'],
@@ -73,8 +81,7 @@ const NICHE_DATA = {
         profile: 'Mujeres 25–45 y personas buscando regalos especiales',
         interests: ['Joyería', 'Moda', 'Lujo accesible', 'Regalos', 'Accesorios'],
         behaviors: ['Compradores de regalos online', 'Interesados en accesorios', 'Compradores de lujo moderado'],
-        ageRange: '25–45',
-        gender: 'Principalmente mujeres (75%)',
+        ageRange: '25–45', gender: 'Principalmente mujeres (75%)',
     },
     mascotas: {
         pains: ['productos de baja calidad que perjudican la salud del animal', 'no saber qué es mejor para su mascota', 'veterinario caro por problemas prevenibles', 'productos que no duran'],
@@ -82,8 +89,7 @@ const NICHE_DATA = {
         profile: 'Dueños de mascotas 25–45 que tratan al animal como familia',
         interests: ['Mascotas', 'Perros', 'Gatos', 'Vida saludable', 'Bienestar animal'],
         behaviors: ['Dueños de mascotas', 'Compradores de productos para animales', 'Usuarios de comunidades de mascotas'],
-        ageRange: '25–45',
-        gender: 'Principalmente mujeres (60%)',
+        ageRange: '25–45', gender: 'Principalmente mujeres (60%)',
     },
     deportes: {
         pains: ['equipamiento que se rompe a los meses', 'rendimiento estancado sin saber por qué', 'lesiones por material inadecuado', 'marcas caras que no aportan diferencia real'],
@@ -91,138 +97,163 @@ const NICHE_DATA = {
         profile: 'Deportistas 20–40 comprometidos con su rendimiento',
         interests: ['Deporte', 'Running', 'Ciclismo', 'Natación', 'Trail', 'Rendimiento deportivo'],
         behaviors: ['Atletas amateur y semi-pro', 'Compradores de equipamiento deportivo', 'Usuarios de apps de deporte'],
-        ageRange: '20–40',
-        gender: 'Mixto (55% hombres, 45% mujeres)',
+        ageRange: '20–40', gender: 'Mixto (55% hombres, 45% mujeres)',
     },
 };
 const DEFAULT_NICHE = NICHE_DATA['ropa'];
-// ─── Copy templates ───────────────────────────────────────────────────────────
-function pickRandom(arr) {
-    return arr[Math.floor(Math.random() * arr.length)];
+// ─── Claude JSON helper ───────────────────────────────────────────────────────
+const CLAUDE_TIMEOUT_MS = 30000;
+async function claudeJSON(system, user) {
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('La IA tardó demasiado. Por favor, inténtalo de nuevo.')), CLAUDE_TIMEOUT_MS));
+    const msg = await Promise.race([
+        getClient().messages.create({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 4000,
+            system,
+            messages: [{ role: 'user', content: user }],
+        }),
+        timeout,
+    ]);
+    const raw = msg.content[0].text.trim();
+    const clean = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
+    try {
+        return JSON.parse(clean);
+    }
+    catch {
+        throw new Error('La IA devolvió una respuesta inesperada. Inténtalo de nuevo.');
+    }
 }
-function buildShortCopies(product, niche, objective) {
-    const pain = pickRandom(niche.pains);
-    const desire = pickRandom(niche.desires);
-    const desire2 = pickRandom(niche.desires.filter(d => d !== desire));
+async function generateCreativesWithClaude(product, niche, objective, campaignStyle, variant) {
+    const variantContext = {
+        '': 'Tono profesional, equilibrado, persuasivo pero no agresivo.',
+        'agresivo': 'Tono muy directo y agresivo. FOMO intenso, urgencia extrema, presión psicológica alta. Frases cortas y contundentes.',
+        'conversion': 'Enfocado 100% en conversión: incluye garantías, elimina objeciones, usa prueba social concreta, urgencia real (no ficticia).',
+        'tiktok': 'Tono nativo de TikTok: viral, entretenido, hooks ultra-cortos (<8 palabras), lenguaje generacional, emojis estratégicos, formato POV o "espera, qué?".',
+    };
     const ctaMap = {
         ventas: ['Comprar ahora →', 'Conseguirlo aquí →', 'Quiero el mío →', 'Aprovecha la oferta →'],
         leads: ['Solicitar info →', 'Quiero saber más →', 'Reservar mi plaza →', 'Hablar con un experto →'],
         trafico: ['Ver más →', 'Descúbrelo →', 'Leer el artículo →', 'Explorar →'],
     };
     const ctas = ctaMap[objective] ?? ctaMap['ventas'];
-    return [
-        {
-            type: 'Curiosidad',
-            platform: 'Meta Ads · Feed',
-            hook: `¿Por qué miles de personas están eligiendo ${product} antes que cualquier otra opción?`,
-            body: `No es casualidad. ${product} resuelve ${pain} de una vez por todas. ${desire2.charAt(0).toUpperCase() + desire2.slice(1)} — sin compromisos.`,
-            cta: pickRandom(ctas),
-        },
-        {
-            type: 'Problema–Solución',
-            platform: 'Meta Ads · Stories',
-            hook: `Cansado/a de ${pain}?`,
-            body: `${product} fue diseñado específicamente para eso. ${desire.charAt(0).toUpperCase() + desire.slice(1)}. El cambio que llevas tiempo buscando.`,
-            cta: pickRandom(ctas),
-        },
-        {
-            type: 'Prueba Social',
-            platform: 'TikTok Ads',
-            hook: `+4.200 clientes no pueden estar equivocados.`,
-            body: `${product} se ha convertido en el favorito de quienes querían ${desire} sin pagar precios absurdos. Ahora te toca a ti.`,
-            cta: pickRandom(ctas),
-        },
-    ];
+    const data = await claudeJSON('Eres un experto copywriter en marketing de performance y publicidad de pago (Meta Ads, TikTok Ads, Google Ads). Escribes copy que convierte, no que suena bonito. Responde ÚNICAMENTE con JSON válido, sin markdown, sin comentarios.', `Crea material publicitario completo para este producto/tienda:
+
+PRODUCTO: "${product}"
+NICHO: ${niche.profile}
+OBJETIVO DE CAMPAÑA: ${objective} (${objective === 'ventas' ? 'maximizar compras directas' : objective === 'leads' ? 'captar contactos cualificados' : 'llevar tráfico a la web'})
+ESTILO: ${campaignStyle || 'performance'}
+VARIANTE/TONO: ${variantContext[variant] ?? variantContext['']}
+
+CONTEXTO DEL CLIENTE IDEAL:
+- Dolores principales: ${niche.pains.join(' | ')}
+- Deseos principales: ${niche.desires.join(' | ')}
+- Perfil: ${niche.profile}
+
+CTAs disponibles (usa solo estos): ${ctas.join(', ')}
+
+Devuelve EXACTAMENTE este JSON:
+{
+  "shortCopies": [
+    {
+      "type": "Curiosidad",
+      "platform": "Meta Ads · Feed",
+      "hook": "titular que para el scroll (máx 12 palabras)",
+      "body": "cuerpo del anuncio (2-3 frases, máx 80 palabras)",
+      "cta": "uno de los CTAs disponibles"
+    },
+    {
+      "type": "Problema–Solución",
+      "platform": "Meta Ads · Stories",
+      "hook": "...",
+      "body": "...",
+      "cta": "..."
+    },
+    {
+      "type": "Prueba Social",
+      "platform": "TikTok Ads",
+      "hook": "...",
+      "body": "...",
+      "cta": "..."
+    },
+    {
+      "type": "Urgencia",
+      "platform": "Meta Ads · Reels",
+      "hook": "...",
+      "body": "...",
+      "cta": "..."
+    },
+    {
+      "type": "Identidad",
+      "platform": "Meta Ads · Feed",
+      "hook": "...",
+      "body": "...",
+      "cta": "..."
+    }
+  ],
+  "longCopies": [
+    {
+      "format": "Storytelling emocional",
+      "platform": "Meta Ads · Feed largo",
+      "content": "copy largo de 150-220 palabras en formato storytelling. Usa saltos de línea para legibilidad. Empieza con una historia real de un cliente."
+    },
+    {
+      "format": "Problema–Agitación–Solución",
+      "platform": "Meta Ads · Video Copy",
+      "content": "copy largo de 150-220 palabras en formato PAS. Agita el dolor antes de presentar la solución."
+    }
+  ],
+  "hooks": [
+    { "type": "Curiosidad extrema", "text": "hook listo para usar (máx 10 palabras)", "why": "por qué funciona psicológicamente (1 frase)" },
+    { "type": "Dolor directo", "text": "...", "why": "..." },
+    { "type": "FOMO + Prueba social", "text": "...", "why": "..." },
+    { "type": "Transformación", "text": "...", "why": "..." },
+    { "type": "Patrón de interrupción", "text": "...", "why": "..." }
+  ],
+  "creatives": [
+    {
+      "format": "UGC — Testimonial espontáneo",
+      "platform": "TikTok / Reels",
+      "duration": "15–20 segundos",
+      "structure": [
+        { "time": "0–3s", "action": "descripción de lo que ocurre en pantalla" },
+        { "time": "3–7s", "action": "..." },
+        { "time": "7–12s", "action": "..." },
+        { "time": "12–15s", "action": "..." },
+        { "time": "15–20s", "action": "..." }
+      ]
+    },
+    {
+      "format": "Before/After — Transformación visual",
+      "platform": "TikTok / Reels / Meta Stories",
+      "duration": "10–15 segundos",
+      "structure": [
+        { "time": "0–2s", "action": "..." },
+        { "time": "2–5s", "action": "..." },
+        { "time": "5–10s", "action": "..." },
+        { "time": "10–13s", "action": "..." },
+        { "time": "13–15s", "action": "..." }
+      ]
+    },
+    {
+      "format": "Hook educacional agresivo",
+      "platform": "TikTok Ads / YouTube Pre-roll",
+      "duration": "20–30 segundos",
+      "structure": [
+        { "time": "0–3s", "action": "..." },
+        { "time": "3–8s", "action": "..." },
+        { "time": "8–15s", "action": "..." },
+        { "time": "15–22s", "action": "..." },
+        { "time": "22–28s", "action": "..." },
+        { "time": "28–30s", "action": "..." }
+      ]
+    }
+  ]
 }
-function buildLongCopies(product, niche, objective) {
-    const pain = pickRandom(niche.pains);
-    const desire = pickRandom(niche.desires);
-    const pain2 = pickRandom(niche.pains.filter(p => p !== pain));
-    return [
-        {
-            format: 'Storytelling',
-            platform: 'Meta Ads · Feed largo',
-            content: `Hace un año, María llevaba meses buscando la solución perfecta.\n\nEstaba harta de ${pain}. Lo había intentado todo — marcas conocidas, opciones más baratas, recomendaciones de amigas. Siempre lo mismo: promesas y decepción.\n\nHasta que encontró ${product}.\n\nEn las primeras dos semanas ya notó la diferencia. No es magia — es que el producto está diseñado de verdad para ${desire}.\n\nHoy María lo recomienda a todo el mundo. Y no es la única.\n\n¿Cuándo vas a darle la oportunidad que mereces?\n\n👇 Haz clic y descúbrelo tú misma.`,
-        },
-        {
-            format: 'Problema–Agitación–Solución',
-            platform: 'Meta Ads · Video Copy',
-            content: `Si todavía estás lidiando con ${pain}, necesitas leer esto.\n\nEl problema real no es que no hayas encontrado la solución. Es que el mercado está lleno de productos que no están hechos para ti — están hechos para vender.\n\n${pain2.charAt(0).toUpperCase() + pain2.slice(1)}... eso sigue pasando porque nadie ha resuelto el problema de raíz.\n\n${product} lo cambia todo.\n\nNo es otro producto genérico. Es un sistema pensado para que consigas ${desire} de verdad, con resultados que se notan.\n\nLos números hablan: más de 4.000 clientes satisfechos en los últimos 6 meses.\n\n¿Vas a ser el siguiente? 👇`,
-        },
-    ];
+
+Todo el contenido en español. Adapta CADA pieza específicamente al producto "${product}". No uses textos genéricos.`);
+    return data;
 }
-function buildHooks(product, niche) {
-    const pain = pickRandom(niche.pains);
-    const desire = pickRandom(niche.desires);
-    return [
-        {
-            type: 'Curiosidad extrema',
-            text: `Lo que nadie te cuenta sobre ${product} (y que marca la diferencia)`,
-            why: 'Activa el gap de curiosidad. El usuario no puede no querer saber la respuesta.',
-        },
-        {
-            type: 'Dolor directo',
-            text: `Si estás harta de ${pain}, este vídeo es para ti.`,
-            why: 'Califica al cliente ideal desde el primer segundo. Solo los que tienen el problema hacen clic.',
-        },
-        {
-            type: 'Urgencia + Prueba social',
-            text: `4.200 personas ya lo tienen. ¿Por qué tú no?`,
-            why: 'FOMO + validación social. Dos triggers de conversión en una sola frase.',
-        },
-        {
-            type: 'Transformación',
-            text: `De ${pain} a ${desire} — en menos de lo que crees.`,
-            why: 'Muestra el antes y después sin decirlo. El cerebro completa la historia solo.',
-        },
-        {
-            type: 'Patrón de interrupción',
-            text: `Para. Deja de buscar más opciones. Ya encontraste la que necesitabas.`,
-            why: 'Rompe el scroll con un mensaje directo que interpela al usuario en su momento de decisión.',
-        },
-    ];
-}
-function buildCreatives(product, niche) {
-    return [
-        {
-            format: 'UGC — Testimonial espontáneo',
-            platform: 'TikTok / Reels',
-            duration: '15–20 segundos',
-            structure: [
-                { time: '0–3s', action: `Persona mirando a cámara: "Llevaba meses buscando esto..." (cara de sorpresa)` },
-                { time: '3–7s', action: `Primeros planos del producto. Manos mostrando el packaging. Sin narración.` },
-                { time: '7–12s', action: `"Desde que lo uso, ${pickRandom(niche.desires)}. En serio, no lo puedo creer."` },
-                { time: '12–15s', action: `CTA directo: "Lo encontré en el link de la bio. Literalmente lo mejor que he comprado."` },
-                { time: '15–20s', action: `Texto en pantalla: ${product} + precio + CTA. Música trending de fondo.` },
-            ],
-        },
-        {
-            format: 'Before/After — Transformación visual',
-            platform: 'TikTok / Reels / Meta Stories',
-            duration: '10–15 segundos',
-            structure: [
-                { time: '0–2s', action: `Pantalla dividida o transición: estado ANTES (caótico, problema visible)` },
-                { time: '2–5s', action: `Transición con efecto de sonido. Texto: "Después de ${product}..."` },
-                { time: '5–10s', action: `Estado DESPUÉS — resultado deseado claramente visible. Cara de satisfacción.` },
-                { time: '10–13s', action: `Zoom al producto. "Disponible solo online — link en la bio."` },
-                { time: '13–15s', action: `Logo + precio + botón de compra.` },
-            ],
-        },
-        {
-            format: 'Hook agresivo — Educacional',
-            platform: 'TikTok Ads / YouTube Pre-roll',
-            duration: '20–30 segundos',
-            structure: [
-                { time: '0–3s', action: `Hook en texto grande: "El error que comete el 90% de la gente con esto"` },
-                { time: '3–8s', action: `Voz en off rápida explicando el problema. Imágenes del problema en acción.` },
-                { time: '8–15s', action: `"La solución es más simple de lo que crees." Introduce el producto.` },
-                { time: '15–22s', action: `Demostración rápida del producto. Resultados visibles. Cifras reales.` },
-                { time: '22–28s', action: `CTA fuerte: "Pruébalo 14 días. Si no funciona, te devolvemos el dinero."` },
-                { time: '28–30s', action: `Pantalla final con nombre del producto y URL.` },
-            ],
-        },
-    ];
-}
+// ─── Structural functions (template-based, no IA needed) ──────────────────────
 function buildCampaignStructure(objective) {
     const funnelMap = {
         ventas: [
@@ -250,7 +281,9 @@ function buildCampaignStructure(objective) {
     return {
         type: typeMap[objective] ?? typeMap['ventas'],
         funnel: funnelMap[objective] ?? funnelMap['ventas'],
-        totalBudgetSuggestion: objective === 'ventas' ? '€30–€80 / día para empezar. Escalar cuando ROAS > 2.5x.' : '€20–€50 / día. Optimizar CPL antes de escalar.',
+        totalBudgetSuggestion: objective === 'ventas'
+            ? '€30–€80 / día para empezar. Escalar cuando ROAS > 2.5x.'
+            : '€20–€50 / día. Optimizar CPL antes de escalar.',
         notes: 'Lanzar TOF y BOF simultáneamente. Revisar frecuencia a los 3 días. Pausar anuncios con CTR < 1.5%. Duplicar los ganadores con presupuesto +30%.',
     };
 }
@@ -263,11 +296,10 @@ function buildSegmentation(niche, product) {
         behaviors: niche.behaviors,
         pains: niche.pains,
         desires: niche.desires,
-        lookalike: ['Compradores recientes (180d)', 'Visitantes de producto (30d)', 'Clientes de alto valor (LTV top 25%)'],
+        lookalike: ['Compradores recientes (180d)', `Visitantes de ${product} (30d)`, 'Clientes de alto valor (LTV top 25%)'],
         exclude: ['Compradores recientes (14d)', 'Empleados propios', 'Competencia directa'],
     };
 }
-// ─── Insight ─────────────────────────────────────────────────────────────────
 function buildInsight(niche, objective, campaignStyle, variant) {
     const base = {
         ventas_performance: 'Problema–Solución con urgencia y conversión directa',
@@ -287,53 +319,10 @@ function buildInsight(niche, objective, campaignStyle, variant) {
         angle = 'Conversión directa con garantía + eliminación de objeciones';
     if (variant === 'tiktok')
         angle = 'Entretenimiento viral + disrupción de scroll';
-    const agr = {
+    const aggr = {
         agresivo: 'Alto', conversion: 'Alto', tiktok: 'Medio', '': objective === 'ventas' ? 'Medio' : 'Bajo',
     };
-    return { angle, clientType: niche.profile, aggressiveness: agr[variant] ?? 'Medio' };
-}
-// ─── Variant modifiers ────────────────────────────────────────────────────────
-function applyVariant(copies, hooks, variant, product, niche) {
-    if (variant === 'agresivo') {
-        return {
-            copies: copies.map(c => ({
-                ...c,
-                hook: c.hook.replace('¿Por qué', 'PARA. ¿Por qué') + ' (Esto te va a cambiar la forma de verlo)',
-                body: c.body + ' Sin excusas. El momento es ahora.',
-                cta: c.cta.replace('→', ' AHORA →'),
-            })),
-            hooks: hooks.map(h => ({ ...h, text: h.text + ' — No hay vuelta atrás.' })),
-        };
-    }
-    if (variant === 'conversion') {
-        return {
-            copies: copies.map(c => ({
-                ...c,
-                body: c.body + ` Garantía 30 días o te devolvemos el dinero. Sin preguntas.`,
-                cta: `⚡ ${c.cta}`,
-            })),
-            hooks: [
-                { type: 'Urgencia real', text: `Quedan pocas unidades de ${product}. Y no es marketing.`, why: 'La escasez real convierte mejor que cualquier descuento.' },
-                ...hooks.slice(0, 4),
-            ],
-        };
-    }
-    if (variant === 'tiktok') {
-        return {
-            copies: copies.map(c => ({
-                ...c,
-                hook: c.hook.length > 60 ? c.hook.split(' ').slice(0, 8).join(' ') + '...' : c.hook,
-                body: c.body.split('.')[0] + '. #fyp #viral',
-                cta: 'Link en bio 👇',
-            })),
-            hooks: [
-                { type: 'POV', text: `POV: encontraste ${product} antes que nadie en tu feed.`, why: 'El formato POV tiene 3x más retención en TikTok que los hooks directos.' },
-                { type: 'Stitch bait', text: `Alguien necesita ver esto. No lo hagas pasar.`, why: 'Incita a guardar y compartir — dos señales clave del algoritmo.' },
-                ...hooks.slice(0, 3),
-            ],
-        };
-    }
-    return { copies, hooks };
+    return { angle, clientType: niche.profile, aggressiveness: aggr[variant] ?? 'Medio' };
 }
 // ─── Controller ───────────────────────────────────────────────────────────────
 async function generateCampaign(req, res) {
@@ -350,26 +339,111 @@ async function generateCampaign(req, res) {
         res.status(400).json({ success: false, error: 'Selecciona el objetivo de la campaña.' });
         return;
     }
-    const nicheKey = niche.toLowerCase();
+    // ── Acceso: suscripción activa o primera campaña gratuita ──────────────────
+    if (!variant) {
+        const user = await User_1.UserStore.findById(req.user.userId);
+        if (!user) {
+            res.status(401).json({ success: false, error: 'Usuario no encontrado.' });
+            return;
+        }
+        const status = user.subscription?.status;
+        const isActive = status === 'active' || status === 'trialing' || user.role === 'admin';
+        if (!isActive) {
+            if (user.freeUsed) {
+                res.status(403).json({ success: false, error: 'FREE_LIMIT_REACHED' });
+                return;
+            }
+            await User_1.UserStore.update(user.id, { freeUsed: true });
+        }
+    }
+    // Build product name from input
+    const rawInput = productDescription?.trim() || productUrl?.replace(/https?:\/\//, '').split('/')[0] || 'tu producto';
+    const words = rawInput
+        .split(/[\s,—·]+/)
+        .filter(w => w.length > 1 && !/^\d+$/.test(w) && !/^[€$£%]/.test(w) && !/^(para|de|en|con|sin|y|o|a|el|la|los|las|mujer|hombre|chica|chico|niño|niña|adulto)$/i.test(w))
+        .slice(0, 3);
+    const product = words.length
+        ? words[0].charAt(0).toUpperCase() + words[0].slice(1) + (words.length > 1 ? ' ' + words.slice(1).join(' ') : '')
+        : 'tu producto';
+    const nicheKey = (niche ?? '').toLowerCase();
     const nicheData = NICHE_DATA[nicheKey] ?? DEFAULT_NICHE;
-    // Derive a clean product name from input
-    const product = productDescription?.trim()
-        ? productDescription.trim().split(' ').slice(0, 6).join(' ')
-        : (productUrl?.replace(/https?:\/\//, '').split('/')[0] ?? 'tu producto');
-    const rawCopies = buildShortCopies(product, nicheData, objective);
-    const rawHooks = buildHooks(product, nicheData);
-    const { copies: finalCopies, hooks: finalHooks } = applyVariant(rawCopies, rawHooks, variant ?? '', product, nicheData);
-    const campaign = {
-        id: (0, uuid_1.v4)(),
-        generatedAt: new Date().toISOString(),
-        input: { productDescription, productUrl, niche, objective, campaignStyle, variant },
-        insight: buildInsight(nicheData, objective, campaignStyle ?? '', variant ?? ''),
-        shortCopies: finalCopies,
-        longCopies: buildLongCopies(product, nicheData, objective),
-        hooks: finalHooks,
-        creatives: buildCreatives(product, nicheData),
-        campaignStructure: buildCampaignStructure(objective),
-        segmentation: buildSegmentation(nicheData, product),
-    };
-    res.json({ success: true, data: campaign });
+    try {
+        const { shortCopies, longCopies, hooks, creatives } = await generateCreativesWithClaude(rawInput, nicheData, objective, campaignStyle ?? '', variant ?? '');
+        const campaign = {
+            id: (0, uuid_1.v4)(),
+            generatedAt: new Date().toISOString(),
+            input: { productDescription, productUrl, niche, objective, campaignStyle, variant },
+            insight: buildInsight(nicheData, objective, campaignStyle ?? '', variant ?? ''),
+            shortCopies,
+            longCopies,
+            hooks,
+            creatives,
+            campaignStructure: buildCampaignStructure(objective),
+            segmentation: buildSegmentation(nicheData, product),
+        };
+        res.json({ success: true, data: campaign });
+    }
+    catch (error) {
+        const msg = error instanceof Error ? error.message : 'Error generando la campaña.';
+        res.status(500).json({ success: false, error: msg });
+    }
+}
+// ─── CRUD Campañas ────────────────────────────────────────────────────────────
+async function saveCampaign(req, res) {
+    try {
+        const userId = req.user.userId;
+        const { name, niche, objective, data } = req.body;
+        if (!name || !niche || !objective || !data) {
+            res.status(400).json({ success: false, error: 'Faltan campos requeridos: name, niche, objective, data.' });
+            return;
+        }
+        const saved = await User_1.prisma.campaign.create({
+            data: { userId, name, niche, objective, data }
+        });
+        res.status(201).json({ success: true, data: saved });
+    }
+    catch {
+        res.status(500).json({ success: false, error: 'Error al guardar la campaña.' });
+    }
+}
+async function getCampaigns(req, res) {
+    try {
+        const userId = req.user.userId;
+        const limit = Math.min(Number(req.query.limit) || 20, 100);
+        const cursor = req.query.cursor;
+        const campaigns = await User_1.prisma.campaign.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' },
+            take: limit + 1,
+            ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+            select: { id: true, name: true, niche: true, objective: true, createdAt: true, data: true },
+        });
+        const hasMore = campaigns.length > limit;
+        const items = hasMore ? campaigns.slice(0, limit) : campaigns;
+        const nextCursor = hasMore ? items[items.length - 1].id : null;
+        res.json({ success: true, data: items, meta: { hasMore, nextCursor } });
+    }
+    catch {
+        res.status(500).json({ success: false, error: 'Error al obtener las campañas.' });
+    }
+}
+async function deleteCampaign(req, res) {
+    try {
+        const userId = req.user.userId;
+        const { id } = req.params;
+        const campaign = await User_1.prisma.campaign.findUnique({ where: { id } });
+        if (!campaign) {
+            res.status(404).json({ success: false, error: 'Campaña no encontrada.' });
+            return;
+        }
+        if (campaign.userId !== userId) {
+            res.status(403).json({ success: false, error: 'No tienes permiso para eliminar esta campaña.' });
+            return;
+        }
+        await User_1.prisma.campaign.delete({ where: { id } });
+        res.json({ success: true, data: { id } });
+    }
+    catch {
+        res.status(500).json({ success: false, error: 'Error al eliminar la campaña.' });
+    }
 }
