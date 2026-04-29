@@ -19,7 +19,6 @@ export default function Login() {
 
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
-  const [remember, setRemember] = useState(false)
   const [showPw,   setShowPw]   = useState(false)
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState<string | null>(null)
@@ -176,16 +175,6 @@ export default function Login() {
                 </button>
               </div>
               {pwErr && <p className="text-xs text-red-500 mt-1.5">{pwErr}</p>}
-            </div>
-
-            {/* Remember me */}
-            <div className="flex items-center gap-2">
-              <input id="remember" type="checkbox" checked={remember}
-                onChange={e => setRemember(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-indigo-500 focus:ring-indigo-500 cursor-pointer" />
-              <label htmlFor="remember" className="text-sm text-gray-600 cursor-pointer select-none">
-                Recordarme en este dispositivo
-              </label>
             </div>
 
             {/* Submit */}

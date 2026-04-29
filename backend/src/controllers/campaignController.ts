@@ -108,6 +108,19 @@ const DEFAULT_NICHE = NICHE_DATA['ropa']
 const CLAUDE_TIMEOUT_MS = 120_000
 
 async function claudeJSON<T>(system: string, user: string): Promise<T> {
+  let lastErr: unknown
+  for (let attempt = 0; attempt < 2; attempt++) {
+    if (attempt > 0) await new Promise(r => setTimeout(r, 2000))
+    try {
+      return await claudeJSONAttempt<T>(system, user)
+    } catch (err) {
+      lastErr = err
+    }
+  }
+  throw lastErr
+}
+
+async function claudeJSONAttempt<T>(system: string, user: string): Promise<T> {
   const timeout = new Promise<never>((_, reject) =>
     setTimeout(
       () => reject(new Error('La IA tardó demasiado. Por favor, inténtalo de nuevo.')),
@@ -343,22 +356,19 @@ export async function generateCampaign(req: Request, res: Response): Promise<voi
   }
 
   // ── Acceso: suscripción activa o primera campaña gratuita ──────────────────
-  if (!variant) {
-    const user = await UserStore.findById((req as { user?: { userId: string } }).user!.userId)
-    if (!user) {
-      res.status(401).json({ success: false, error: 'Usuario no encontrado.' })
+  const user = await UserStore.findById(req.user!.userId)
+  if (!user) {
+    res.status(401).json({ success: false, error: 'Usuario no encontrado.' })
+    return
+  }
+  const status = user.subscription?.status
+  const isActive = status === 'active' || status === 'trialing' || user.role === 'admin'
+  if (!isActive) {
+    if (user.freeUsed) {
+      res.status(403).json({ success: false, error: 'FREE_LIMIT_REACHED' })
       return
     }
-    const status = user.subscription?.status
-    const isActive = status === 'active' || status === 'trialing' || user.role === 'admin'
-
-    if (!isActive) {
-      if (user.freeUsed) {
-        res.status(403).json({ success: false, error: 'FREE_LIMIT_REACHED' })
-        return
-      }
-      await UserStore.update(user.id, { freeUsed: true })
-    }
+    await UserStore.update(user.id, { freeUsed: true })
   }
 
   // Build product name from input

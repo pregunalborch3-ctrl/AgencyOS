@@ -6,15 +6,15 @@ import {
   viralContent,
   scalingRoadmap,
 } from '../controllers/frameworksController'
-import { requireAuth } from '../middleware/authMiddleware'
+import { requireAuth, requireSubscription } from '../middleware/authMiddleware'
 import { frameworksLimiter } from '../middleware/security'
 
 const router = Router()
 
-router.post('/mercado',      requireAuth, frameworksLimiter, analyzeMarket)
-router.post('/competencia',  requireAuth, frameworksLimiter, mapCompetition)
-router.post('/distribucion', requireAuth, frameworksLimiter, planDistribution)
-router.post('/contenido',    requireAuth, frameworksLimiter, viralContent)
-router.post('/escalado',     requireAuth, frameworksLimiter, scalingRoadmap)
+router.post('/mercado',      requireAuth, requireSubscription, frameworksLimiter, analyzeMarket)
+router.post('/competencia',  requireAuth, requireSubscription, frameworksLimiter, mapCompetition)
+router.post('/distribucion', requireAuth, requireSubscription, frameworksLimiter, planDistribution)
+router.post('/contenido',    requireAuth, requireSubscription, frameworksLimiter, viralContent)
+router.post('/escalado',     requireAuth, requireSubscription, frameworksLimiter, scalingRoadmap)
 
 export default router

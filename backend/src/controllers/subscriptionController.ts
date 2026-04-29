@@ -1,8 +1,14 @@
 import { Request, Response } from 'express'
 import { stripe, PRICE_ID, PRICE_IDS, WEBHOOK_SECRET } from '../services/stripeService'
-import { UserStore, type SubStatus } from '../models/User'
+import { UserStore, type SubStatus, prisma } from '../models/User'
 
 const FRONTEND = process.env.FRONTEND_URL ?? 'http://localhost:5173'
+
+// Stripe API versions >= 2025 may omit current_period_end on some event shapes
+function tsToISO(ts: number | null | undefined, fallbackDays = 30): string {
+  if (ts != null && Number.isFinite(ts) && ts > 0) return new Date(ts * 1000).toISOString()
+  return new Date(Date.now() + fallbackDays * 24 * 60 * 60 * 1000).toISOString()
+}
 
 // ─── GET /api/subscription/status ────────────────────────────────────────────
 export async function getStatus(req: Request, res: Response): Promise<void> {
@@ -34,7 +40,7 @@ export async function createCheckoutSession(req: Request, res: Response): Promis
       metadata: { agencyos_user_id: user.id },
     })
     customerId = customer.id
-    UserStore.update(user.id, { stripeCustomerId: customerId })
+    await UserStore.update(user.id, { stripeCustomerId: customerId })
   }
 
   const session = await stripe.checkout.sessions.create({
@@ -43,7 +49,6 @@ export async function createCheckoutSession(req: Request, res: Response): Promis
     line_items: [{ price: priceId, quantity: 1 }],
     mode: 'subscription',
     subscription_data: {
-      trial_period_days: 14,
       metadata: { agencyos_user_id: user.id },
     },
     success_url: `${FRONTEND}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
@@ -80,7 +85,7 @@ export async function cancelSubscription(req: Request, res: Response): Promise<v
     user.subscription.stripeSubscriptionId,
     { cancel_at_period_end: true },
   )
-  UserStore.update(user.id, {
+  await UserStore.update(user.id, {
     subscription: {
       ...user.subscription,
       cancelAtPeriodEnd: true,
@@ -101,7 +106,7 @@ export async function reactivateSubscription(req: Request, res: Response): Promi
     user.subscription.stripeSubscriptionId,
     { cancel_at_period_end: false },
   )
-  UserStore.update(user.id, {
+  await UserStore.update(user.id, {
     subscription: { ...user.subscription, cancelAtPeriodEnd: false },
   })
   res.json({ success: true, data: { cancelAtPeriodEnd: false } })
@@ -124,6 +129,15 @@ export async function handleWebhook(req: Request, res: Response): Promise<void> 
   console.log(`[webhook] Received: ${event.type} — id: ${event.id}`)
 
   try {
+    // Idempotency: skip events already processed (Stripe retries on timeout/error)
+    const seen = await prisma.processedWebhookEvent.findUnique({ where: { id: event.id } })
+    if (seen) {
+      console.log(`[webhook] Duplicate event skipped: ${event.id}`)
+      res.json({ received: true })
+      return
+    }
+    await prisma.processedWebhookEvent.create({ data: { id: event.id } })
+
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object
@@ -140,8 +154,8 @@ export async function handleWebhook(req: Request, res: Response): Promise<void> 
           subscription: {
             stripeSubscriptionId: sub.id,
             status:              sub.status as SubStatus,
-            currentPeriodEnd:    new Date(sub.current_period_end * 1000).toISOString(),
-            cancelAtPeriodEnd:   sub.cancel_at_period_end,
+            currentPeriodEnd:    tsToISO(sub.current_period_end),
+            cancelAtPeriodEnd:   sub.cancel_at_period_end ?? false,
             priceId:             item?.price.id ?? PRICE_ID,
             trialEnd:            sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null,
           },
@@ -150,10 +164,19 @@ export async function handleWebhook(req: Request, res: Response): Promise<void> 
         break
       }
 
+      case 'customer.subscription.created':
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
         const sub  = event.data.object
-        const user = await UserStore.findByStripeCustomerId(sub.customer)
+        let user = await UserStore.findByStripeCustomerId(sub.customer)
+        // Fallback: look up user by agencyos_user_id in subscription metadata
+        if (!user && sub.metadata?.agencyos_user_id) {
+          user = await UserStore.findById(sub.metadata.agencyos_user_id)
+          if (user) {
+            await UserStore.update(user.id, { stripeCustomerId: sub.customer })
+            console.log(`[webhook] ${event.type}: linked customer ${sub.customer} to user ${user.id} via metadata`)
+          }
+        }
         if (!user) {
           console.error(`[webhook] ${event.type}: no user found for customer ${sub.customer}`)
           break
@@ -164,8 +187,8 @@ export async function handleWebhook(req: Request, res: Response): Promise<void> 
           subscription: {
             stripeSubscriptionId: sub.id,
             status:              sub.status as SubStatus,
-            currentPeriodEnd:    new Date(sub.current_period_end * 1000).toISOString(),
-            cancelAtPeriodEnd:   sub.cancel_at_period_end,
+            currentPeriodEnd:    tsToISO(sub.current_period_end),
+            cancelAtPeriodEnd:   sub.cancel_at_period_end ?? false,
             priceId:             item?.price.id ?? PRICE_ID,
             trialEnd:            sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null,
           },
@@ -173,6 +196,21 @@ export async function handleWebhook(req: Request, res: Response): Promise<void> 
           ...(isGone ? { freeUsed: false } : {}),
         })
         console.log(`[webhook] ${event.type}: user ${user.id} → status ${sub.status}${isGone ? ' (freeUsed reset)' : ''}`)
+        break
+      }
+
+      case 'invoice.payment_action_required': {
+        // 3D Secure: mark as past_due so the UI shows an alert
+        const invoice = event.data.object
+        const user    = await UserStore.findByStripeCustomerId(invoice.customer)
+        if (!user?.subscription) {
+          console.error('[webhook] invoice.payment_action_required: no user/subscription for customer', invoice.customer)
+          break
+        }
+        await UserStore.update(user.id, {
+          subscription: { ...user.subscription, status: 'past_due' },
+        })
+        console.log(`[webhook] invoice.payment_action_required: user ${user.id} → past_due (3D Secure required)`)
         break
       }
 

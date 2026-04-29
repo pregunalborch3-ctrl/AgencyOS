@@ -12,8 +12,10 @@ console.log('\n🔐 Verificando variables de entorno…')
 validateEnv()
 console.log('  ✓ Variables de entorno OK\n')
 
+import { prisma } from './models/User'
 import authRoutes         from './routes/auth'
 import subscriptionRoutes from './routes/subscription'
+import { handleWebhook }  from './controllers/subscriptionController'
 import campaignRoutes     from './routes/campaigns'
 import contentRoutes      from './routes/content'
 import calendarRoutes     from './routes/calendar'
@@ -66,12 +68,8 @@ app.use(cors({ origin: process.env.FRONTEND_URL ?? 'http://localhost:5173' }))
 // Global rate limiter — applied before all routes
 app.use(generalLimiter)
 
-// ⚠  Stripe webhook needs raw body — mount BEFORE express.json()
-app.post(
-  '/api/subscription/webhook',
-  express.raw({ type: 'application/json' }),
-  (req, res, next) => { subscriptionRoutes(req, res, next) },
-)
+// ⚠  Stripe webhook needs raw body — bypass the Router entirely and call handleWebhook directly
+app.post('/api/subscription/webhook', express.raw({ type: 'application/json' }), handleWebhook)
 
 // Body parsing with size limit + sanitization
 app.use(express.json({ limit: '1mb' }))
@@ -100,9 +98,22 @@ app.use((_req, res) => {
   res.status(404).json({ success: false, error: 'Endpoint not found' })
 })
 
+async function cleanupExpiredTokens() {
+  try {
+    const { count } = await prisma.passwordResetToken.deleteMany({
+      where: { expiresAt: { lt: new Date() } },
+    })
+    if (count > 0) console.log(`[cleanup] ${count} tokens de reset expirados eliminados`)
+  } catch (err) {
+    console.error('[cleanup] Error eliminando tokens expirados:', err)
+  }
+}
+
 app.listen(PORT, () => {
   console.log(`🚀 AgencyOS API  →  http://localhost:${PORT}`)
   console.log(`   Health        →  http://localhost:${PORT}/api/health\n`)
+  cleanupExpiredTokens()
+  setInterval(cleanupExpiredTokens, 24 * 60 * 60 * 1000)
 })
 
 export default app

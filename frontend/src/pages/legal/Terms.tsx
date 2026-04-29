@@ -70,12 +70,13 @@ export default function Terms() {
             que incluye acceso completo a todas las funcionalidades de la plataforma.
           </p>
         </SubSection>
-        <SubSection title="Período de prueba gratuita">
+        <SubSection title="Campaña de inicio gratuita">
           <p>
-            Los nuevos usuarios disfrutan de un período de prueba gratuita de{' '}
-            <strong className="text-zinc-300">14 días</strong> sin cargo. No se requiere tarjeta de
-            crédito para iniciar la prueba. Al finalizar el período de prueba, la suscripción se
-            activa automáticamente si has introducido un método de pago.
+            Los nuevos usuarios pueden generar{' '}
+            <strong className="text-zinc-300">1 campaña completa de forma gratuita</strong> sin necesidad
+            de tarjeta de crédito. Esta campaña gratuita está disponible desde el momento del registro.
+            Para acceder a campañas ilimitadas y al resto de funcionalidades Pro, es necesario activar
+            una suscripción de pago.
           </p>
         </SubSection>
         <SubSection title="Renovación automática">
@@ -130,7 +131,7 @@ export default function Terms() {
           <p>
             Si eres consumidor en la Unión Europea, tienes derecho a desistir del contrato en un
             plazo de 14 días naturales desde la contratación, conforme a la Directiva 2011/83/UE.
-            No obstante, al aceptar el inicio inmediato del servicio digital (período de prueba),
+            No obstante, al aceptar el inicio inmediato del servicio digital,
             reconoces que este derecho puede quedar limitado una vez que hayas comenzado a utilizar
             el servicio activamente.
           </p>

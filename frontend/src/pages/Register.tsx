@@ -5,9 +5,9 @@ import { useAuth } from '../contexts/AuthContext'
 import { useSubscription } from '../contexts/SubscriptionContext'
 
 const PLAN_PRICE_IDS: Record<string, string> = {
-  starter:    'price_1TOdnhF8XDkWjNCAclRxBkO3',
-  pro:        'price_1TOdnTF8XDkWjNCA4uu5qZaD',
-  enterprise: 'price_1TOdnUF8XDkWjNCA0RFFPzVV',
+  starter:    import.meta.env.VITE_STRIPE_PRICE_ID_STARTER    ?? '',
+  pro:        import.meta.env.VITE_STRIPE_PRICE_ID_PRO        ?? '',
+  enterprise: import.meta.env.VITE_STRIPE_PRICE_ID_ENTERPRISE ?? '',
 }
 
 // ─── Password strength ────────────────────────────────────────────────────────

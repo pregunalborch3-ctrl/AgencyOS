@@ -14,6 +14,19 @@ function getClient(): Anthropic {
 const CLAUDE_TIMEOUT_MS = 120_000
 
 async function claudeJSON<T>(system: string, user: string): Promise<T> {
+  let lastErr: unknown
+  for (let attempt = 0; attempt < 2; attempt++) {
+    if (attempt > 0) await new Promise(r => setTimeout(r, 2000))
+    try {
+      return await claudeJSONAttempt<T>(system, user)
+    } catch (err) {
+      lastErr = err
+    }
+  }
+  throw lastErr
+}
+
+async function claudeJSONAttempt<T>(system: string, user: string): Promise<T> {
   const timeout = new Promise<never>((_, reject) =>
     setTimeout(
       () => reject(new Error('La IA tardó demasiado. Por favor, inténtalo de nuevo.')),

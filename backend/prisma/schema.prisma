@@ -31,6 +31,8 @@ model User {
   competitors        Competitor[]
   contentHistory     ContentHistory[]
   apiKeys            ApiKey[]
+
+  @@index([stripeCustomerId])
 }
 
 model Campaign {
@@ -150,4 +152,11 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+model ProcessedWebhookEvent {
+  id          String   @id
+  processedAt DateTime @default(now())
+
+  @@index([processedAt])
 }

@@ -20,10 +20,10 @@ export function logFailedLogin(ip: string, email: string): void {
 
 // ─── Rate limiters ────────────────────────────────────────────────────────────
 
-// General: 100 req / 15 min per IP
+// General: 200 req / 15 min per IP
 export const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 200,
   standardHeaders: true,
   legacyHeaders: false,
   handler(req, res) {
@@ -128,6 +128,12 @@ export function validateEnv(): void {
   const jwtSecret = process.env.JWT_SECRET ?? ''
   if (jwtSecret && jwtSecret.length < 32) {
     console.error(`  ✗ JWT_SECRET debe tener mínimo 32 caracteres (actual: ${jwtSecret.length})`)
+    fatal = true
+  }
+
+  const stripeKey = process.env.STRIPE_SECRET_KEY ?? ''
+  if (stripeKey && stripeKey.startsWith('sk_test_') && process.env.NODE_ENV === 'production') {
+    console.error('  ✗ STRIPE_SECRET_KEY — Clave de TEST activa en producción. Los cobros reales no funcionarán.')
     fatal = true
   }
 

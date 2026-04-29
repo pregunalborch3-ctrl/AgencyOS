@@ -281,8 +281,8 @@ const FAQ_ITEMS = [
     a: 'Sí, sin permanencia. Cancela en cualquier momento desde tu panel.',
   },
   {
-    q: '¿Qué pasa cuando termina el free trial?',
-    a: 'Te pedimos tarjeta solo si quieres continuar. Sin cargos automáticos en Starter.',
+    q: '¿Puedo probar antes de suscribirme?',
+    a: 'Sí, genera tu primera campaña completamente gratis, sin tarjeta. Si te gusta, activas el plan.',
   },
   {
     q: '¿Los anuncios generados son únicos?',
@@ -641,7 +641,7 @@ const PLANS = [
       'Exportación PDF',
       'Soporte prioritario 24h',
     ],
-    cta: 'Empezar prueba gratis',
+    cta: 'Suscribirse ahora',
     highlighted: true,
     gradient: true,
   },
@@ -676,7 +676,7 @@ function Pricing() {
             Elige tu plan
           </h2>
           <p className="text-zinc-400 text-lg max-w-xl mx-auto">
-            14 días gratis en todos los planes. Sin tarjeta de crédito para Starter.
+            1 campaña gratis para empezar. Sin tarjeta de crédito para Starter.
           </p>
         </div>
 
@@ -786,7 +786,7 @@ const TESTIMONIALS = [
     name: 'Miquel F.',
     role: 'Ecommerce Agency',
     city: 'Barcelona',
-    text: 'Probé el free trial y al día 3 ya había pagado. No podía volver atrás.',
+    text: 'Generé mi primera campaña gratis y al día 3 ya había pagado. No podía volver atrás.',
     color: 'from-violet-500 to-fuchsia-500',
   },
   {
@@ -868,7 +868,7 @@ function FinalCta() {
             Empezar gratis <ArrowRight size={18} />
           </Link>
         </div>
-        <p className="text-xs text-zinc-700">14 días gratis. Sin tarjeta. Sin compromiso.</p>
+        <p className="text-xs text-zinc-700">1 campaña gratis. Sin tarjeta. Sin compromiso.</p>
       </div>
     </section>
   )

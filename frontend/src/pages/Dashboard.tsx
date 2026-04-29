@@ -56,7 +56,7 @@ function UpgradeBanner() {
       <div className="flex items-start justify-between gap-6">
         <div className="space-y-3">
           <span className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full">
-            <Zap size={11} /> 14 días gratis
+            <Zap size={11} /> 1 campaña gratis
           </span>
           <h2 className="text-2xl font-black text-white leading-tight">
             Activa tu acceso al<br />Generador de Campañas

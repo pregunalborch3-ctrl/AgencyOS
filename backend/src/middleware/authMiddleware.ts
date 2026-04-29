@@ -52,6 +52,21 @@ export async function requireApiKey(req: Request, res: Response, next: NextFunct
   }
 }
 
+export async function requireSubscription(req: Request, res: Response, next: NextFunction): Promise<void> {
+  const user = await UserStore.findById(req.user!.userId)
+  if (!user) {
+    res.status(401).json({ success: false, error: 'Usuario no encontrado.' })
+    return
+  }
+  const status = user.subscription?.status
+  const isActive = status === 'active' || status === 'trialing' || user.role === 'admin'
+  if (!isActive) {
+    res.status(403).json({ success: false, error: 'Esta función requiere una suscripción activa.' })
+    return
+  }
+  next()
+}
+
 export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
   const header = req.headers.authorization
   if (!header?.startsWith('Bearer ')) {

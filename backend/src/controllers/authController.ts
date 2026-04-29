@@ -110,14 +110,17 @@ export async function login(req: Request, res: Response): Promise<void> {
   })
 }
 
-export function me(req: Request, res: Response): void {
-  UserStore.findById(req.user!.userId).then(user => {
+export async function me(req: Request, res: Response): Promise<void> {
+  try {
+    const user = await UserStore.findById(req.user!.userId)
     if (!user) {
       res.status(404).json({ success: false, error: "Usuario no encontrado." })
       return
     }
     res.json({ success: true, data: UserStore.toPublic(user) })
-  })
+  } catch {
+    res.status(500).json({ success: false, error: "Error al obtener el usuario." })
+  }
 }
 
 export async function forgotPassword(req: Request, res: Response): Promise<void> {

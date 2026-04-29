@@ -52,7 +52,7 @@ function UpgradeWall() {
               <span className="text-zinc-400 text-lg mb-1.5">/ mes</span>
             </div>
             <p className="text-sm text-indigo-400 font-medium mb-6 flex items-center gap-1.5">
-              <Sparkles size={13} /> 14 días gratis — sin tarjeta de crédito
+              <Sparkles size={13} /> Primera campaña gratis — sin tarjeta de crédito
             </p>
 
             {/* Features */}
@@ -73,7 +73,7 @@ function UpgradeWall() {
             >
               {loading
                 ? <><Loader2 size={17} className="animate-spin" /> Redirigiendo a Stripe...</>
-                : <><span>Empezar prueba gratuita</span><ArrowRight size={17} /></>
+                : <><span>Activar acceso completo</span><ArrowRight size={17} /></>
               }
             </button>
 
