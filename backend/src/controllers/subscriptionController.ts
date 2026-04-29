@@ -197,7 +197,7 @@ export async function handleWebhook(req: Request, res: Response): Promise<void> 
           break
         }
         const item    = sub.items.data[0]
-        const isGone  = event.type === 'customer.subscription.deleted' || sub.status === 'canceled'
+        const isGone  = event.type === 'customer.subscription.deleted'
         const pId     = item?.price.id ?? PRICE_ID
         const periodEndISO = tsToISO(sub.current_period_end)
         await UserStore.update(user.id, {

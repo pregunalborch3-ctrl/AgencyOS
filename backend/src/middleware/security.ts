@@ -142,7 +142,7 @@ export function validateEnv(): void {
     process.exit(1)
   }
 
-  const optional = ['ANTHROPIC_API_KEY', 'STRIPE_SECRET_KEY', 'STRIPE_PRICE_ID', 'FRONTEND_URL']
+  const optional = ['ANTHROPIC_API_KEY', 'STRIPE_SECRET_KEY', 'STRIPE_PRICE_ID', 'FRONTEND_URL', 'RESEND_API_KEY', 'RESEND_FROM']
   const missing = optional.filter(k => !process.env[k])
   if (missing.length > 0) {
     console.warn(`  ⚠  Variables opcionales no configuradas: ${missing.join(', ')}`)
