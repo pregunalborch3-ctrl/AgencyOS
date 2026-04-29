@@ -1,7 +1,7 @@
 import { Resend } from "resend"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
-const FROM = "Agenciesos <hola@agenciesos.com>"
+const FROM = "Agenciesos <agenciesosapp@gmail.com>"
 
 function escHtml(str: string): string {
   return str
@@ -24,7 +24,7 @@ export async function sendWelcomeEmail(to: string, rawName: string): Promise<voi
     to: [to],
     subject: "Bienvenido a Agenciesos 🚀",
     headers: {
-      'List-Unsubscribe': '<mailto:hola@agenciesos.com?subject=unsubscribe>',
+      'List-Unsubscribe': '<mailto:agenciesosapp@gmail.com?subject=unsubscribe>',
       'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
     },
     html: `
@@ -106,7 +106,7 @@ export async function sendWelcomeEmail(to: string, rawName: string): Promise<voi
                 Si no fuiste tú, puedes ignorar este mensaje.
               </p>
               <p style="margin:12px 0 0;color:#3f3f46;font-size:12px;">
-                © ${new Date().getFullYear()} Agenciesos · hola@agenciesos.com
+                © ${new Date().getFullYear()} Agenciesos · agenciesosapp@gmail.com
               </p>
             </td>
           </tr>
@@ -139,7 +139,7 @@ export async function sendPasswordResetEmail(to: string, rawName: string, resetU
     to: [to],
     subject: "Restablecer tu contraseña — Agenciesos",
     headers: {
-      'List-Unsubscribe': '<mailto:hola@agenciesos.com?subject=unsubscribe>',
+      'List-Unsubscribe': '<mailto:agenciesosapp@gmail.com?subject=unsubscribe>',
       'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
     },
     html: `
@@ -206,7 +206,7 @@ export async function sendPasswordResetEmail(to: string, rawName: string, resetU
                 Puedes ignorar este mensaje con total seguridad.
               </p>
               <p style="margin:12px 0 0;color:#3f3f46;font-size:12px;">
-                © ${new Date().getFullYear()} Agenciesos · hola@agenciesos.com
+                © ${new Date().getFullYear()} Agenciesos · agenciesosapp@gmail.com
               </p>
             </td>
           </tr>
