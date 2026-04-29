@@ -24,6 +24,7 @@ export interface User {
   stripeCustomerId: string | null
   subscription: SubscriptionData | null
   freeUsed: boolean
+  onboardingDone: boolean
 }
 
 export type PublicUser = Omit<User, "passwordHash">
@@ -48,6 +49,7 @@ function toUser(u: any): User {
       trialEnd: u.trialEnd ? u.trialEnd.toISOString() : null,
     } : null,
     freeUsed: u.freeUsed ?? false,
+    onboardingDone: u.onboardingDone ?? false,
   }
 }
 
@@ -93,6 +95,7 @@ export const UserStore = {
     if (data.priceId !== undefined) updateData.priceId = data.priceId
     if (data.cancelAtPeriodEnd !== undefined) updateData.cancelAtPeriodEnd = data.cancelAtPeriodEnd
     if (data.freeUsed !== undefined) updateData.freeUsed = data.freeUsed
+    if (data.onboardingDone !== undefined) updateData.onboardingDone = data.onboardingDone
     if (data.subscription !== undefined) {
       const sub = data.subscription
       if (sub) {

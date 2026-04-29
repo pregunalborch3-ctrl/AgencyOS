@@ -17,12 +17,11 @@ export default function Login() {
   const location   = useLocation()
   const from       = (location.state as { from?: string })?.from ?? '/home'
 
-  const [email,      setEmail]      = useState('')
-  const [password,   setPassword]   = useState('')
-  const [rememberMe, setRememberMe] = useState(false)
-  const [showPw,     setShowPw]     = useState(false)
-  const [loading,    setLoading]    = useState(false)
-  const [error,      setError]      = useState<string | null>(null)
+  const [email,    setEmail]    = useState('')
+  const [password, setPassword] = useState('')
+  const [showPw,   setShowPw]   = useState(false)
+  const [loading,  setLoading]  = useState(false)
+  const [error,    setError]    = useState<string | null>(null)
 
   // Field-level errors
   const [emailErr, setEmailErr] = useState('')
@@ -42,7 +41,7 @@ export default function Login() {
     if (!validate()) return
     setError(null); setLoading(true)
     try {
-      await login(email.trim().toLowerCase(), password, rememberMe)
+      await login(email.trim().toLowerCase(), password)
       navigate(from, { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al iniciar sesión.')
@@ -173,17 +172,8 @@ export default function Login() {
               {pwErr && <p className="text-xs text-red-500 mt-1.5">{pwErr}</p>}
             </div>
 
-            {/* Remember me */}
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={e => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-indigo-500 focus:ring-indigo-500"
-                />
-                <span className="text-sm text-gray-600">Recordarme 30 días</span>
-              </label>
+            {/* Forgot password */}
+            <div className="flex justify-end">
               <Link to="/forgot-password" className="text-xs text-indigo-500 hover:text-indigo-400 font-medium">
                 ¿Olvidaste tu contraseña?
               </Link>

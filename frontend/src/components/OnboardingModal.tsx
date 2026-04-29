@@ -1,16 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { X, Rocket, BarChart2, Layers, ArrowRight, CheckCircle2 } from 'lucide-react'
-
-const ONBOARDING_KEY = 'agencyos_onboarding_seen'
-
-export function isOnboardingNeeded(): boolean {
-  return !localStorage.getItem(ONBOARDING_KEY)
-}
-
-export function markOnboardingDone(): void {
-  localStorage.setItem(ONBOARDING_KEY, '1')
-}
+import { useAuth } from '../contexts/AuthContext'
 
 const STEPS = [
   {
@@ -55,6 +46,7 @@ interface Props {
 export default function OnboardingModal({ onClose }: Props) {
   const [step, setStep] = useState(0)
   const navigate        = useNavigate()
+  const { markOnboardingDone } = useAuth()
   const current         = STEPS[step]
   const Icon            = current.icon
   const isFinal         = 'isFinal' in current && current.isFinal === true

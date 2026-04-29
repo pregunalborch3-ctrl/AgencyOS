@@ -6,10 +6,11 @@ import {
   AlertTriangle, Loader2, RefreshCw,
   Lock, Building2, Globe, Zap,
   CreditCard, Crown, AlertCircle, Sparkles,
-  Plus, Copy, Key, Code2, Upload, X,
+  Plus, Copy, Key, Code2, Upload, X, BookOpen,
 } from 'lucide-react'
 import Header from '../components/Layout/Header'
 import { useSubscription } from '../contexts/SubscriptionContext'
+import OnboardingModal from '../components/OnboardingModal'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type SettingsSection = 'general' | 'seguridad' | 'facturacion' | 'api'
@@ -712,6 +713,7 @@ function SectionNav({ active, onChange }: { active: SettingsSection; onChange: (
 export default function Settings() {
   const { t } = useTranslation()
   const [section, setSection] = useState<SettingsSection>('general')
+  const [showTutorial, setShowTutorial] = useState(false)
 
   const subtitles: Record<SettingsSection, string> = {
     general:     t('settings.subtitle_general'),
@@ -731,6 +733,17 @@ export default function Settings() {
                 {t('settings.section_label')}
               </p>
               <SectionNav active={section} onChange={setSection} />
+
+              {/* Tutorial button */}
+              <div className="mt-3 px-1">
+                <button
+                  onClick={() => setShowTutorial(true)}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-all text-left"
+                >
+                  <BookOpen size={16} />
+                  Ver tutorial
+                </button>
+              </div>
             </div>
           </div>
           <div className="md:col-span-9">
@@ -741,6 +754,8 @@ export default function Settings() {
           </div>
         </div>
       </div>
+
+      {showTutorial && <OnboardingModal onClose={() => setShowTutorial(false)} />}
     </div>
   )
 }

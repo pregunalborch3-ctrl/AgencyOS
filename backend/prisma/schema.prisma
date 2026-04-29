@@ -23,6 +23,7 @@ model User {
   priceId            String?
   cancelAtPeriodEnd  Boolean    @default(false)
   freeUsed           Boolean    @default(false)
+  onboardingDone     Boolean    @default(false)
   agencySettings     Json?
   campaigns          Campaign[]
   briefings          Briefing[]

@@ -65,9 +65,10 @@ export async function register(req: Request, res: Response): Promise<void> {
       stripeCustomerId: null,
       subscription: null,
       freeUsed: false,
+      onboardingDone: false,
     })
 
-    const token = signToken(user)
+    const token = signToken(user, "30d")
     res.status(201).json({
       success: true,
       data: { token, user: UserStore.toPublic(user) },
@@ -84,7 +85,7 @@ export async function register(req: Request, res: Response): Promise<void> {
 
 export async function login(req: Request, res: Response): Promise<void> {
   try {
-    const { email, password, rememberMe } = req.body as { email?: string; password?: string; rememberMe?: boolean }
+    const { email, password } = req.body as { email?: string; password?: string }
 
     if (!email?.trim() || !password) {
       res.status(400).json({ success: false, error: "Email y contrasena son obligatorios." })
@@ -109,14 +110,23 @@ export async function login(req: Request, res: Response): Promise<void> {
     }
 
     await UserStore.update(user.id, { lastLoginAt: new Date().toISOString() })
-    const token = signToken(user, rememberMe ? "30d" : "1d")
+    const token = signToken(user, "30d")
     res.json({
       success: true,
-      data: { token, user: UserStore.toPublic(user), rememberMe: !!rememberMe },
+      data: { token, user: UserStore.toPublic(user) },
     })
   } catch (err) {
     console.error("[login] Error inesperado:", err)
     res.status(500).json({ success: false, error: "Error al iniciar sesión. Por favor inténtalo de nuevo." })
+  }
+}
+
+export async function markOnboardingDone(req: Request, res: Response): Promise<void> {
+  try {
+    await UserStore.update(req.user!.userId, { onboardingDone: true })
+    res.json({ success: true, data: { onboardingDone: true } })
+  } catch {
+    res.status(500).json({ success: false, error: "Error al actualizar el onboarding." })
   }
 }
 

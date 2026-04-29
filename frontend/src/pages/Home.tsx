@@ -11,7 +11,7 @@ import {
 import { useAuth } from '../contexts/AuthContext'
 import { useSubscription } from '../contexts/SubscriptionContext'
 import { getCampaigns, type SavedCampaign } from '../lib/campaignsApi'
-import OnboardingModal, { isOnboardingNeeded } from '../components/OnboardingModal'
+import OnboardingModal from '../components/OnboardingModal'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const WEEKLY_GOAL = 5
@@ -130,11 +130,9 @@ function CustomTooltip({ active, payload, label }: any) {
   )
 }
 
-// OnboardingModal is imported from components/OnboardingModal
-
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function Home() {
-  const { user, token } = useAuth()
+  const { user, token, isLoading } = useAuth()
   const { subscription, isActive } = useSubscription()
   const navigate = useNavigate()
 
@@ -157,13 +155,14 @@ export default function Home() {
     ]).then(([camps, dailyTip]) => {
       setCampaigns(camps)
       setTip(dailyTip)
-    }).catch(() => {}).finally(() => {
-      setLoadingData(false)
-      if (isOnboardingNeeded()) {
-        setShowOnboarding(true)
-      }
-    })
+    }).catch(() => {}).finally(() => setLoadingData(false))
   }, [token])
+
+  useEffect(() => {
+    if (!isLoading && user && user.onboardingDone === false) {
+      setShowOnboarding(true)
+    }
+  }, [isLoading, user])
 
   function handleOnboardingClose() {
     setShowOnboarding(false)
