@@ -13,6 +13,7 @@ validateEnv()
 console.log('  ✓ Variables de entorno OK\n')
 
 import { prisma } from './models/User'
+import { sendRenewalReminderEmail } from './services/emailService'
 import authRoutes         from './routes/auth'
 import subscriptionRoutes from './routes/subscription'
 import { handleWebhook }  from './controllers/subscriptionController'
@@ -109,11 +110,49 @@ async function cleanupExpiredTokens() {
   }
 }
 
+function planLabelFromPriceId(priceId: string | null | undefined): string {
+  if (!priceId) return 'Starter'
+  const e = process.env.STRIPE_PRICE_ID_ENTERPRISE
+  const p = process.env.STRIPE_PRICE_ID_PRO
+  if (e && priceId === e) return 'Enterprise'
+  if (p && priceId === p) return 'Pro'
+  return 'Starter'
+}
+
+async function sendRenewalReminders() {
+  try {
+    const now     = new Date()
+    const in3days = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
+    const in4days = new Date(now.getTime() + 4 * 24 * 60 * 60 * 1000)
+
+    // Find active users whose subscription ends in the [now+3d, now+4d) window
+    const users = await prisma.user.findMany({
+      where: {
+        subscriptionStatus: 'active',
+        subscriptionEnd:    { gte: in3days, lt: in4days },
+      },
+      select: { email: true, name: true, subscriptionEnd: true, priceId: true },
+    })
+
+    for (const user of users) {
+      const renewalStr = user.subscriptionEnd!.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
+      sendRenewalReminderEmail(user.email, user.name, renewalStr, planLabelFromPriceId(user.priceId))
+        .catch(e => console.error(`[email] recordatorio renovación para ${user.email}:`, e))
+    }
+
+    if (users.length > 0) console.log(`[renewal] Recordatorios enviados: ${users.length}`)
+  } catch (err) {
+    console.error('[renewal] Error enviando recordatorios de renovación:', err)
+  }
+}
+
 app.listen(PORT, () => {
   console.log(`🚀 AgencyOS API  →  http://localhost:${PORT}`)
   console.log(`   Health        →  http://localhost:${PORT}/api/health\n`)
   cleanupExpiredTokens()
   setInterval(cleanupExpiredTokens, 24 * 60 * 60 * 1000)
+  sendRenewalReminders()
+  setInterval(sendRenewalReminders, 24 * 60 * 60 * 1000)
 })
 
 export default app

@@ -1,8 +1,23 @@
 import { Request, Response } from 'express'
 import { stripe, PRICE_ID, PRICE_IDS, WEBHOOK_SECRET } from '../services/stripeService'
 import { UserStore, type SubStatus, prisma } from '../models/User'
+import {
+  sendSubscriptionConfirmationEmail,
+  sendCancellationEmail,
+  sendPaymentFailedEmail,
+} from '../services/emailService'
 
 const FRONTEND = process.env.FRONTEND_URL ?? 'http://localhost:5173'
+
+function planLabel(priceId: string): string {
+  if (priceId === PRICE_IDS.enterprise) return 'Enterprise'
+  if (priceId === PRICE_IDS.pro)        return 'Pro'
+  return 'Starter'
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
+}
 
 // Stripe API versions >= 2025 may omit current_period_end on some event shapes
 function tsToISO(ts: number | null | undefined, fallbackDays = 30): string {
@@ -183,19 +198,35 @@ export async function handleWebhook(req: Request, res: Response): Promise<void> 
         }
         const item    = sub.items.data[0]
         const isGone  = event.type === 'customer.subscription.deleted' || sub.status === 'canceled'
+        const pId     = item?.price.id ?? PRICE_ID
+        const periodEndISO = tsToISO(sub.current_period_end)
         await UserStore.update(user.id, {
           subscription: {
             stripeSubscriptionId: sub.id,
             status:              sub.status as SubStatus,
-            currentPeriodEnd:    tsToISO(sub.current_period_end),
+            currentPeriodEnd:    periodEndISO,
             cancelAtPeriodEnd:   sub.cancel_at_period_end ?? false,
-            priceId:             item?.price.id ?? PRICE_ID,
+            priceId:             pId,
             trialEnd:            sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null,
           },
           // Reset free campaign gate when subscription is truly canceled
           ...(isGone ? { freeUsed: false } : {}),
         })
         console.log(`[webhook] ${event.type}: user ${user.id} → status ${sub.status}${isGone ? ' (freeUsed reset)' : ''}`)
+
+        if (event.type === 'customer.subscription.created' && sub.status === 'active') {
+          sendSubscriptionConfirmationEmail(
+            user.email, user.name,
+            planLabel(pId), '49,99€',
+            formatDate(periodEndISO),
+          ).catch(e => console.error('[email] confirmación:', e))
+        }
+        if (isGone) {
+          sendCancellationEmail(
+            user.email, user.name,
+            formatDate(periodEndISO),
+          ).catch(e => console.error('[email] cancelación:', e))
+        }
         break
       }
 
@@ -225,6 +256,19 @@ export async function handleWebhook(req: Request, res: Response): Promise<void> 
           subscription: { ...user.subscription, status: 'past_due' },
         })
         console.log(`[webhook] invoice.payment_failed: user ${user.id} → past_due`)
+
+        // Generate billing portal URL for the CTA in the email
+        let portalUrl = `${FRONTEND}/settings`
+        try {
+          const portal = await stripe.billingPortal.sessions.create({
+            customer: user.stripeCustomerId!,
+            return_url: `${FRONTEND}/settings`,
+          })
+          portalUrl = portal.url
+        } catch { /* fallback to /settings if portal creation fails */ }
+
+        sendPaymentFailedEmail(user.email, user.name, portalUrl)
+          .catch(e => console.error('[email] pago fallido:', e))
         break
       }
 
