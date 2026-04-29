@@ -35,6 +35,12 @@ async function apiFetch<T>(
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (token) headers['Authorization'] = `Bearer ${token}`
   const res = await fetch(`/api${endpoint}`, { ...options, headers })
+
+  const contentType = res.headers.get('content-type') ?? ''
+  if (!contentType.includes('application/json')) {
+    throw new Error(`Error del servidor (${res.status}). Por favor inténtalo de nuevo.`)
+  }
+
   const data = await res.json()
   if (!res.ok || !data.success) throw new Error(data.error ?? 'Error desconocido')
   return data.data as T

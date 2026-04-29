@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { type Request, type Response, type NextFunction } from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import dotenv from 'dotenv'
@@ -97,6 +97,12 @@ app.get('/api/health', (_req, res) => {
 
 app.use((_req, res) => {
   res.status(404).json({ success: false, error: 'Endpoint not found' })
+})
+
+// Global JSON error handler — catches any unhandled Express errors and returns JSON instead of HTML
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  console.error('[error]', err.message, err.stack?.split('\n')[1]?.trim())
+  res.status(500).json({ success: false, error: 'Error interno del servidor.' })
 })
 
 async function cleanupExpiredTokens() {
