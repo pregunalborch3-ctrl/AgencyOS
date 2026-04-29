@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowRight, Zap, CheckCircle2, Store, Search, Rocket,
@@ -199,11 +199,11 @@ function Hero() {
         {/* Headline */}
         <div className="space-y-3">
           <h1 className="text-5xl md:text-7xl font-black text-white leading-[1.05] tracking-tight">
-            Consigue clientes de<br />
+            Tus clientes reciben<br />
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400">
-              e-commerce en piloto
+              su campaña hoy,
             </span>
-            <br />automático
+            <br />no en una semana
           </h1>
           <p className="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed font-medium">
             Genera campañas completas para tus clientes en menos de 3 minutos.
@@ -238,24 +238,24 @@ function Hero() {
   )
 }
 
-// ─── Section: Stats bar ───────────────────────────────────────────────────────
+// ─── Section: Honest value strip ─────────────────────────────────────────────
 function StatsBar() {
-  const stats = [
-    { value: '847', label: 'agencias activas' },
-    { value: '12.400+', label: 'campañas generadas' },
-    { value: '4.8/5', label: 'valoración media' },
+  const points = [
+    { value: '1 campaña gratis', label: 'para empezar hoy mismo' },
+    { value: 'Sin tarjeta', label: 'no pedimos datos de pago' },
+    { value: 'Cancela cuando quieras', label: 'sin permanencia ni letra pequeña' },
   ]
   return (
     <section className="py-6 border-y border-white/5 bg-zinc-950/60 backdrop-blur-sm">
       <div className="max-w-3xl mx-auto px-6">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-16">
-          {stats.map((s, i) => (
-            <div key={s.label} className="flex items-center gap-10">
+          {points.map((s, i) => (
+            <div key={s.value} className="flex items-center gap-10">
               <div className="text-center">
-                <p className="text-2xl font-black text-white">{s.value}</p>
+                <p className="text-base font-black text-white">{s.value}</p>
                 <p className="text-xs text-zinc-500 mt-0.5">{s.label}</p>
               </div>
-              {i < stats.length - 1 && (
+              {i < points.length - 1 && (
                 <div className="hidden sm:block w-px h-8 bg-white/8" />
               )}
             </div>
@@ -606,6 +606,9 @@ function Demo() {
   )
 }
 
+// Tipado mínimo para fbq (Meta Pixel global)
+declare function fbq(event: string, name: string, params?: Record<string, string>): void
+
 // ─── Section: Pricing ─────────────────────────────────────────────────────────
 const PLANS = [
   {
@@ -667,8 +670,26 @@ const PLANS = [
 ]
 
 function Pricing() {
+  const sectionRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    const el = sectionRef.current
+    if (!el || typeof fbq === 'undefined') return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          fbq('track', 'ViewContent', { content_name: 'pricing', content_category: 'subscription' })
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.3 },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
   return (
-    <section id="precio" className="py-28 px-6">
+    <section id="precio" ref={sectionRef} className="py-28 px-6">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16 space-y-3">
           <p className="text-xs text-indigo-400 font-bold uppercase tracking-widest">Precio</p>
