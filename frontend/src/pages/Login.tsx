@@ -17,11 +17,12 @@ export default function Login() {
   const location   = useLocation()
   const from       = (location.state as { from?: string })?.from ?? '/home'
 
-  const [email,    setEmail]    = useState('')
-  const [password, setPassword] = useState('')
-  const [showPw,   setShowPw]   = useState(false)
-  const [loading,  setLoading]  = useState(false)
-  const [error,    setError]    = useState<string | null>(null)
+  const [email,      setEmail]      = useState('')
+  const [password,   setPassword]   = useState('')
+  const [rememberMe, setRememberMe] = useState(false)
+  const [showPw,     setShowPw]     = useState(false)
+  const [loading,    setLoading]    = useState(false)
+  const [error,      setError]      = useState<string | null>(null)
 
   // Field-level errors
   const [emailErr, setEmailErr] = useState('')
@@ -41,7 +42,7 @@ export default function Login() {
     if (!validate()) return
     setError(null); setLoading(true)
     try {
-      await login(email.trim().toLowerCase(), password)
+      await login(email.trim().toLowerCase(), password, rememberMe)
       navigate(from, { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al iniciar sesión.')
@@ -155,12 +156,7 @@ export default function Login() {
 
             {/* Password */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="label mb-0">Contraseña</label>
-                <Link to="/forgot-password" className="text-xs text-indigo-500 hover:text-indigo-400 font-medium">
-                  ¿Olvidaste tu contraseña?
-                </Link>
-              </div>
+              <label className="label">Contraseña</label>
               <div className="relative">
                 <input
                   type={showPw ? 'text' : 'password'} autoComplete="current-password"
@@ -177,9 +173,25 @@ export default function Login() {
               {pwErr && <p className="text-xs text-red-500 mt-1.5">{pwErr}</p>}
             </div>
 
+            {/* Remember me */}
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={e => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-indigo-500 focus:ring-indigo-500"
+                />
+                <span className="text-sm text-gray-600">Recordarme 30 días</span>
+              </label>
+              <Link to="/forgot-password" className="text-xs text-indigo-500 hover:text-indigo-400 font-medium">
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
+
             {/* Submit */}
             <button type="submit" disabled={loading}
-              className="btn-primary w-full justify-center py-3 text-base mt-2">
+              className="btn-primary w-full justify-center py-3 text-base mt-1">
               {loading
                 ? <><Loader2 size={17} className="animate-spin" /> Iniciando sesión...</>
                 : <><span>Iniciar sesión</span><ArrowRight size={17} /></>

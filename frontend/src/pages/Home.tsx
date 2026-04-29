@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Zap, Rocket, TrendingUp, Target, Clock,
-  Calendar, Loader2, ChevronRight, Lightbulb, X, Check,
+  Calendar, Loader2, ChevronRight, Lightbulb,
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -11,9 +11,9 @@ import {
 import { useAuth } from '../contexts/AuthContext'
 import { useSubscription } from '../contexts/SubscriptionContext'
 import { getCampaigns, type SavedCampaign } from '../lib/campaignsApi'
+import OnboardingModal, { isOnboardingNeeded } from '../components/OnboardingModal'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const ONBOARDING_KEY = 'agencyos_onboarding_done'
 const WEEKLY_GOAL = 5
 
 const MOTIVATIONAL = [
@@ -130,113 +130,7 @@ function CustomTooltip({ active, payload, label }: any) {
   )
 }
 
-// ─── Onboarding Modal ─────────────────────────────────────────────────────────
-const ONBOARDING_STEPS = [
-  {
-    icon: Rocket,
-    title: 'Genera tu primera campaña',
-    desc: 'Ve al Generador de Campañas, describe tu producto y el sistema crea copies, hooks, guiones y segmentación listos para lanzar.',
-    action: '/dashboard',
-    cta: 'Ir al generador',
-  },
-  {
-    icon: TrendingUp,
-    title: 'Analiza tu mercado',
-    desc: 'En Frameworks encontrarás análisis de mercado, mapa de competencia, plan de distribución y más — todo generado con IA.',
-    action: '/frameworks/mercado',
-    cta: 'Ver frameworks',
-  },
-  {
-    icon: Calendar,
-    title: 'Planifica tu contenido',
-    desc: 'Usa el Calendario de Publicación para organizar y planificar todo tu contenido en un solo lugar.',
-    action: null,
-    cta: null,
-  },
-]
-
-function OnboardingModal({ name, onClose }: { name: string; onClose: () => void }) {
-  const navigate = useNavigate()
-  const [step, setStep] = useState(0)
-  const current = ONBOARDING_STEPS[step]
-  const Icon = current.icon
-  const isLast = step === ONBOARDING_STEPS.length - 1
-
-  function handleAction() {
-    onClose()
-    if (current.action) navigate(current.action)
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
-      <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl p-8 shadow-2xl relative">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-zinc-600 hover:text-zinc-400 transition-colors"
-          aria-label="Cerrar"
-        >
-          <X size={18} />
-        </button>
-
-        {step === 0 && (
-          <div className="mb-6">
-            <p className="text-indigo-400 text-xs font-bold uppercase tracking-widest mb-1">Bienvenido</p>
-            <h2 className="text-2xl font-black text-white">Hola, {name} 👋</h2>
-            <p className="text-zinc-400 text-sm mt-1">Vamos a mostrarte lo más importante en 3 pasos.</p>
-          </div>
-        )}
-
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-11 h-11 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
-            <Icon size={20} className="text-indigo-400" />
-          </div>
-          <div>
-            <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Paso {step + 1} de {ONBOARDING_STEPS.length}</p>
-            <h3 className="text-base font-bold text-white">{current.title}</h3>
-          </div>
-        </div>
-
-        <p className="text-zinc-400 text-sm leading-relaxed mb-7">{current.desc}</p>
-
-        <div className="flex items-center gap-3">
-          {current.cta && (
-            <button
-              onClick={handleAction}
-              className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl transition-all"
-            >
-              {current.cta} →
-            </button>
-          )}
-          {!isLast ? (
-            <button
-              onClick={() => setStep(s => s + 1)}
-              className={`${current.cta ? 'px-4' : 'flex-1'} py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium rounded-xl transition-all`}
-            >
-              {current.cta ? 'Siguiente' : 'Siguiente →'}
-            </button>
-          ) : (
-            <button
-              onClick={onClose}
-              className="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium rounded-xl transition-all flex items-center gap-2"
-            >
-              <Check size={14} /> Listo
-            </button>
-          )}
-        </div>
-
-        {/* Progress dots */}
-        <div className="flex justify-center gap-1.5 mt-5">
-          {ONBOARDING_STEPS.map((_, i) => (
-            <div
-              key={i}
-              className={`h-1 rounded-full transition-all ${i === step ? 'w-6 bg-indigo-500' : i < step ? 'w-2 bg-indigo-500/40' : 'w-2 bg-zinc-700'}`}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
+// OnboardingModal is imported from components/OnboardingModal
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function Home() {
@@ -265,14 +159,13 @@ export default function Home() {
       setTip(dailyTip)
     }).catch(() => {}).finally(() => {
       setLoadingData(false)
-      if (!localStorage.getItem(ONBOARDING_KEY)) {
+      if (isOnboardingNeeded()) {
         setShowOnboarding(true)
       }
     })
   }, [token])
 
   function handleOnboardingClose() {
-    localStorage.setItem(ONBOARDING_KEY, '1')
     setShowOnboarding(false)
   }
 
@@ -308,7 +201,7 @@ export default function Home() {
     <div className="flex-1 flex flex-col min-h-screen bg-zinc-950">
 
       {showOnboarding && (
-        <OnboardingModal name={firstName} onClose={handleOnboardingClose} />
+        <OnboardingModal onClose={handleOnboardingClose} />
       )}
 
       {/* ── 1. Header ─────────────────────────────────────────────────────── */}

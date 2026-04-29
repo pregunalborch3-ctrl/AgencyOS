@@ -17,7 +17,7 @@ interface AuthState {
 }
 
 interface AuthContextType extends AuthState {
-  login:    (email: string, password: string) => Promise<void>
+  login:    (email: string, password: string, rememberMe?: boolean) => Promise<void>
   register: (name: string, email: string, password: string, confirmPassword: string) => Promise<void>
   logout:   () => void
 }
@@ -25,7 +25,30 @@ interface AuthContextType extends AuthState {
 // ─── Context ──────────────────────────────────────────────────────────────────
 const AuthContext = createContext<AuthContextType | null>(null)
 
-const TOKEN_KEY = 'agencyos_token'
+const TOKEN_KEY     = 'agencyos_token'
+const REMEMBER_KEY  = 'agencyos_remember'
+
+function getStoredToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY) ?? sessionStorage.getItem(TOKEN_KEY)
+}
+
+function storeToken(token: string, remember: boolean): void {
+  if (remember) {
+    localStorage.setItem(TOKEN_KEY, token)
+    localStorage.setItem(REMEMBER_KEY, '1')
+    sessionStorage.removeItem(TOKEN_KEY)
+  } else {
+    sessionStorage.setItem(TOKEN_KEY, token)
+    localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(REMEMBER_KEY)
+  }
+}
+
+function clearToken(): void {
+  localStorage.removeItem(TOKEN_KEY)
+  localStorage.removeItem(REMEMBER_KEY)
+  sessionStorage.removeItem(TOKEN_KEY)
+}
 
 async function apiFetch<T>(
   endpoint: string,
@@ -50,13 +73,13 @@ async function apiFetch<T>(
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({
     user: null,
-    token: localStorage.getItem(TOKEN_KEY),
+    token: getStoredToken(),
     isLoading: true,
   })
 
   // On mount: validate stored token
   useEffect(() => {
-    const token = localStorage.getItem(TOKEN_KEY)
+    const token = getStoredToken()
     if (!token) {
       setState({ user: null, token: null, isLoading: false })
       return
@@ -64,17 +87,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     apiFetch<AuthUser>('/auth/me', undefined, token)
       .then(user => setState({ user, token, isLoading: false }))
       .catch(() => {
-        localStorage.removeItem(TOKEN_KEY)
+        clearToken()
         setState({ user: null, token: null, isLoading: false })
       })
   }, [])
 
-  const login = useCallback(async (email: string, password: string) => {
-    const { token, user } = await apiFetch<{ token: string; user: AuthUser }>(
+  const login = useCallback(async (email: string, password: string, rememberMe = false) => {
+    const { token, user } = await apiFetch<{ token: string; user: AuthUser; rememberMe: boolean }>(
       '/auth/login',
-      { method: 'POST', body: JSON.stringify({ email, password }) },
+      { method: 'POST', body: JSON.stringify({ email, password, rememberMe }) },
     )
-    localStorage.setItem(TOKEN_KEY, token)
+    storeToken(token, rememberMe)
     setState({ user, token, isLoading: false })
   }, [])
 
@@ -84,14 +107,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         '/auth/register',
         { method: 'POST', body: JSON.stringify({ name, email, password, confirmPassword }) },
       )
-      localStorage.setItem(TOKEN_KEY, token)
+      storeToken(token, true) // registration always remembers
       setState({ user, token, isLoading: false })
     },
     [],
   )
 
   const logout = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY)
+    clearToken()
     setState({ user: null, token: null, isLoading: false })
   }, [])
 

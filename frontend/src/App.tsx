@@ -24,6 +24,7 @@ import Privacy                 from './pages/legal/Privacy'
 import Terms                   from './pages/legal/Terms'
 import Cookies                 from './pages/legal/Cookies'
 import PublicationCalendar     from './pages/PublicationCalendar'
+import MetaAnalysis            from './pages/MetaAnalysis'
 import NotFound                from './pages/NotFound'
 
 export default function App() {
@@ -57,9 +58,10 @@ export default function App() {
                 <Route path="/frameworks/contenido"    element={<ViralContent />} />
                 <Route path="/frameworks/escalado"     element={<ScalingRoadmap />} />
                 {/* Main app — paywall handled in-app */}
-                <Route path="/dashboard" element={<CampaignApp />} />
-                <Route path="/historial" element={<HistorialPage />} />
-                <Route path="/calendar"  element={<PublicationCalendar />} />
+                <Route path="/dashboard"      element={<CampaignApp />} />
+                <Route path="/historial"      element={<HistorialPage />} />
+                <Route path="/calendar"       element={<PublicationCalendar />} />
+                <Route path="/meta-analysis"  element={<MetaAnalysis />} />
               </Route>
             </Route>
 

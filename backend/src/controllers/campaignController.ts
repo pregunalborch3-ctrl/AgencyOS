@@ -130,7 +130,7 @@ async function claudeJSONAttempt<T>(system: string, user: string): Promise<T> {
   const msg = await Promise.race([
     getClient().messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 4500,
+      max_tokens: 8000,
       system,
       messages: [{ role: 'user', content: user }],
     }),
@@ -160,8 +160,8 @@ async function claudeJSONAttempt<T>(system: string, user: string): Promise<T> {
 }
 
 // ─── Generate creatives with Claude ──────────────────────────────────────────
-interface ShortCopy { hook: string; body: string; cta: string; type: string; platform: string }
-interface LongCopy  { format: string; platform: string; content: string }
+interface ShortCopy { hook: string; body: string; cta: string; type: string; platform: string; tone: string; length: string }
+interface LongCopy  { format: string; platform: string; content: string; tone: string }
 interface Hook      { type: string; text: string; why: string }
 interface Creative  { format: string; platform: string; duration: string; structure: Array<{ time: string; action: string }> }
 
@@ -193,51 +193,68 @@ async function generateCreativesWithClaude(
     creatives: Creative[]
   }>(
     'Eres copywriter experto en Meta Ads y TikTok Ads. Escribes copy que convierte. Responde SOLO con JSON válido, sin markdown.',
-    `Material publicitario para:
+    `Genera material publicitario COMPLETO para:
 
 PRODUCTO: "${product}"
 NICHO: ${niche.profile}
 OBJETIVO: ${objective}
-TONO: ${variantContext[variant] ?? variantContext['']}
+ESTILO BASE: ${variantContext[variant] ?? variantContext['']}
 DOLORES: ${niche.pains.slice(0, 3).join(' | ')}
 DESEOS: ${niche.desires.slice(0, 3).join(' | ')}
-CTAs (usa solo estos): ${ctas.join(', ')}
+CTAs (usa SOLO estos): ${ctas.join(', ')}
 
-JSON requerido (todo en español, específico para "${product}", sin textos genéricos):
+JSON requerido (todo en español, 100% específico para "${product}", CERO textos genéricos):
 {
   "shortCopies": [
-    { "type": "Curiosidad",       "platform": "Meta Ads · Feed",    "hook": "titular máx 10 palabras", "body": "2-3 frases máx 60 palabras", "cta": "de los CTAs" },
-    { "type": "Problema–Solución","platform": "Meta Ads · Stories", "hook": "...", "body": "...", "cta": "..." },
-    { "type": "Prueba Social",    "platform": "TikTok Ads",         "hook": "...", "body": "...", "cta": "..." },
-    { "type": "Urgencia",         "platform": "Meta Ads · Reels",   "hook": "...", "body": "...", "cta": "..." }
+    { "tone": "urgente",      "length": "stories",    "type": "FOMO",             "platform": "Stories · 9:16", "hook": "máx 8 palabras urgentes",  "body": "máx 20 palabras con urgencia real",     "cta": "CTA" },
+    { "tone": "urgente",      "length": "feed",       "type": "Escasez",          "platform": "Feed · 1:1",     "hook": "máx 10 palabras",           "body": "30-40 palabras escasez + beneficio",    "cta": "CTA" },
+    { "tone": "urgente",      "length": "conversion", "type": "Urgencia directa", "platform": "Feed · 4:5",     "hook": "máx 10 palabras",           "body": "60-70 palabras + garantía + urgencia",  "cta": "CTA" },
+    { "tone": "emocional",    "length": "stories",    "type": "Transformación",   "platform": "Stories · 9:16", "hook": "máx 8 palabras emocionales", "body": "máx 20 palabras emoción pura",          "cta": "CTA" },
+    { "tone": "emocional",    "length": "feed",       "type": "Aspiración",       "platform": "Feed · 1:1",     "hook": "máx 10 palabras",           "body": "30-40 palabras historia emocional",     "cta": "CTA" },
+    { "tone": "emocional",    "length": "conversion", "type": "Storytelling",     "platform": "Feed · 4:5",     "hook": "máx 10 palabras",           "body": "60-70 palabras narrativa de cambio",    "cta": "CTA" },
+    { "tone": "racional",     "length": "stories",    "type": "Dato + Beneficio", "platform": "Stories · 9:16", "hook": "dato concreto máx 8 palabras","body": "máx 20 palabras lógica y datos",       "cta": "CTA" },
+    { "tone": "racional",     "length": "feed",       "type": "Prueba Social",    "platform": "Feed · 1:1",     "hook": "máx 10 palabras",           "body": "30-40 palabras beneficio racional",     "cta": "CTA" },
+    { "tone": "racional",     "length": "conversion", "type": "Comparativa",      "platform": "Feed · 4:5",     "hook": "máx 10 palabras",           "body": "60-70 palabras elimina objeciones",     "cta": "CTA" },
+    { "tone": "humor",        "length": "stories",    "type": "Relatable",        "platform": "TikTok · 9:16",  "hook": "máx 8 palabras graciosas",  "body": "máx 20 palabras humor cercano",         "cta": "CTA" },
+    { "tone": "humor",        "length": "feed",       "type": "Ironía",           "platform": "Reels · 4:5",    "hook": "máx 10 palabras con gancho","body": "30-40 palabras humor + giro inesperado","cta": "CTA" },
+    { "tone": "humor",        "length": "conversion", "type": "Situación real",   "platform": "TikTok · 9:16",  "hook": "máx 10 palabras",           "body": "60-70 palabras situación cómica real",  "cta": "CTA" },
+    { "tone": "aspiracional", "length": "stories",    "type": "Identidad",        "platform": "Stories · 9:16", "hook": "máx 8 palabras de estatus",  "body": "máx 20 palabras imagen deseada",       "cta": "CTA" },
+    { "tone": "aspiracional", "length": "feed",       "type": "Estilo de vida",   "platform": "Feed · 1:1",     "hook": "máx 10 palabras",           "body": "30-40 palabras lifestyle elevado",      "cta": "CTA" },
+    { "tone": "aspiracional", "length": "conversion", "type": "Pertenencia",      "platform": "Feed · 4:5",     "hook": "máx 10 palabras",           "body": "60-70 palabras comunidad + beneficio",  "cta": "CTA" }
   ],
   "longCopies": [
-    { "format": "Storytelling",            "platform": "Meta Ads · Feed",  "content": "80-120 palabras, storytelling emocional, saltos de línea" },
-    { "format": "Problema–Agitación–Solución", "platform": "Meta Ads · Video", "content": "80-120 palabras, formato PAS" }
+    { "tone": "emocional",    "format": "Storytelling PAS",        "platform": "Meta Ads · Feed",  "content": "90-120 palabras, problema personal → agitación → solución con saltos de línea" },
+    { "tone": "racional",     "format": "Beneficios + Objeciones", "platform": "Meta Ads · Feed",  "content": "90-120 palabras, lista de beneficios clave + responde las 3 objeciones más comunes" },
+    { "tone": "urgente",      "format": "Oferta limitada",         "platform": "Meta Ads · Video", "content": "90-120 palabras, oferta con escasez real + prueba social + CTA fuerte" },
+    { "tone": "aspiracional", "format": "Visión de futuro",        "platform": "Meta Ads · Feed",  "content": "90-120 palabras, cómo es la vida del cliente con este producto en 30 días" }
   ],
   "hooks": [
-    { "type": "Curiosidad extrema", "text": "máx 8 palabras", "why": "razón psicológica en 5 palabras" },
-    { "type": "Dolor directo",      "text": "...", "why": "..." },
-    { "type": "FOMO + Social",      "text": "...", "why": "..." },
-    { "type": "Transformación",     "text": "...", "why": "..." }
+    { "type": "Curiosidad extrema",   "text": "máx 8 palabras que generen curiosidad irresistible", "why": "abre bucle mental" },
+    { "type": "Dolor directo",        "text": "máx 8 palabras que golpeen el mayor pain point",     "why": "identificación inmediata" },
+    { "type": "FOMO + Social proof",  "text": "máx 8 palabras con número + acción",                 "why": "validación social" },
+    { "type": "Transformación",       "text": "máx 8 palabras: antes → después",                   "why": "resultado visible" },
+    { "type": "Pregunta polémica",    "text": "máx 8 palabras pregunta que desafía creencia",       "why": "disonancia cognitiva" },
+    { "type": "Secreto revelado",     "text": "máx 8 palabras con 'por qué' o 'cómo'",             "why": "acceso a información exclusiva" },
+    { "type": "Humor / POV",          "text": "máx 8 palabras situación relatable o POV",           "why": "engagement y shares" },
+    { "type": "Número concreto",      "text": "empieza con cifra: X personas / X% / en X días",    "why": "credibilidad instantánea" }
   ],
   "creatives": [
     {
-      "format": "UGC — Testimonial", "platform": "TikTok / Reels", "duration": "15–20s",
+      "format": "UGC — Testimonial auténtico", "platform": "TikTok / Reels", "duration": "15–20s",
       "structure": [
-        { "time": "0–3s",  "action": "descripción concisa" },
-        { "time": "3–8s",  "action": "..." },
-        { "time": "8–14s", "action": "..." },
-        { "time": "14–20s","action": "CTA final" }
+        { "time": "0–3s",  "action": "hook verbal directo: presenta el problema que tenía" },
+        { "time": "3–8s",  "action": "agitación: describe cómo era su vida antes" },
+        { "time": "8–14s", "action": "giro: cómo lo resolvió con el producto, resultado concreto" },
+        { "time": "14–20s","action": "CTA con urgencia: 'Yo tardé X en probarloꓸ no esperes tanto'" }
       ]
     },
     {
-      "format": "Before/After", "platform": "TikTok / Reels / Stories", "duration": "10–15s",
+      "format": "Before / After visual", "platform": "TikTok / Reels / Stories", "duration": "10–15s",
       "structure": [
-        { "time": "0–3s",  "action": "antes — problema visible" },
-        { "time": "3–7s",  "action": "producto en acción" },
-        { "time": "7–12s", "action": "después — resultado" },
-        { "time": "12–15s","action": "CTA con oferta" }
+        { "time": "0–3s",  "action": "ANTES: muestra el problema de forma visual e impactante" },
+        { "time": "3–7s",  "action": "PROCESO: producto en acción, demostración clara" },
+        { "time": "7–12s", "action": "DESPUÉS: resultado visual + cifra o testimonio en texto" },
+        { "time": "12–15s","action": "CTA con oferta: texto superpuesto + narración de urgencia" }
       ]
     }
   ]

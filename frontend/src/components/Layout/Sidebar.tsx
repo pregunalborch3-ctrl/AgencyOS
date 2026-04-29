@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import {
   Rocket, Settings, LogOut, Clock, CalendarDays,
   Globe2, Crosshair, Map, Flame, Layers, Zap,
-  ShieldCheck, FileText, Cookie, MoreHorizontal, X,
+  ShieldCheck, FileText, Cookie, MoreHorizontal, X, BarChart2,
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -70,11 +70,12 @@ export default function Sidebar() {
   ]
 
   const NAV_TOOLS = [
-    { path: '/frameworks/mercado',      icon: Globe2,    label: t('nav.market')       },
-    { path: '/frameworks/competencia',  icon: Crosshair, label: t('nav.competition')  },
-    { path: '/frameworks/distribucion', icon: Map,       label: t('nav.distribution') },
-    { path: '/frameworks/contenido',    icon: Flame,     label: t('nav.content')      },
-    { path: '/frameworks/escalado',     icon: Layers,    label: t('nav.scaling')      },
+    { path: '/meta-analysis',            icon: BarChart2, label: 'Meta Análisis'       },
+    { path: '/frameworks/mercado',       icon: Globe2,    label: t('nav.market')       },
+    { path: '/frameworks/competencia',   icon: Crosshair, label: t('nav.competition')  },
+    { path: '/frameworks/distribucion',  icon: Map,       label: t('nav.distribution') },
+    { path: '/frameworks/contenido',     icon: Flame,     label: t('nav.content')      },
+    { path: '/frameworks/escalado',      icon: Layers,    label: t('nav.scaling')      },
   ]
 
   const NAV_LEGAL = [

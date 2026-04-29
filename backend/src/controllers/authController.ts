@@ -14,7 +14,7 @@ function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
 }
 
-function signToken(user: User): string {
+function signToken(user: User, expiresIn: string = process.env.JWT_EXPIRES_IN ?? "7d"): string {
   const pwv = crypto.createHash("sha256").update(user.passwordHash).digest("hex").slice(0, 16)
   const payload: JwtPayload = {
     userId: user.id,
@@ -24,7 +24,7 @@ function signToken(user: User): string {
     pwv,
   }
   return jwt.sign(payload, process.env.JWT_SECRET!, {
-    expiresIn: (process.env.JWT_EXPIRES_IN ?? "7d") as jwt.SignOptions["expiresIn"],
+    expiresIn: expiresIn as jwt.SignOptions["expiresIn"],
   })
 }
 
@@ -84,7 +84,7 @@ export async function register(req: Request, res: Response): Promise<void> {
 
 export async function login(req: Request, res: Response): Promise<void> {
   try {
-    const { email, password } = req.body as { email?: string; password?: string }
+    const { email, password, rememberMe } = req.body as { email?: string; password?: string; rememberMe?: boolean }
 
     if (!email?.trim() || !password) {
       res.status(400).json({ success: false, error: "Email y contrasena son obligatorios." })
@@ -109,10 +109,10 @@ export async function login(req: Request, res: Response): Promise<void> {
     }
 
     await UserStore.update(user.id, { lastLoginAt: new Date().toISOString() })
-    const token = signToken(user)
+    const token = signToken(user, rememberMe ? "30d" : "1d")
     res.json({
       success: true,
-      data: { token, user: UserStore.toPublic(user) },
+      data: { token, user: UserStore.toPublic(user), rememberMe: !!rememberMe },
     })
   } catch (err) {
     console.error("[login] Error inesperado:", err)
