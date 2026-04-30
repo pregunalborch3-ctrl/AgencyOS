@@ -4,6 +4,8 @@ import { Eye, EyeOff, Loader2, Zap, ArrowRight, CheckCircle2, XCircle } from 'lu
 import { useAuth } from '../contexts/AuthContext'
 import { useSubscription } from '../contexts/SubscriptionContext'
 
+declare function fbq(event: string, name: string, params?: Record<string, string>): void
+
 const PLAN_PRICE_IDS: Record<string, string> = {
   starter:    import.meta.env.VITE_STRIPE_PRICE_ID_STARTER    ?? '',
   pro:        import.meta.env.VITE_STRIPE_PRICE_ID_PRO        ?? '',
@@ -130,6 +132,7 @@ export default function Register() {
     setError(null); setLoading(true)
     try {
       await register(name.trim(), email.trim().toLowerCase(), password, confirm)
+      if (typeof fbq !== 'undefined') fbq('track', 'CompleteRegistration')
       const plan = searchParams.get('plan')
       const priceId = plan ? PLAN_PRICE_IDS[plan] : undefined
       if (priceId && plan !== 'starter') {
