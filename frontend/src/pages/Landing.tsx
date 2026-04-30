@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth }         from '../contexts/AuthContext'
+import { useSubscription } from '../contexts/SubscriptionContext'
 import {
   ArrowRight, Zap, CheckCircle2, Store, Search, Rocket,
   Clock, Lightbulb, TrendingUp, Target, ChevronRight,
@@ -925,6 +927,24 @@ function Footer() {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function Landing() {
+  const navigate = useNavigate()
+  const { user, isLoading: authLoading } = useAuth()
+  const { isActive, isLoading: subLoading } = useSubscription()
+
+  useEffect(() => {
+    if (authLoading || (user && subLoading)) return
+    if (!user) return
+    if (isActive) {
+      navigate('/home', { replace: true })
+    } else {
+      document.getElementById('precio')?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [authLoading, subLoading, user, isActive, navigate])
+
+  if (authLoading || (user && subLoading)) {
+    return <div className="min-h-screen bg-[#080808]" />
+  }
+
   return (
     <div className="min-h-screen bg-[#080808] text-white">
       <Nav />
