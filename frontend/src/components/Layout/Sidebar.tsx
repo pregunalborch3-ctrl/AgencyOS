@@ -4,12 +4,13 @@ import { useTranslation } from 'react-i18next'
 import {
   Rocket, Settings, LogOut, Clock, CalendarDays,
   Globe2, Crosshair, Map, Flame, Layers, Zap,
-  ShieldCheck, FileText, Cookie, MoreHorizontal, X, BarChart2,
+  ShieldCheck, FileText, Cookie, MoreHorizontal, X, BarChart2, Lock,
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
+import { usePlan, type PlanTier } from '../../hooks/usePlan'
 
 // ─── Desktop nav item (sidebar) ───────────────────────────────────────────────
-function NavItem({ path, icon: Icon, label }: { path: string; icon: React.ElementType; label: string }) {
+function NavItem({ path, icon: Icon, label, locked }: { path: string; icon: React.ElementType; label: string; locked?: boolean }) {
   const { pathname } = useLocation()
   const isActive = pathname === path || pathname.startsWith(path + '/')
   return (
@@ -19,12 +20,19 @@ function NavItem({ path, icon: Icon, label }: { path: string; icon: React.Elemen
       className={`group relative flex items-center justify-center w-10 h-10 rounded-xl transition-all ${
         isActive
           ? 'bg-indigo-500 shadow-lg shadow-indigo-500/25'
+          : locked
+          ? 'text-zinc-700 hover:bg-white/5 hover:text-zinc-500'
           : 'text-zinc-600 hover:bg-white/5 hover:text-zinc-300'
       }`}
     >
       <Icon size={18} className={isActive ? 'text-white' : ''} />
+      {locked && !isActive && (
+        <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center">
+          <Lock size={7} className="text-zinc-500" />
+        </span>
+      )}
       <span className="pointer-events-none absolute left-full ml-3 px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-white/8 text-xs font-semibold text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50 shadow-xl">
-        {label}
+        {label}{locked ? ' · Pro' : ''}
       </span>
     </Link>
   )
@@ -58,6 +66,7 @@ export default function Sidebar() {
   const { t }            = useTranslation()
   const { pathname }     = useLocation()
   const [moreOpen, setMoreOpen] = useState(false)
+  const { hasAccess }    = usePlan()
 
   const initials = user ? getInitials(user.name) : 'AG'
   const gradient = GRADIENTS[(user?.name?.charCodeAt(0) ?? 0) % GRADIENTS.length]
@@ -69,13 +78,14 @@ export default function Sidebar() {
     { path: '/settings',  icon: Settings,     label: t('nav.settings'), mobileLabel: t('nav.settings_short') },
   ]
 
-  const NAV_TOOLS = [
-    { path: '/meta-analysis',            icon: BarChart2, label: 'Meta Análisis'       },
-    { path: '/frameworks/mercado',       icon: Globe2,    label: t('nav.market')       },
-    { path: '/frameworks/competencia',   icon: Crosshair, label: t('nav.competition')  },
-    { path: '/frameworks/distribucion',  icon: Map,       label: t('nav.distribution') },
-    { path: '/frameworks/contenido',     icon: Flame,     label: t('nav.content')      },
-    { path: '/frameworks/escalado',      icon: Layers,    label: t('nav.scaling')      },
+  const proLocked = !hasAccess('pro')
+  const NAV_TOOLS: { path: string; icon: React.ElementType; label: string; requiredTier?: PlanTier }[] = [
+    { path: '/meta-analysis',            icon: BarChart2, label: 'Meta Análisis'                         },
+    { path: '/frameworks/mercado',       icon: Globe2,    label: t('nav.market'),       requiredTier: 'pro' },
+    { path: '/frameworks/competencia',   icon: Crosshair, label: t('nav.competition'),  requiredTier: 'pro' },
+    { path: '/frameworks/distribucion',  icon: Map,       label: t('nav.distribution'), requiredTier: 'pro' },
+    { path: '/frameworks/contenido',     icon: Flame,     label: t('nav.content'),      requiredTier: 'pro' },
+    { path: '/frameworks/escalado',      icon: Layers,    label: t('nav.scaling'),      requiredTier: 'pro' },
   ]
 
   const NAV_LEGAL = [
@@ -112,7 +122,15 @@ export default function Sidebar() {
         <div className="w-6 h-px bg-white/8 my-1" />
         <span className="text-[8px] font-black text-zinc-700 uppercase tracking-widest select-none">tools</span>
         <nav className="flex flex-col items-center gap-1.5">
-          {NAV_TOOLS.map(item => <NavItem key={item.path} {...item} />)}
+          {NAV_TOOLS.map(item => (
+            <NavItem
+              key={item.path}
+              path={item.path}
+              icon={item.icon}
+              label={item.label}
+              locked={item.requiredTier === 'pro' && proLocked}
+            />
+          ))}
         </nav>
 
         <div className="w-6 h-px bg-white/8 my-1" />
@@ -190,6 +208,7 @@ export default function Sidebar() {
                 <div className="space-y-1">
                   {NAV_TOOLS.map(item => {
                     const isActive = pathname === item.path || pathname.startsWith(item.path + '/')
+                    const itemLocked = item.requiredTier === 'pro' && proLocked
                     return (
                       <button
                         key={item.path}
@@ -197,11 +216,14 @@ export default function Sidebar() {
                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left ${
                           isActive
                             ? 'bg-indigo-500/15 text-indigo-400'
+                            : itemLocked
+                            ? 'text-zinc-600 hover:bg-white/5'
                             : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
                         }`}
                       >
                         <item.icon size={16} />
-                        {item.label}
+                        <span className="flex-1">{item.label}</span>
+                        {itemLocked && <Lock size={11} className="text-zinc-600 flex-shrink-0" />}
                       </button>
                     )
                   })}

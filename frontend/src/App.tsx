@@ -26,6 +26,7 @@ import Cookies                 from './pages/legal/Cookies'
 import PublicationCalendar     from './pages/PublicationCalendar'
 import MetaAnalysis            from './pages/MetaAnalysis'
 import NotFound                from './pages/NotFound'
+import PlanGate               from './components/PlanGate'
 
 export default function App() {
   return (
@@ -52,11 +53,11 @@ export default function App() {
                 <Route path="/settings"              element={<Settings />} />
 
                 <Route path="/home"                      element={<Home />} />
-                <Route path="/frameworks/mercado"      element={<MarketAnalysis />} />
-                <Route path="/frameworks/competencia"  element={<CompetitionMap />} />
-                <Route path="/frameworks/distribucion" element={<DistributionPlan />} />
-                <Route path="/frameworks/contenido"    element={<ViralContent />} />
-                <Route path="/frameworks/escalado"     element={<ScalingRoadmap />} />
+                <Route path="/frameworks/mercado"      element={<PlanGate required="pro"><MarketAnalysis /></PlanGate>} />
+                <Route path="/frameworks/competencia"  element={<PlanGate required="pro"><CompetitionMap /></PlanGate>} />
+                <Route path="/frameworks/distribucion" element={<PlanGate required="pro"><DistributionPlan /></PlanGate>} />
+                <Route path="/frameworks/contenido"    element={<PlanGate required="pro"><ViralContent /></PlanGate>} />
+                <Route path="/frameworks/escalado"     element={<PlanGate required="pro"><ScalingRoadmap /></PlanGate>} />
                 {/* Main app — paywall handled in-app */}
                 <Route path="/dashboard"      element={<CampaignApp />} />
                 <Route path="/historial"      element={<HistorialPage />} />

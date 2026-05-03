@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router-dom'
 import i18n from '../i18n'
 import {
   ShieldCheck, Check, CheckCircle2, XCircle,
@@ -11,6 +12,7 @@ import {
 import Header from '../components/Layout/Header'
 import { useSubscription } from '../contexts/SubscriptionContext'
 import OnboardingModal from '../components/OnboardingModal'
+import PlanGate from '../components/PlanGate'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type SettingsSection = 'general' | 'seguridad' | 'facturacion' | 'api'
@@ -683,11 +685,14 @@ X-API-Key: <your-key>
 function SectionNav({ active, onChange }: { active: SettingsSection; onChange: (s: SettingsSection) => void }) {
   const { t } = useTranslation()
 
-  const items: { id: SettingsSection; label: string; icon: React.ReactNode }[] = [
+  const items: { id: SettingsSection; label: string; icon: React.ReactNode; badge?: React.ReactNode }[] = [
     { id: 'general',     label: t('settings.nav.general'),  icon: <Building2 size={16} /> },
     { id: 'seguridad',   label: t('settings.nav.security'), icon: <ShieldCheck size={16} /> },
     { id: 'facturacion', label: t('settings.nav.billing'),  icon: <CreditCard size={16} /> },
-    { id: 'api',         label: t('settings.nav.api'),      icon: <Key size={16} /> },
+    {
+      id: 'api', label: t('settings.nav.api'), icon: <Key size={16} />,
+      badge: <span className="ml-auto text-[9px] font-black tracking-wider px-1.5 py-0.5 rounded-full bg-amber-400/20 text-amber-600 border border-amber-400/30">Enterprise</span>,
+    },
   ]
 
   return (
@@ -702,7 +707,7 @@ function SectionNav({ active, onChange }: { active: SettingsSection; onChange: (
               : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-600'
           }`}
         >
-          {item.icon}{item.label}
+          {item.icon}{item.label}{item.badge}
         </button>
       ))}
     </nav>
@@ -712,7 +717,11 @@ function SectionNav({ active, onChange }: { active: SettingsSection; onChange: (
 // ─── Main Settings Page ───────────────────────────────────────────────────────
 export default function Settings() {
   const { t } = useTranslation()
-  const [section, setSection] = useState<SettingsSection>('general')
+  const [searchParams] = useSearchParams()
+  const [section, setSection] = useState<SettingsSection>(() => {
+    const tab = searchParams.get('tab') as SettingsSection | null
+    return tab && ['general', 'seguridad', 'facturacion', 'api'].includes(tab) ? tab : 'general'
+  })
   const [showTutorial, setShowTutorial] = useState(false)
 
   const subtitles: Record<SettingsSection, string> = {
@@ -750,7 +759,7 @@ export default function Settings() {
             {section === 'general'     && <GeneralSection />}
             {section === 'seguridad'   && <SecuritySection />}
             {section === 'facturacion' && <BillingSection />}
-            {section === 'api'         && <ApiKeysSection />}
+            {section === 'api'         && <PlanGate required="enterprise" inline><ApiKeysSection /></PlanGate>}
           </div>
         </div>
       </div>
