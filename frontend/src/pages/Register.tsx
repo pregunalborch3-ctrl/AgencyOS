@@ -138,7 +138,7 @@ export default function Register() {
       if (priceId && plan !== 'starter') {
         await subscribe(priceId)
       } else {
-        navigate('/dashboard', { replace: true })
+        navigate('/home', { replace: true })
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al crear la cuenta.')

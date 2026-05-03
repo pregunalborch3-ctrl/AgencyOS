@@ -11,6 +11,12 @@ export interface AuthUser {
   onboardingDone: boolean
 }
 
+export interface OnboardingSettings {
+  agencyName?: string
+  clientType?: string
+  primaryGoal?: string
+}
+
 interface AuthState {
   user: AuthUser | null
   token: string | null
@@ -21,7 +27,7 @@ interface AuthContextType extends AuthState {
   login:               (email: string, password: string) => Promise<void>
   register:            (name: string, email: string, password: string, confirmPassword: string) => Promise<void>
   logout:              () => void
-  markOnboardingDone:  () => Promise<void>
+  markOnboardingDone:  (settings?: OnboardingSettings) => Promise<void>
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -110,13 +116,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState({ user: null, token: null, isLoading: false })
   }, [])
 
-  const markOnboardingDone = useCallback(async () => {
+  const markOnboardingDone = useCallback(async (settings?: OnboardingSettings) => {
     const storedToken = getStoredToken()
     if (!storedToken) return
-    try {
-      await apiFetch('/auth/onboarding-done', { method: 'POST' }, storedToken)
-      setState(prev => prev.user ? { ...prev, user: { ...prev.user, onboardingDone: true } } : prev)
-    } catch { /* silencioso */ }
+    setState(prev => prev.user ? { ...prev, user: { ...prev.user, onboardingDone: true } } : prev)
+    apiFetch('/auth/onboarding-done', { method: 'POST', body: JSON.stringify(settings ?? {}) }, storedToken)
+      .catch((err: unknown) => {
+        console.error('[markOnboardingDone] Error al sincronizar con el servidor:', err)
+      })
   }, [])
 
   return (

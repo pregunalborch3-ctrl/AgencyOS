@@ -54,6 +54,15 @@ export async function register(req: Request, res: Response): Promise<void> {
       res.status(400).json({ success: false, error: "Las contrasenas no coinciden." })
       return
     }
+    if (
+      password.length < 8 ||
+      !/[A-Z]/.test(password) ||
+      !/[0-9]/.test(password) ||
+      !/[^A-Za-z0-9]/.test(password)
+    ) {
+      res.status(400).json({ success: false, error: "La contraseña no cumple los requisitos de seguridad (mínimo 8 caracteres, una mayúscula, un número y un carácter especial)." })
+      return
+    }
 
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS)
     const user = await UserStore.create({
@@ -123,7 +132,18 @@ export async function login(req: Request, res: Response): Promise<void> {
 
 export async function markOnboardingDone(req: Request, res: Response): Promise<void> {
   try {
-    await UserStore.update(req.user!.userId, { onboardingDone: true })
+    const { agencyName, clientType, primaryGoal } = req.body as {
+      agencyName?: string; clientType?: string; primaryGoal?: string
+    }
+    const settings: Record<string, string> = {}
+    if (agencyName?.trim()) settings.agencyName = agencyName.trim()
+    if (clientType)         settings.clientType = clientType
+    if (primaryGoal)        settings.primaryGoal = primaryGoal
+
+    await UserStore.update(req.user!.userId, {
+      onboardingDone: true,
+      ...(Object.keys(settings).length ? { agencySettings: settings } : {}),
+    })
     res.json({ success: true, data: { onboardingDone: true } })
   } catch {
     res.status(500).json({ success: false, error: "Error al actualizar el onboarding." })

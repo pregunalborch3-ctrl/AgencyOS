@@ -96,6 +96,7 @@ export const UserStore = {
     if (data.cancelAtPeriodEnd !== undefined) updateData.cancelAtPeriodEnd = data.cancelAtPeriodEnd
     if (data.freeUsed !== undefined) updateData.freeUsed = data.freeUsed
     if (data.onboardingDone !== undefined) updateData.onboardingDone = data.onboardingDone
+    if (data.agencySettings !== undefined) updateData.agencySettings = data.agencySettings
     if (data.subscription !== undefined) {
       const sub = data.subscription
       if (sub) {
