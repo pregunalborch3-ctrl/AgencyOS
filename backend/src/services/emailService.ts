@@ -13,27 +13,53 @@ function escHtml(str: string): string {
 }
 
 export async function sendWelcomeEmail(to: string, rawName: string): Promise<void> {
-  const name = escHtml(rawName)
+  const name    = escHtml(rawName)
+  const dashUrl = `${process.env.FRONTEND_URL ?? "https://agenciesos.com"}/dashboard`
+
   if (!process.env.RESEND_API_KEY) {
     console.warn("[email] RESEND_API_KEY no definida — email de bienvenida omitido")
     return
   }
 
   const { data, error } = await resend.emails.send({
-    from: FROM,
-    to: [to],
-    subject: "Bienvenido a Agenciesos 🚀",
+    from:    FROM,
+    to:      [to],
+    replyTo: "agenciesosapp@gmail.com",
+    subject: "Tu cuenta de Agenciesos",
     headers: {
-      'List-Unsubscribe': '<mailto:agenciesosapp@gmail.com?subject=unsubscribe>',
-      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      "X-Priority":      "1",
+      "List-Unsubscribe": "<mailto:agenciesosapp@gmail.com?subject=unsubscribe>",
     },
+
+    // ── Texto plano (mejora deliverability y clientes sin HTML) ──────────────
+    text: [
+      `Hola, ${rawName}:`,
+      "",
+      "Tu cuenta en Agenciesos ya está activa.",
+      "",
+      "Lo que puedes hacer desde ahora:",
+      "",
+      "- Genera campañas de marketing completas con IA",
+      "- Analiza tus resultados de Meta Ads y obtén recomendaciones concretas",
+      "- Crea roadmaps de escalado para hacer crecer tu agencia",
+      "",
+      `Accede a tu panel: ${dashUrl}`,
+      "",
+      "---",
+      "Recibiste este email porque creaste una cuenta en Agenciesos.",
+      "Si no fuiste tú, puedes ignorar este mensaje.",
+      "",
+      `© ${new Date().getFullYear()} Agenciesos · agenciesosapp@gmail.com`,
+    ].join("\n"),
+
+    // ── HTML ─────────────────────────────────────────────────────────────────
     html: `
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bienvenido a Agenciesos</title>
+  <title>Tu cuenta de Agenciesos</title>
 </head>
 <body style="margin:0;padding:0;background-color:#0a0a0a;font-family:'Segoe UI',Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0a0a0a;padding:40px 20px;">
@@ -54,16 +80,16 @@ export async function sendWelcomeEmail(to: string, rawName: string): Promise<voi
           <tr>
             <td style="padding:40px 40px 32px;">
               <h1 style="margin:0 0 16px;color:#ffffff;font-size:28px;font-weight:700;line-height:1.2;">
-                Hola, ${name} 👋
+                Hola, ${name}
               </h1>
               <p style="margin:0 0 24px;color:#a1a1aa;font-size:16px;line-height:1.6;">
-                Tu cuenta en <strong style="color:#ffffff;">Agenciesos</strong> está lista. Ahora tienes acceso a las herramientas de marketing más potentes para hacer crecer tu agencia.
+                Tu cuenta en <strong style="color:#ffffff;">Agenciesos</strong> ya está activa. A continuación tienes acceso a las herramientas que necesitas para hacer crecer tu agencia.
               </p>
 
               <!-- Feature list -->
               <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:32px;">
                 <tr>
-                  <td style="padding:12px 16px;background:#1a1a1a;border-radius:8px;margin-bottom:8px;display:block;">
+                  <td style="padding:12px 16px;background:#1a1a1a;border-radius:8px;display:block;">
                     <span style="color:#a855f7;font-size:18px;margin-right:10px;">⚡</span>
                     <span style="color:#e4e4e7;font-size:14px;">Genera campañas de marketing completas con IA</span>
                   </td>
@@ -72,13 +98,13 @@ export async function sendWelcomeEmail(to: string, rawName: string): Promise<voi
                 <tr>
                   <td style="padding:12px 16px;background:#1a1a1a;border-radius:8px;">
                     <span style="color:#a855f7;font-size:18px;margin-right:10px;">📊</span>
-                    <span style="color:#e4e4e7;font-size:14px;">Análisis de mercado, competencia y estrategia de contenido</span>
+                    <span style="color:#e4e4e7;font-size:14px;">Análisis de Meta Ads con recomendaciones concretas</span>
                   </td>
                 </tr>
                 <tr><td style="height:8px;"></td></tr>
                 <tr>
                   <td style="padding:12px 16px;background:#1a1a1a;border-radius:8px;">
-                    <span style="color:#a855f7;font-size:18px;margin-right:10px;">🚀</span>
+                    <span style="color:#a855f7;font-size:18px;margin-right:10px;">📈</span>
                     <span style="color:#e4e4e7;font-size:14px;">Roadmaps de escalado personalizados para tu negocio</span>
                   </td>
                 </tr>
@@ -88,9 +114,9 @@ export async function sendWelcomeEmail(to: string, rawName: string): Promise<voi
               <table cellpadding="0" cellspacing="0" width="100%">
                 <tr>
                   <td align="center">
-                    <a href="${process.env.FRONTEND_URL ?? "https://agenciesos.com"}/dashboard"
+                    <a href="${dashUrl}"
                        style="display:inline-block;background:linear-gradient(135deg,#a855f7,#6366f1);color:#ffffff;text-decoration:none;font-size:16px;font-weight:600;padding:14px 36px;border-radius:10px;letter-spacing:0.2px;">
-                      Ir a mi dashboard →
+                      Ir a mi panel
                     </a>
                   </td>
                 </tr>
