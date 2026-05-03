@@ -82,10 +82,6 @@ export async function register(req: Request, res: Response): Promise<void> {
       success: true,
       data: { token, user: UserStore.toPublic(user) },
     })
-
-    sendWelcomeEmail(user.email, user.name).catch((err: unknown) => {
-      console.error("[register] Fallo al enviar email de bienvenida:", err)
-    })
   } catch (err) {
     console.error("[register] Error inesperado:", err)
     res.status(500).json({ success: false, error: "Error al crear la cuenta. Por favor inténtalo de nuevo." })
@@ -135,6 +131,14 @@ export async function markOnboardingDone(req: Request, res: Response): Promise<v
     const { agencyName, clientType, primaryGoal } = req.body as {
       agencyName?: string; clientType?: string; primaryGoal?: string
     }
+
+    const existing = await UserStore.findById(req.user!.userId)
+    if (!existing) {
+      res.status(404).json({ success: false, error: "Usuario no encontrado." })
+      return
+    }
+    const isFirstTime = !existing.onboardingDone
+
     const settings: Record<string, string> = {}
     if (agencyName?.trim()) settings.agencyName = agencyName.trim()
     if (clientType)         settings.clientType = clientType
@@ -145,6 +149,13 @@ export async function markOnboardingDone(req: Request, res: Response): Promise<v
       ...(Object.keys(settings).length ? { agencySettings: settings } : {}),
     })
     res.json({ success: true, data: { onboardingDone: true } })
+
+    if (isFirstTime) {
+      const displayName = agencyName?.trim() || existing.name
+      sendWelcomeEmail(existing.email, displayName).catch((err: unknown) => {
+        console.error("[markOnboardingDone] Fallo al enviar email de bienvenida:", err)
+      })
+    }
   } catch {
     res.status(500).json({ success: false, error: "Error al actualizar el onboarding." })
   }
