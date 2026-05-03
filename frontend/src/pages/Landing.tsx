@@ -953,8 +953,8 @@ export default function Landing() {
       <SocialProof />
       <HowItWorks />
       <Benefits />
-      <Demo />
       <Pricing />
+      <Demo />
       <Testimonials />
       <FinalCta />
       <FAQ />
