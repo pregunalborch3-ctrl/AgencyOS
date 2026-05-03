@@ -21,126 +21,230 @@ export async function sendWelcomeEmail(to: string, rawName: string): Promise<voi
     return
   }
 
+  const year = new Date().getFullYear()
+
   const { data, error } = await resend.emails.send({
     from:    FROM,
     to:      [to],
     replyTo: "agenciesosapp@gmail.com",
-    subject: "Tu cuenta de Agenciesos",
+    subject: "Tu agencia acaba de subir de nivel ⚡",
     headers: {
-      "X-Priority":      "1",
+      "X-Priority":       "1",
       "List-Unsubscribe": "<mailto:agenciesosapp@gmail.com?subject=unsubscribe>",
     },
 
-    // ── Texto plano (mejora deliverability y clientes sin HTML) ──────────────
+    // ── Texto plano ───────────────────────────────────────────────────────────
     text: [
-      `Hola, ${rawName}:`,
+      `Hola, ${rawName},`,
       "",
-      "Tu cuenta en Agenciesos ya está activa.",
+      "Bienvenido a Agenciesos",
+      "La IA que trabaja para tu agencia, 24/7",
       "",
-      "Lo que puedes hacer desde ahora:",
+      "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
       "",
-      "- Genera campañas de marketing completas con IA",
-      "- Analiza tus resultados de Meta Ads y obtén recomendaciones concretas",
-      "- Crea roadmaps de escalado para hacer crecer tu agencia",
+      "Empieza ahora mismo:",
       "",
-      `Accede a tu panel: ${dashUrl}`,
+      "⚡ Genera tu primera campaña con IA",
+      "   Copy, hooks y guiones listos en menos de 2 minutos.",
       "",
-      "---",
+      "📊 Analiza tu mercado y competencia",
+      "   Análisis detallado de tu sector, oportunidades y posicionamiento.",
+      "",
+      "📅 Crea tu calendario de contenido",
+      "   Planifica semanas de publicaciones en minutos.",
+      "",
+      "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+      "",
+      `Genera tu primera campaña gratis: ${dashUrl}`,
+      "",
+      "Tu primera campaña es completamente gratis. Sin tarjeta de crédito.",
+      "",
+      "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+      "",
+      `© ${year} Agenciesos · agenciesosapp@gmail.com`,
+      "",
       "Recibiste este email porque creaste una cuenta en Agenciesos.",
       "Si no fuiste tú, puedes ignorar este mensaje.",
-      "",
-      `© ${new Date().getFullYear()} Agenciesos · agenciesosapp@gmail.com`,
     ].join("\n"),
 
-    // ── HTML ─────────────────────────────────────────────────────────────────
+    // ── HTML ──────────────────────────────────────────────────────────────────
     html: `
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tu cuenta de Agenciesos</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Tu agencia acaba de subir de nivel</title>
 </head>
-<body style="margin:0;padding:0;background-color:#0a0a0a;font-family:'Segoe UI',Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0a0a0a;padding:40px 20px;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#111111;border-radius:16px;border:1px solid #1f1f1f;overflow:hidden;max-width:600px;width:100%;">
+<!--[if !mso]><!-->
+<body style="margin:0;padding:0;background-color:#0f0f0f;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+<!--<![endif]-->
 
-          <!-- Header -->
-          <tr>
-            <td style="padding:40px 40px 32px;text-align:center;border-bottom:1px solid #1f1f1f;">
-              <div style="display:inline-block;background:linear-gradient(135deg,#a855f7,#6366f1);border-radius:12px;padding:12px 24px;">
-                <span style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.5px;">Agenciesos</span>
-              </div>
-            </td>
-          </tr>
+<!-- Wrapper -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"
+       style="background-color:#0f0f0f;min-width:320px;">
+  <tr>
+    <td align="center" style="padding:48px 20px;">
 
-          <!-- Body -->
-          <tr>
-            <td style="padding:40px 40px 32px;">
-              <h1 style="margin:0 0 16px;color:#ffffff;font-size:28px;font-weight:700;line-height:1.2;">
-                Hola, ${name}
-              </h1>
-              <p style="margin:0 0 24px;color:#a1a1aa;font-size:16px;line-height:1.6;">
-                Tu cuenta en <strong style="color:#ffffff;">Agenciesos</strong> ya está activa. A continuación tienes acceso a las herramientas que necesitas para hacer crecer tu agencia.
-              </p>
+      <!-- Content column: 600px max -->
+      <table width="600" cellpadding="0" cellspacing="0" border="0" role="presentation"
+             style="max-width:600px;width:100%;">
 
-              <!-- Feature list -->
-              <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:32px;">
-                <tr>
-                  <td style="padding:12px 16px;background:#1a1a1a;border-radius:8px;display:block;">
-                    <span style="color:#a855f7;font-size:18px;margin-right:10px;">⚡</span>
-                    <span style="color:#e4e4e7;font-size:14px;">Genera campañas de marketing completas con IA</span>
-                  </td>
-                </tr>
-                <tr><td style="height:8px;"></td></tr>
-                <tr>
-                  <td style="padding:12px 16px;background:#1a1a1a;border-radius:8px;">
-                    <span style="color:#a855f7;font-size:18px;margin-right:10px;">📊</span>
-                    <span style="color:#e4e4e7;font-size:14px;">Análisis de Meta Ads con recomendaciones concretas</span>
-                  </td>
-                </tr>
-                <tr><td style="height:8px;"></td></tr>
-                <tr>
-                  <td style="padding:12px 16px;background:#1a1a1a;border-radius:8px;">
-                    <span style="color:#a855f7;font-size:18px;margin-right:10px;">📈</span>
-                    <span style="color:#e4e4e7;font-size:14px;">Roadmaps de escalado personalizados para tu negocio</span>
-                  </td>
-                </tr>
-              </table>
+        <!-- ── Logo row ─────────────────────────────────────────────────── -->
+        <tr>
+          <td style="padding:0 0 32px 0;">
+            <span style="color:#7c3aed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:20px;font-weight:700;letter-spacing:-0.5px;">Agenciesos</span>
+          </td>
+        </tr>
 
-              <!-- CTA -->
-              <table cellpadding="0" cellspacing="0" width="100%">
-                <tr>
-                  <td align="center">
-                    <a href="${dashUrl}"
-                       style="display:inline-block;background:linear-gradient(135deg,#a855f7,#6366f1);color:#ffffff;text-decoration:none;font-size:16px;font-weight:600;padding:14px 36px;border-radius:10px;letter-spacing:0.2px;">
-                      Ir a mi panel
-                    </a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+        <!-- ── Main card ─────────────────────────────────────────────────── -->
+        <tr>
+          <td style="background-color:#161616;border-radius:16px;border:1px solid #222222;overflow:hidden;">
 
-          <!-- Footer -->
-          <tr>
-            <td style="padding:24px 40px;border-top:1px solid #1f1f1f;text-align:center;">
-              <p style="margin:0;color:#52525b;font-size:13px;line-height:1.5;">
-                Recibiste este email porque creaste una cuenta en Agenciesos.<br/>
-                Si no fuiste tú, puedes ignorar este mensaje.
-              </p>
-              <p style="margin:12px 0 0;color:#3f3f46;font-size:12px;">
-                © ${new Date().getFullYear()} Agenciesos · agenciesosapp@gmail.com
-              </p>
-            </td>
-          </tr>
+            <!-- Purple top bar (gradient with solid fallback for Outlook) -->
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation">
+              <tr>
+                <td height="4" bgcolor="#7c3aed"
+                    style="background-color:#7c3aed;background-image:linear-gradient(90deg,#7c3aed 0%,#6366f1 100%);font-size:0;line-height:0;">&nbsp;</td>
+              </tr>
+            </table>
 
-        </table>
-      </td>
-    </tr>
-  </table>
+            <!-- Card body -->
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation">
+              <tr>
+                <td style="padding:48px 48px 44px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+
+                  <!-- Greeting -->
+                  <p style="margin:0 0 28px;color:#a1a1aa;font-size:16px;line-height:1.6;">
+                    Hola, ${name},
+                  </p>
+
+                  <!-- Main headline -->
+                  <h1 style="margin:0 0 10px;color:#ffffff;font-size:34px;font-weight:800;line-height:1.15;letter-spacing:-1px;">
+                    Bienvenido a Agenciesos
+                  </h1>
+
+                  <!-- Subtitle -->
+                  <p style="margin:0 0 40px;color:#71717a;font-size:18px;line-height:1.5;font-weight:400;">
+                    La IA que trabaja para tu agencia, 24/7
+                  </p>
+
+                  <!-- Divider -->
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-bottom:32px;">
+                    <tr><td height="1" bgcolor="#2a2a2a" style="background-color:#2a2a2a;font-size:0;line-height:0;">&nbsp;</td></tr>
+                  </table>
+
+                  <!-- Section label -->
+                  <p style="margin:0 0 20px;color:#52525b;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;">
+                    Empieza ahora mismo
+                  </p>
+
+                  <!-- Bullet 1 -->
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-bottom:16px;">
+                    <tr>
+                      <td valign="top" width="40">
+                        <table cellpadding="0" cellspacing="0" border="0" role="presentation">
+                          <tr>
+                            <td width="32" height="32" bgcolor="#1c0f40"
+                                style="background-color:#1c0f40;border-radius:8px;border:1px solid #3b1f7a;text-align:center;vertical-align:middle;font-size:15px;line-height:32px;">
+                              ⚡
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                      <td valign="top" style="padding-left:14px;">
+                        <p style="margin:0 0 3px;color:#f4f4f5;font-size:15px;font-weight:600;line-height:1.4;">Genera tu primera campaña con IA</p>
+                        <p style="margin:0;color:#71717a;font-size:13px;line-height:1.6;">Copy, hooks y guiones listos en menos de 2 minutos. Sin experiencia previa.</p>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Bullet 2 -->
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-bottom:16px;">
+                    <tr>
+                      <td valign="top" width="40">
+                        <table cellpadding="0" cellspacing="0" border="0" role="presentation">
+                          <tr>
+                            <td width="32" height="32" bgcolor="#1c0f40"
+                                style="background-color:#1c0f40;border-radius:8px;border:1px solid #3b1f7a;text-align:center;vertical-align:middle;font-size:15px;line-height:32px;">
+                              📊
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                      <td valign="top" style="padding-left:14px;">
+                        <p style="margin:0 0 3px;color:#f4f4f5;font-size:15px;font-weight:600;line-height:1.4;">Analiza tu mercado y competencia</p>
+                        <p style="margin:0;color:#71717a;font-size:13px;line-height:1.6;">Análisis detallado de tu sector, oportunidades y estrategia de posicionamiento.</p>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Bullet 3 -->
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-bottom:44px;">
+                    <tr>
+                      <td valign="top" width="40">
+                        <table cellpadding="0" cellspacing="0" border="0" role="presentation">
+                          <tr>
+                            <td width="32" height="32" bgcolor="#1c0f40"
+                                style="background-color:#1c0f40;border-radius:8px;border:1px solid #3b1f7a;text-align:center;vertical-align:middle;font-size:15px;line-height:32px;">
+                              📅
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                      <td valign="top" style="padding-left:14px;">
+                        <p style="margin:0 0 3px;color:#f4f4f5;font-size:15px;font-weight:600;line-height:1.4;">Crea tu calendario de contenido</p>
+                        <p style="margin:0;color:#71717a;font-size:13px;line-height:1.6;">Planifica semanas de publicaciones en minutos. Nunca más te quedes sin ideas.</p>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- CTA button (table method = max Outlook compat) -->
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-bottom:16px;">
+                    <tr>
+                      <td align="center" bgcolor="#7c3aed"
+                          style="background-color:#7c3aed;background-image:linear-gradient(135deg,#7c3aed 0%,#6366f1 100%);border-radius:10px;">
+                        <a href="${dashUrl}"
+                           style="display:block;padding:17px 32px;color:#ffffff;text-decoration:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;font-weight:700;letter-spacing:0.1px;text-align:center;">
+                          Genera tu primera campaña gratis &rarr;
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Urgency line -->
+                  <p style="margin:0;text-align:center;color:#52525b;font-size:13px;line-height:1.5;">
+                    Tu primera campaña es completamente gratis. Sin tarjeta de crédito.
+                  </p>
+
+                </td>
+              </tr>
+            </table>
+
+          </td>
+        </tr>
+
+        <!-- ── Footer ──────────────────────────────────────────────────────── -->
+        <tr>
+          <td style="padding:36px 0 0;text-align:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+            <p style="margin:0 0 8px;color:#3f3f46;font-size:13px;line-height:1.6;">
+              &copy; ${year} Agenciesos &nbsp;&middot;&nbsp;
+              <a href="mailto:agenciesosapp@gmail.com"
+                 style="color:#52525b;text-decoration:underline;">agenciesosapp@gmail.com</a>
+            </p>
+            <p style="margin:0;color:#27272a;font-size:12px;line-height:1.6;">
+              Recibiste este email porque creaste una cuenta en Agenciesos.<br />
+              Si no fuiste tú, puedes ignorar este mensaje con total seguridad.
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+
 </body>
 </html>
     `.trim(),
