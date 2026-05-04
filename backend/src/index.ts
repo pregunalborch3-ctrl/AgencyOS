@@ -94,6 +94,25 @@ app.use('/api/apikeys',      apiKeyRoutes)
 app.use('/api/meta',        metaAnalysisRoutes)
 app.use('/api/capi',        capiRoutes)
 
+// Meta CAPI Gateway verification — Meta llama a esta URL sin prefijo /api
+app.get('/capig/autoconfig', (req, res) => {
+  const host    = req.headers['x-forwarded-host'] ?? req.headers.host ?? ''
+  const proto   = req.headers['x-forwarded-proto'] ?? (req.secure ? 'https' : 'http')
+  const baseUrl = `${proto}://${host}`
+  res.json({
+    status:  'success',
+    version: '1.0.0',
+    endpoint: `${baseUrl}/api/capi`,
+    pixel_settings: [
+      {
+        pixel_id:    '1312549040971863',
+        endpoint:    `${baseUrl}/api/capi`,
+        access_mode: 'server_side',
+      },
+    ],
+  })
+})
+
 // Health
 app.get('/api/health', (_req, res) => {
   res.json({ success: true, message: 'AgencyOS API running', timestamp: new Date().toISOString() })
