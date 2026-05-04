@@ -28,6 +28,7 @@ import frameworkRoutes    from './routes/frameworks'
 import settingsRoutes     from './routes/settings'
 import apiKeyRoutes       from './routes/apiKeys'
 import metaAnalysisRoutes from './routes/metaAnalysis'
+import capiRoutes         from './routes/capi'
 
 const app  = express()
 const PORT = process.env.PORT ?? 3001
@@ -91,6 +92,7 @@ app.use('/api/frameworks',   frameworkRoutes)
 app.use('/api/settings',     settingsRoutes)
 app.use('/api/apikeys',      apiKeyRoutes)
 app.use('/api/meta',        metaAnalysisRoutes)
+app.use('/api/capi',        capiRoutes)
 
 // Health
 app.get('/api/health', (_req, res) => {

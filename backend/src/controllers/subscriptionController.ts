@@ -6,6 +6,7 @@ import {
   sendCancellationEmail,
   sendPaymentFailedEmail,
 } from '../services/emailService'
+import { sendPurchase } from '../services/metaCAPIService'
 
 const FRONTEND = process.env.FRONTEND_URL ?? 'http://localhost:5173'
 
@@ -220,6 +221,15 @@ export async function handleWebhook(req: Request, res: Response): Promise<void> 
             planLabel(pId), '49,99€',
             formatDate(periodEndISO),
           ).catch(e => console.error('[email] confirmación:', e))
+
+          const unitAmount = item?.price?.unit_amount
+          const value    = unitAmount != null ? unitAmount / 100 : 49.99
+          const currency = (item?.price?.currency ?? 'eur').toUpperCase()
+          sendPurchase(
+            { email: user.email, name: user.name },
+            value,
+            currency,
+          ).catch(e => console.error('[capi] Purchase:', e))
         }
         if (isGone) {
           sendCancellationEmail(

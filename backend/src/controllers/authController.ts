@@ -7,6 +7,7 @@ import { UserStore, User, prisma } from "../models/User"
 import type { JwtPayload } from "../middleware/authMiddleware"
 import { logFailedLogin } from "../middleware/security"
 import { sendWelcomeEmail, sendPasswordResetEmail } from "../services/emailService"
+import { sendCompleteRegistration } from "../services/metaCAPIService"
 
 const BCRYPT_ROUNDS = 12
 
@@ -82,6 +83,13 @@ export async function register(req: Request, res: Response): Promise<void> {
       success: true,
       data: { token, user: UserStore.toPublic(user) },
     })
+
+    sendCompleteRegistration({
+      email:     user.email,
+      name:      user.name,
+      ip:        req.ip,
+      userAgent: req.headers['user-agent'],
+    }).catch((err: unknown) => console.error("[capi] CompleteRegistration:", err))
   } catch (err) {
     console.error("[register] Error inesperado:", err)
     res.status(500).json({ success: false, error: "Error al crear la cuenta. Por favor inténtalo de nuevo." })
