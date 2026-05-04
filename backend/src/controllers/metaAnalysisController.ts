@@ -90,19 +90,20 @@ function parseFile(buffer: Buffer, mimetype: string, originalname: string): Arra
 
 // ─── Normalize column names from Meta Ads exports ────────────────────────────
 const COL_ALIASES: Record<string, string[]> = {
-  campaign:    ['Campaign name', 'Nombre de la campaña', 'Campaña', 'Campaign'],
-  adset:       ['Ad Set Name', 'Nombre del conjunto de anuncios', 'Conjunto de anuncios'],
-  ad:          ['Ad Name', 'Nombre del anuncio', 'Anuncio'],
-  spend:       ['Amount spent (EUR)', 'Amount spent (USD)', 'Importe gastado (EUR)', 'Importe gastado', 'Amount Spent', 'Spend', 'Gasto'],
+  campaign:    ['Campaign name', 'Nombre de la campaña', 'Campaña', 'Campaign', 'Nombre de campaña'],
+  adset:       ['Ad Set Name', 'Nombre del conjunto de anuncios', 'Conjunto de anuncios', 'Ad set name'],
+  ad:          ['Ad Name', 'Nombre del anuncio', 'Anuncio', 'Ad name', 'Nombre del Ad'],
+  spend:       ['Amount spent (EUR)', 'Amount spent (USD)', 'Importe gastado (EUR)', 'Importe gastado (USD)',
+                'Importe gastado', 'Amount Spent', 'Spend', 'Gasto', 'Coste', 'Cost'],
   impressions: ['Impressions', 'Impresiones'],
   reach:       ['Reach', 'Alcance'],
-  clicks:      ['Clicks (all)', 'Clics (todos)', 'Link clicks', 'Clics en el enlace', 'Clicks'],
+  clicks:      ['Clicks (all)', 'Clics (todos)', 'Link clicks', 'Clics en el enlace', 'Clicks', 'Clics'],
   ctr:         ['CTR (all)', 'CTR (todos)', 'CTR (link click-through rate)', 'CTR'],
   cpc:         ['CPC (all)', 'CPC (todos)', 'CPC (cost per link click)', 'CPC'],
   cpm:         ['CPM (cost per 1,000 impressions)', 'CPM (coste por 1.000 impresiones)', 'CPM'],
   roas:        ['Purchase ROAS (return on ad spend)', 'ROAS de compras', 'ROAS'],
   results:     ['Results', 'Resultados'],
-  costPerResult: ['Cost per result', 'Coste por resultado'],
+  costPerResult: ['Cost per result', 'Coste por resultado', 'Coste por resultado obtenido'],
   frequency:   ['Frequency', 'Frecuencia'],
   purchases:   ['Purchases', 'Compras', 'Purchase'],
 }
@@ -145,7 +146,7 @@ function buildDataSummary(rows: Array<Record<string, string>>): string {
   }> = {}
 
   for (const r of normalized) {
-    const name = r['campaign'] || 'Sin nombre'
+    const name = r['campaign'] || r['adset'] || r['ad'] || 'Sin nombre'
     if (!campaigns[name]) {
       campaigns[name] = { spend: 0, impressions: 0, clicks: 0, purchases: 0, roas: [], ctr: [], cpc: [], cpm: [], rows: 0 }
     }
@@ -214,8 +215,20 @@ export async function analyzeMetaAds(req: Request, res: Response): Promise<void>
       return
     }
 
+    const resolved0 = resolveRow(rows[0])
+    const levelLabel = resolved0['campaign'] ? 'Campaña'
+      : resolved0['adset'] ? 'Conjunto de anuncios'
+      : resolved0['ad']    ? 'Anuncio'
+      : 'Elemento'
+
     const dataSummary = buildDataSummary(rows)
     const columnsList = Object.keys(rows[0]).slice(0, 30).join(', ')
+
+    console.log('[metaAnalysis] CSV columns received:', Object.keys(rows[0]))
+    console.log('[metaAnalysis] row[0] raw:', rows[0])
+    console.log('[metaAnalysis] resolved row[0]:', resolved0)
+    console.log('[metaAnalysis] level:', levelLabel)
+    console.log('[metaAnalysis] dataSummary:\n', dataSummary)
 
     const client = getClient()
     const msg = await client.messages.create({
@@ -226,6 +239,7 @@ export async function analyzeMetaAds(req: Request, res: Response): Promise<void>
         role: 'user',
         content: `Analiza estos datos reales de Meta Ads Manager y devuelve un análisis completo en JSON.
 
+NIVEL DE DATOS: ${levelLabel}
 COLUMNAS DETECTADAS: ${columnsList}
 
 DATOS POR CAMPAÑA:
