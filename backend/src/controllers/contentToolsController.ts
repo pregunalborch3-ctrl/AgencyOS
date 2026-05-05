@@ -214,6 +214,12 @@ ${metrics}
 
 ━━━ AUDITORÍA ━━━
 
+## RESUMEN EJECUTIVO
+
+3-4 líneas directas. Incluye: (1) estado global de la cuenta en cifras concretas del archivo, (2) el problema más crítico con su dato exacto y cuánto se desvía del benchmark, (3) el coste estimado de no actuar. Sin tecnicismos. Pensado para leer en 10 segundos.
+
+---
+
 ## DIAGNÓSTICO DE MÉTRICAS CLAVE
 
 Para cada métrica problemática o destacable presente en los datos:

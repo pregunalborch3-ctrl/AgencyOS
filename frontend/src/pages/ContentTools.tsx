@@ -1,6 +1,6 @@
 import { useState, useRef, type DragEvent } from 'react'
 import {
-  Wand2, ChevronDown, Loader2, Copy, CheckCheck, RotateCcw,
+  Wand2, ChevronDown, ChevronUp, Loader2, Copy, CheckCheck, RotateCcw,
   Upload, FileSpreadsheet, X,
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
@@ -112,6 +112,7 @@ function ToolCard({ tool, token }: { tool: ToolDef; token: string | null }) {
   const [reachFile,     setReachFile]     = useState<File | null>(null)
   const [reachParsing,  setReachParsing]  = useState(false)
   const [reachDragging, setReachDragging] = useState(false)
+  const [showFull,      setShowFull]      = useState(false)
   const reachInputRef = useRef<HTMLInputElement>(null)
 
   const isReachDiagnosis = tool.id === 'reach-diagnosis'
@@ -125,6 +126,7 @@ function ToolCard({ tool, token }: { tool: ToolDef; token: string | null }) {
     setResult(null)
     setError(null)
     setReachFile(null)
+    setShowFull(false)
   }
 
   async function handleReachFile(f: File) {
@@ -335,30 +337,62 @@ function ToolCard({ tool, token }: { tool: ToolDef; token: string | null }) {
             </div>
           )}
 
-          {result && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Resultado</span>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={reset}
-                    className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors px-2 py-1 rounded-lg hover:bg-white/5"
-                  >
-                    <RotateCcw size={11} /> Nueva consulta
-                  </button>
-                  <button
-                    onClick={copy}
-                    className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors px-2 py-1 rounded-lg hover:bg-white/5"
-                  >
-                    {copied ? <><CheckCheck size={11} className="text-emerald-400" /> Copiado</> : <><Copy size={11} /> Copiar</>}
-                  </button>
+          {result && (() => {
+            const sepIdx      = result.indexOf('\n---')
+            const summaryText = sepIdx !== -1 ? result.slice(0, sepIdx).trim() : result
+            const fullText    = sepIdx !== -1 ? result.slice(sepIdx + 4).trim() : ''
+            const hasFull     = isReachDiagnosis && fullText.length > 0
+
+            return (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Resultado</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={reset}
+                      className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors px-2 py-1 rounded-lg hover:bg-white/5"
+                    >
+                      <RotateCcw size={11} /> Nueva consulta
+                    </button>
+                    <button
+                      onClick={copy}
+                      className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors px-2 py-1 rounded-lg hover:bg-white/5"
+                    >
+                      {copied ? <><CheckCheck size={11} className="text-emerald-400" /> Copiado</> : <><Copy size={11} /> Copiar</>}
+                    </button>
+                  </div>
                 </div>
+
+                <div className="rounded-xl bg-zinc-800/60 border border-white/6 px-4 py-4 max-h-[520px] overflow-y-auto">
+                  {isReachDiagnosis ? (
+                    <>
+                      <ResultBlock text={summaryText} />
+                      {hasFull && showFull && (
+                        <>
+                          <hr className="border-white/8 my-4" />
+                          <ResultBlock text={fullText} />
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <ResultBlock text={result} />
+                  )}
+                </div>
+
+                {hasFull && (
+                  <button
+                    onClick={() => setShowFull(v => !v)}
+                    className="w-full flex items-center justify-center gap-2 py-2 rounded-xl border border-white/10 text-xs text-zinc-400 hover:text-white hover:border-indigo-500/40 transition-all"
+                  >
+                    {showFull
+                      ? <><ChevronUp size={13} /> Ocultar análisis completo</>
+                      : <><ChevronDown size={13} /> Ver análisis completo</>
+                    }
+                  </button>
+                )}
               </div>
-              <div className="rounded-xl bg-zinc-800/60 border border-white/6 px-4 py-4 max-h-[520px] overflow-y-auto">
-                <ResultBlock text={result} />
-              </div>
-            </div>
-          )}
+            )
+          })()}
         </div>
       )}
     </div>
