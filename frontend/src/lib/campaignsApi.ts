@@ -36,3 +36,20 @@ export function getCampaigns(token: string) {
 export function deleteCampaignById(token: string, id: string) {
   return authFetch<{ id: string }>(`/campaigns/${id}`, token, { method: 'DELETE' })
 }
+
+export function generateCampaignCalendar(
+  token: string,
+  payload: {
+    product: string
+    niche: string
+    objective: string
+    hooks: unknown[]
+    shortCopies: unknown[]
+    campaignStructure: unknown
+  },
+) {
+  return authFetch<{ count: number }>('/campaigns/generate-calendar', token, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}

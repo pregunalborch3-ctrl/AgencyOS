@@ -1,5 +1,8 @@
-import { useState } from 'react'
-import { Wand2, ChevronDown, Loader2, Copy, CheckCheck, RotateCcw } from 'lucide-react'
+import { useState, useRef, type DragEvent } from 'react'
+import {
+  Wand2, ChevronDown, Loader2, Copy, CheckCheck, RotateCcw,
+  Upload, FileSpreadsheet, X,
+} from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { InfoTooltip } from '../components/InfoTooltip'
 
@@ -67,11 +70,10 @@ const TOOLS: ToolDef[] = [
     id:          'reach-diagnosis',
     emoji:       '📊',
     title:       'Diagnóstico de alcance',
-    description: 'Análisis de tus métricas reales + plan de acción de 2 semanas.',
+    description: 'Análisis forense de tus métricas reales + protocolo de 14 días para recuperar alcance.',
     fields: [
-      { key: 'metrics', label: 'Métricas de tus últimos posts',
-        placeholder: 'Pega aquí tus datos: alcance, impresiones, guardados, compartidos, comentarios…\nEj:\nPost 1 (Reel): alcance 1.200, impresiones 1.800, guardados 45, compartidos 12\nPost 2 (Carrusel): alcance 850, impresiones 1.100, guardados 23…',
-        type: 'textarea' },
+      { key: 'metrics', label: 'Datos exportados', type: 'textarea',
+        placeholder: 'Sube un archivo o pega tus métricas aquí…' },
       { key: 'format', label: 'Formato principal analizado', type: 'select',
         options: ['Reel', 'Carrusel', 'Foto', 'Story', 'Directo', 'Mixto'] },
     ],
@@ -83,7 +85,7 @@ function initInputs(tool: ToolDef): Record<string, string> {
   return Object.fromEntries(tool.fields.map(f => [f.key, '']))
 }
 
-// ─── Result display (renders markdown-ish text) ───────────────────────────────
+// ─── Result display ───────────────────────────────────────────────────────────
 function ResultBlock({ text }: { text: string }) {
   const lines = text.split('\n')
   return (
@@ -103,12 +105,18 @@ function ResultBlock({ text }: { text: string }) {
 
 // ─── Single tool card ─────────────────────────────────────────────────────────
 function ToolCard({ tool, token }: { tool: ToolDef; token: string | null }) {
-  const [open,    setOpen]    = useState(false)
-  const [inputs,  setInputs]  = useState<Record<string, string>>(initInputs(tool))
-  const [loading, setLoading] = useState(false)
-  const [result,  setResult]  = useState<string | null>(null)
-  const [error,   setError]   = useState<string | null>(null)
-  const [copied,  setCopied]  = useState(false)
+  const [open,          setOpen]          = useState(false)
+  const [inputs,        setInputs]        = useState<Record<string, string>>(initInputs(tool))
+  const [loading,       setLoading]       = useState(false)
+  const [result,        setResult]        = useState<string | null>(null)
+  const [error,         setError]         = useState<string | null>(null)
+  const [copied,        setCopied]        = useState(false)
+  const [reachFile,     setReachFile]     = useState<File | null>(null)
+  const [reachParsing,  setReachParsing]  = useState(false)
+  const [reachDragging, setReachDragging] = useState(false)
+  const reachInputRef = useRef<HTMLInputElement>(null)
+
+  const isReachDiagnosis = tool.id === 'reach-diagnosis'
 
   function setField(key: string, value: string) {
     setInputs(prev => ({ ...prev, [key]: value }))
@@ -118,6 +126,42 @@ function ToolCard({ tool, token }: { tool: ToolDef; token: string | null }) {
     setInputs(initInputs(tool))
     setResult(null)
     setError(null)
+    setReachFile(null)
+  }
+
+  async function handleReachFile(f: File) {
+    setReachFile(f)
+    setReachParsing(true)
+    setField('metrics', '')
+    setError(null)
+    try {
+      const form = new FormData()
+      form.append('file', f)
+      const res  = await fetch('/api/content-tools/parse-file', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token ?? ''}` },
+        body: form,
+      })
+      const data = await res.json()
+      if (!data.success) {
+        setReachFile(null)
+        setError(data.error ?? 'Error al leer el archivo.')
+      } else {
+        setField('metrics', data.data.text)
+      }
+    } catch {
+      setReachFile(null)
+      setError('Error al leer el archivo. Comprueba el formato.')
+    } finally {
+      setReachParsing(false)
+    }
+  }
+
+  function onReachDrop(e: DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    setReachDragging(false)
+    const f = e.dataTransfer.files?.[0]
+    if (f) handleReachFile(f)
   }
 
   async function generate() {
@@ -126,7 +170,7 @@ function ToolCard({ tool, token }: { tool: ToolDef; token: string | null }) {
     setError(null)
     setResult(null)
     try {
-      const res = await fetch('/api/content-tools/generate', {
+      const res  = await fetch('/api/content-tools/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ tool: tool.id, inputs }),
@@ -149,7 +193,7 @@ function ToolCard({ tool, token }: { tool: ToolDef; token: string | null }) {
     })
   }
 
-  const canGenerate = tool.fields.every(f => inputs[f.key]?.trim()) && !loading
+  const canGenerate = tool.fields.every(f => inputs[f.key]?.trim()) && !loading && !reachParsing
 
   return (
     <div className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
@@ -174,46 +218,108 @@ function ToolCard({ tool, token }: { tool: ToolDef; token: string | null }) {
       {/* Expanded body */}
       {open && (
         <div className="px-5 pb-5 space-y-5 border-t border-white/5 pt-4">
-
-          {/* Fields */}
           <div className="space-y-3">
             {tool.fields.map(field => (
               <div key={field.key}>
-                <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
-                  {field.label}
-                </label>
-                {field.type === 'select' ? (
-                  <select
-                    value={inputs[field.key]}
-                    onChange={e => setField(field.key, e.target.value)}
-                    className="w-full bg-zinc-800 border border-white/8 rounded-xl px-3 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-indigo-500/60 transition-colors"
-                  >
-                    <option value="">Selecciona una opción…</option>
-                    {field.options?.map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                ) : field.type === 'textarea' ? (
-                  <textarea
-                    rows={5}
-                    value={inputs[field.key]}
-                    onChange={e => setField(field.key, e.target.value)}
-                    placeholder={field.placeholder}
-                    className="w-full bg-zinc-800 border border-white/8 rounded-xl px-3 py-2.5 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-indigo-500/60 transition-colors resize-none"
-                  />
+                {/* reach-diagnosis metrics: export guide + file upload */}
+                {isReachDiagnosis && field.key === 'metrics' ? (
+                  <div className="space-y-3">
+                    <div className="rounded-xl border border-white/5 bg-zinc-800/40 p-4">
+                      <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2.5">Cómo exportar desde Meta Ads Manager</p>
+                      <ol className="space-y-1.5 text-xs text-zinc-400">
+                        <li className="flex gap-2"><span className="text-indigo-400 font-bold flex-shrink-0">1.</span>Abre Meta Ads Manager → selecciona tus anuncios o campañas</li>
+                        <li className="flex gap-2"><span className="text-indigo-400 font-bold flex-shrink-0">2.</span>Haz clic en <strong className="text-zinc-300">Exportar</strong> → <strong className="text-zinc-300">Exportar datos de tabla</strong> → CSV o Excel</li>
+                        <li className="flex gap-2"><span className="text-indigo-400 font-bold flex-shrink-0">3.</span>También funciona con exports de Instagram Insights o TikTok Analytics</li>
+                        <li className="flex gap-2"><span className="text-indigo-400 font-bold flex-shrink-0">4.</span>Sube el archivo aquí — la IA analiza todas las métricas automáticamente</li>
+                      </ol>
+                    </div>
+
+                    <div
+                      onDragOver={e => { e.preventDefault(); setReachDragging(true) }}
+                      onDragLeave={() => setReachDragging(false)}
+                      onDrop={onReachDrop}
+                      onClick={() => !reachFile && !reachParsing && reachInputRef.current?.click()}
+                      className={`rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 py-8 px-4 transition-all ${
+                        reachDragging
+                          ? 'border-indigo-400 bg-indigo-500/8'
+                          : reachFile
+                          ? 'border-emerald-500/40 bg-emerald-500/5'
+                          : 'border-white/10 bg-zinc-800/30 hover:border-indigo-500/40 cursor-pointer'
+                      }`}
+                    >
+                      <input
+                        ref={reachInputRef}
+                        type="file"
+                        accept=".csv,.xlsx,.xls"
+                        className="hidden"
+                        onChange={e => { const f = e.target.files?.[0]; if (f) handleReachFile(f) }}
+                      />
+                      {reachParsing ? (
+                        <>
+                          <Loader2 size={18} className="animate-spin text-indigo-400" />
+                          <p className="text-xs text-zinc-400">Leyendo archivo…</p>
+                        </>
+                      ) : reachFile ? (
+                        <>
+                          <FileSpreadsheet size={20} className="text-emerald-400" />
+                          <p className="text-sm font-medium text-white text-center max-w-xs truncate">{reachFile.name}</p>
+                          <p className="text-xs text-emerald-500">Datos cargados · listo para analizar</p>
+                          <button
+                            onClick={e => { e.stopPropagation(); setReachFile(null); setField('metrics', '') }}
+                            className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors mt-1"
+                          >
+                            <X size={10} /> Cambiar archivo
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <Upload size={18} className="text-zinc-500" />
+                          <p className="text-xs text-zinc-400 text-center">
+                            Arrastra tu archivo aquí o <span className="text-indigo-400">selecciónalo</span>
+                          </p>
+                          <p className="text-xs text-zinc-600">CSV o Excel · Máx. 10 MB</p>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 ) : (
-                  <input
-                    type="text"
-                    value={inputs[field.key]}
-                    onChange={e => setField(field.key, e.target.value)}
-                    placeholder={field.placeholder}
-                    className="w-full bg-zinc-800 border border-white/8 rounded-xl px-3 py-2.5 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-indigo-500/60 transition-colors"
-                    onKeyDown={e => { if (e.key === 'Enter' && canGenerate) generate() }}
-                  />
+                  <>
+                    <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
+                      {field.label}
+                    </label>
+                    {field.type === 'select' ? (
+                      <select
+                        value={inputs[field.key]}
+                        onChange={e => setField(field.key, e.target.value)}
+                        className="w-full bg-zinc-800 border border-white/8 rounded-xl px-3 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-indigo-500/60 transition-colors"
+                      >
+                        <option value="">Selecciona una opción…</option>
+                        {field.options?.map(o => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    ) : field.type === 'textarea' ? (
+                      <textarea
+                        rows={5}
+                        value={inputs[field.key]}
+                        onChange={e => setField(field.key, e.target.value)}
+                        placeholder={field.placeholder}
+                        className="w-full bg-zinc-800 border border-white/8 rounded-xl px-3 py-2.5 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-indigo-500/60 transition-colors resize-none"
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        value={inputs[field.key]}
+                        onChange={e => setField(field.key, e.target.value)}
+                        placeholder={field.placeholder}
+                        className="w-full bg-zinc-800 border border-white/8 rounded-xl px-3 py-2.5 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-indigo-500/60 transition-colors"
+                        onKeyDown={e => { if (e.key === 'Enter' && canGenerate) generate() }}
+                      />
+                    )}
+                  </>
                 )}
               </div>
             ))}
           </div>
 
-          {/* Generate button */}
           <button
             onClick={generate}
             disabled={!canGenerate}
@@ -225,14 +331,12 @@ function ToolCard({ tool, token }: { tool: ToolDef; token: string | null }) {
             }
           </button>
 
-          {/* Error */}
           {error && (
             <div className="rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
               {error}
             </div>
           )}
 
-          {/* Result */}
           {result && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">

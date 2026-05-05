@@ -426,6 +426,95 @@ export async function generateCampaign(req: Request, res: Response): Promise<voi
   }
 }
 
+// ─── 30-day calendar generation ───────────────────────────────────────────────
+const CALENDAR_SYSTEM = `Eres un estratega experto en paid media y content marketing para ecommerce.
+Creas planes de 30 días que integran publicación orgánica, gestión de campañas pagadas y análisis de datos.
+Tu metodología por fases:
+- Días 1-7: Lanzamiento y captura de señales. Activa anuncios base, publica contenido de valor.
+- Días 8-14: Optimización. A/B test de creativos, ajuste de públicos basado en primeros datos reales.
+- Días 15-21: Escalado agresivo. Creativos ganadores x2 presupuesto, expansión lookalike 1-3%.
+- Días 22-30: Consolidación. Retargeting avanzado, lookalike 3-5%, preparar siguiente ciclo.
+Cada día tiene UNA acción concreta y accionable. Nunca días genéricos ni de "descanso".`
+
+function buildCalendarPrompt(p: {
+  product: string; niche: string; objective: string
+  hooks: Array<{ text: string; type: string }>
+  shortCopies: Array<{ hook: string; type: string; platform: string }>
+  campaignStructure: { funnel?: Array<{ stage: string; format: string }> }
+}): string {
+  const hooks  = (p.hooks ?? []).slice(0, 4).map(h => `[${h.type}] "${h.text}"`).join(' | ')
+  const copies = (p.shortCopies ?? []).slice(0, 3).map(c => `[${c.type}·${c.platform}] "${c.hook}"`).join(' | ')
+  const funnel = (p.campaignStructure?.funnel ?? []).map(f => `${f.stage}: ${f.format}`).join(' | ')
+  return `Genera el plan de acción de exactamente 30 días para:
+
+PRODUCTO: ${p.product}
+NICHO: ${p.niche}
+OBJETIVO: ${p.objective}
+HOOKS DISPONIBLES: ${hooks}
+COPIES TOP: ${copies}
+FUNNEL: ${funnel}
+
+Para cada día alterna entre:
+- "publicar" → formato (reel/carrusel/story/foto), plataforma y qué hook/copy concreto usar
+- "analizar" → métrica exacta y threshold que activa la siguiente acción
+- "optimizar" → cambio específico en anuncio con porcentaje o acción concreta
+- "test" → variable a testear + métrica de éxito
+- "presupuesto" → subir/bajar X% o pausar anuncio con condición específica
+
+Plataformas válidas: instagram, tiktok, facebook.
+
+Responde SOLO con JSON (sin markdown):
+{
+  "days": [
+    { "day": 1, "type": "publicar", "platform": "instagram", "title": "Lanzar Reel de presentación", "content": "Descripción de 2-3 frases con el hook específico del material, objetivo del día y métrica a vigilar las primeras 2h." },
+    ... 30 entradas total
+  ]
+}`
+}
+
+export async function generateCalendar(req: Request, res: Response): Promise<void> {
+  const userId = req.user!.userId
+  const { product, niche, objective, hooks, shortCopies, campaignStructure } = req.body as {
+    product: string; niche: string; objective: string
+    hooks: Array<{ text: string; type: string }>
+    shortCopies: Array<{ hook: string; type: string; platform: string }>
+    campaignStructure: { funnel?: Array<{ stage: string; format: string }> }
+  }
+
+  if (!product || !niche || !objective) {
+    res.status(400).json({ success: false, error: 'product, niche y objective son requeridos.' })
+    return
+  }
+
+  try {
+    const result = await claudeJSON<{
+      days: Array<{ day: number; type: string; platform: string; title: string; content: string }>
+    }>(CALENDAR_SYSTEM, buildCalendarPrompt({ product, niche, objective, hooks: hooks ?? [], shortCopies: shortCopies ?? [], campaignStructure: campaignStructure ?? {} }))
+
+    const today = new Date()
+    const validPlatforms = new Set(['instagram', 'tiktok', 'facebook', 'twitter', 'linkedin', 'youtube'])
+    const postsData = result.days.slice(0, 30).map(d => {
+      const date = new Date(today)
+      date.setDate(today.getDate() + d.day)
+      date.setHours(9, 0, 0, 0)
+      return {
+        userId,
+        title:    (d.title ?? `Día ${d.day}`).slice(0, 120),
+        date:     date.toISOString(),
+        platform: validPlatforms.has(d.platform) ? d.platform : 'instagram',
+        content:  d.content ?? '',
+        status:   'programado',
+      }
+    })
+
+    await prisma.calendarPost.createMany({ data: postsData })
+    res.json({ success: true, data: { count: postsData.length } })
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Error generando el calendario.'
+    res.status(500).json({ success: false, error: msg })
+  }
+}
+
 // ─── CRUD Campañas ────────────────────────────────────────────────────────────
 export async function saveCampaign(req: Request, res: Response): Promise<void> {
   try {

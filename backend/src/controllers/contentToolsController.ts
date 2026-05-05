@@ -1,5 +1,37 @@
 import { Request, Response } from 'express'
 import Anthropic from '@anthropic-ai/sdk'
+import multer from 'multer'
+import * as XLSX from 'xlsx'
+
+export const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter(_req, file, cb) {
+    const ext = file.originalname.toLowerCase()
+    if (ext.endsWith('.csv') || ext.endsWith('.xlsx') || ext.endsWith('.xls')) cb(null, true)
+    else cb(new Error('Solo se admiten CSV o Excel (.xlsx/.xls)'))
+  },
+})
+
+export async function parseReachFile(req: Request, res: Response): Promise<void> {
+  const file = req.file
+  if (!file) { res.status(400).json({ success: false, error: 'Archivo requerido' }); return }
+  try {
+    const name = file.originalname.toLowerCase()
+    const wb   = name.endsWith('.csv')
+      ? XLSX.read(file.buffer.toString('utf8'), { type: 'string' })
+      : XLSX.read(file.buffer, { type: 'buffer' })
+    const sheet = wb.Sheets[wb.SheetNames[0]]
+    const rows  = XLSX.utils.sheet_to_json<Record<string, string>>(sheet, { defval: '' })
+    if (rows.length === 0) { res.status(400).json({ success: false, error: 'El archivo no contiene datos.' }); return }
+    const cols = Object.keys(rows[0])
+    const text = [cols.join('\t'), ...rows.slice(0, 60).map(r => cols.map(c => String(r[c] ?? '')).join('\t'))].join('\n')
+    res.json({ success: true, data: { text, rowCount: rows.length, columns: cols.slice(0, 8) } })
+  } catch (err) {
+    console.error('[parseReachFile]', err)
+    res.status(500).json({ success: false, error: 'Error al leer el archivo.' })
+  }
+}
 
 function getClient(): Anthropic {
   const key = process.env.ANTHROPIC_API_KEY
@@ -150,43 +182,72 @@ Masivos (>500K): [10 hashtags]
 
   'reach-diagnosis': {
     requiredInputs: ['metrics', 'format'],
-    system: `Eres un analista experto en el algoritmo de Meta e Instagram con conocimiento profundo de los factores que determinan el alcance orgánico en 2024-2025.
-Diagnosticas problemas específicos con la precisión de un médico: primero el síntoma, luego la causa raíz, luego el tratamiento.
-Cada recomendación tiene una acción concreta, un plazo y un resultado esperado.`,
+    system: `Eres un auditor forense de contenido orgánico especializado en el algoritmo de distribución de Instagram y TikTok (2024-2025).
+Tu metodología combina análisis estadístico de señales con patrones algorítmicos documentados:
+- Señales de calidad: guardados y compartidos pesan x3 vs likes en el ranking de distribución
+- Ratio alcance no-seguidores/total: objetivo >40% Instagram, >60% TikTok
+- Ventana crítica de distribución: primeras 2h post-publicación determinan el 80% del alcance final
+- Ratio guardados/alcance >3% = el algoritmo cataloga el contenido como "alta calidad" y amplifica
+- Frecuencia óptima vs fatiga: publicar más de 2x/día colapsa el alcance individual de cada post
+Tu diagnóstico se basa SIEMPRE en los datos reales proporcionados. Citas números exactos del archivo.
+Si un dato no está disponible, lo indicas en lugar de inventarlo.`,
     buildPrompt: ({ metrics, format }) => `
-Realiza un diagnóstico completo de alcance basado en estos datos reales:
+Realiza una auditoría forense de alcance orgánico con estos datos exportados:
 
-MÉTRICAS:
+FORMATO ANALIZADO: ${format}
+
+DATOS REALES EXPORTADOS:
 ${metrics}
-
-FORMATO analizado: ${format}
 
 ---
 
-## 1. DIAGNÓSTICO GENERAL
-[¿Qué está pasando y por qué? Identifica el problema principal en 2-3 frases directas]
+## 1. BASELINE — QUÉ TIENES HOY
 
-## 2. ANÁLISIS POR MÉTRICA
-Para cada métrica que aparece en los datos:
-- **[Nombre métrica]**: [valor] → [Estado: ✅ / ⚠️ / 🔴] · [Qué indica] · Benchmark: [qué debería ser]
+Evalúa cada métrica presente en los datos:
+**[Nombre métrica]** → [valor real del archivo] | Benchmark 2025: [referencia] | Estado: ✅ Bien / ⚠️ Mejorable / 🔴 Problema
 
-## 3. CAUSA RAÍZ
-[Las 2-3 razones principales por las que el alcance está en este nivel]
+Si hay múltiples publicaciones, calcula medias. Cita SOLO datos del archivo, nunca inventados.
 
-## 4. PLAN DE ACCIÓN — 2 SEMANAS
+## 2. PATRONES DETECTADOS
 
-**Semana 1 (acciones inmediatas):**
-1. [Acción concreta + cómo hacerla + resultado esperado]
-2. [Ídem]
-3. [Ídem]
+**Mejor rendimiento:** [qué publicación/tipo tiene mejores números y por qué]
+**Peor rendimiento:** [cuál tiene peores números + patrón detectado]
+**Ratio guardados/alcance:** [si disponible: >3%=calidad, <1%=problema de valor percibido]
+**Distribución a no-seguidores:** [si disponible: indica si el algoritmo está amplificando o no]
+**Patrón temporal:** [si hay variación por fecha/día, nómbrala; si no hay datos suficientes, dilo]
 
-**Semana 2 (consolidación):**
-1. [Acción + cómo + resultado]
-2. [Ídem]
-3. [Ídem]
+## 3. CAUSA RAÍZ (diagnóstico específico)
 
-## 5. QUICK WINS
-Las 2 cosas que más impacto tendrían en los próximos 7 días y por qué.
+Las 2-3 razones técnicas principales, en orden de impacto. Para cada una:
+- El mecanismo algorítmico exacto
+- Qué dato de los tuyos lo confirma
+- Qué debería cambiar para solucionarlo
+
+## 4. PROTOCOLO DE 14 DÍAS
+
+**Días 1-3 — Diagnóstico activo:**
+→ Día 1: [acción concreta + hora óptima para ${format} + métrica a vigilar en primeras 2h]
+→ Día 2: [prueba de la variable más débil detectada en tus datos]
+→ Día 3: [análisis: si [métrica X] > [threshold], continuar; si no, ajustar Z]
+
+**Días 4-7 — Ajuste basado en evidencia:**
+→ Día 4: [acción basada en datos días 1-3]
+→ Día 5: [A/B test específico: qué variable + cómo medir el resultado]
+→ Día 6: [optimización de horario o frecuencia según señales acumuladas]
+→ Día 7: [revisión semanal: 3 KPIs a comparar vs semana anterior]
+
+**Días 8-14 — Consolidación:**
+→ Día 8-10: [escalar lo que funcionó + frecuencia recomendada]
+→ Día 11-12: [ajuste fino basado en datos acumulados]
+→ Día 13-14: [preparar siguiente ciclo: qué tipos de contenido testear en semanas 3-4]
+
+## 5. QUICK WINS — Próximas 48h
+
+**Acción #1 (mayor impacto, basada en tus datos):**
+[Qué hacer exactamente + por qué esta acción tiene el mayor retorno basándose en tus métricas reales + resultado esperado en X días]
+
+**Acción #2:**
+[Ídem]
 `.trim(),
   },
 }

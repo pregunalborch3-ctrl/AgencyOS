@@ -9,7 +9,8 @@ import {
 } from 'lucide-react'
 import { saveToHistory, type HistoryEntry } from '../lib/history'
 import { InfoTooltip } from '../components/InfoTooltip'
-import { saveCampaign } from '../lib/campaignsApi'
+import { saveCampaign, generateCampaignCalendar } from '../lib/campaignsApi'
+import { toast } from 'sonner'
 import { useSubscription } from '../contexts/SubscriptionContext'
 import { useAuth } from '../contexts/AuthContext'
 import { printHTML } from '../lib/exportUtils'
@@ -1008,6 +1009,20 @@ export default function CampaignApp() {
           result:      data,
         }
         saveToHistory(entry)
+
+        // Fire 30-day calendar generation in background
+        if (token) {
+          generateCampaignCalendar(token, {
+            product:           params.input,
+            niche:             params.niche,
+            objective:         params.objective,
+            hooks:             data.hooks,
+            shortCopies:       data.shortCopies,
+            campaignStructure: data.campaignStructure,
+          }).then(({ count }) => {
+            toast.success(`📅 ${count} días de estrategia añadidos al calendario`, { duration: 6000 })
+          }).catch(() => {})
+        }
       }
     } catch (e) {
       if (e instanceof Error && e.message === 'FREE_LIMIT_REACHED') {

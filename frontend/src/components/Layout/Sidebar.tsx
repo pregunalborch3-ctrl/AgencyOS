@@ -9,31 +9,24 @@ import {
 import { useAuth } from '../../contexts/AuthContext'
 import { usePlan, type PlanTier } from '../../hooks/usePlan'
 
-// ─── Desktop nav item (sidebar) ───────────────────────────────────────────────
+// ─── Desktop nav item ─────────────────────────────────────────────────────────
 function NavItem({ path, icon: Icon, label, locked }: { path: string; icon: React.ElementType; label: string; locked?: boolean }) {
   const { pathname } = useLocation()
   const isActive = pathname === path || pathname.startsWith(path + '/')
   return (
     <Link
       to={path}
-      title={label}
-      className={`group relative flex items-center justify-center w-10 h-10 rounded-xl transition-all ${
+      className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all ${
         isActive
-          ? 'bg-indigo-500 shadow-lg shadow-indigo-500/25'
+          ? 'bg-indigo-500/15 text-indigo-400'
           : locked
-          ? 'text-zinc-700 hover:bg-white/5 hover:text-zinc-500'
-          : 'text-zinc-600 hover:bg-white/5 hover:text-zinc-300'
+          ? 'text-zinc-700 hover:bg-white/5 hover:text-zinc-600'
+          : 'text-zinc-500 hover:bg-white/5 hover:text-zinc-300'
       }`}
     >
-      <Icon size={18} className={isActive ? 'text-white' : ''} />
-      {locked && !isActive && (
-        <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center">
-          <Lock size={7} className="text-zinc-500" />
-        </span>
-      )}
-      <span className="pointer-events-none absolute left-full ml-3 px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-white/8 text-xs font-semibold text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50 shadow-xl">
-        {label}{locked ? ' · Pro' : ''}
-      </span>
+      <Icon size={15} className="flex-shrink-0" />
+      <span className="truncate">{label}</span>
+      {locked && !isActive && <Lock size={9} className="text-zinc-700 ml-auto flex-shrink-0" />}
     </Link>
   )
 }
@@ -72,57 +65,61 @@ export default function Sidebar() {
   const gradient = GRADIENTS[(user?.name?.charCodeAt(0) ?? 0) % GRADIENTS.length]
 
   const NAV_MAIN = [
-    { path: '/dashboard',    icon: Rocket,       label: t('nav.campaign'), mobileLabel: t('nav.campaign_short') },
-    { path: '/content-tools', icon: Wand2,       label: 'Herramientas IA', mobileLabel: 'IA'                   },
-    { path: '/calendar',     icon: CalendarDays, label: t('nav.calendar'), mobileLabel: t('nav.calendar_short') },
-    { path: '/historial',    icon: Clock,        label: t('nav.history'),  mobileLabel: t('nav.history_short')  },
-    { path: '/settings',     icon: Settings,     label: t('nav.settings'), mobileLabel: t('nav.settings_short') },
+    { path: '/dashboard',     icon: Rocket,       label: t('nav.campaign'), mobileLabel: t('nav.campaign_short') },
+    { path: '/content-tools', icon: Wand2,        label: 'Herramientas IA', mobileLabel: 'IA'                   },
+    { path: '/calendar',      icon: CalendarDays, label: t('nav.calendar'), mobileLabel: t('nav.calendar_short') },
+    { path: '/historial',     icon: Clock,        label: t('nav.history'),  mobileLabel: t('nav.history_short')  },
+    { path: '/settings',      icon: Settings,     label: t('nav.settings'), mobileLabel: t('nav.settings_short') },
   ]
 
   const proLocked = !hasAccess('pro')
   const NAV_TOOLS: { path: string; icon: React.ElementType; label: string; requiredTier?: PlanTier }[] = [
-    { path: '/meta-analysis',            icon: BarChart2, label: 'Meta Análisis'                         },
-    { path: '/frameworks/mercado',       icon: Globe2,    label: t('nav.market'),       requiredTier: 'pro' },
-    { path: '/frameworks/competencia',   icon: Crosshair, label: t('nav.competition'),  requiredTier: 'pro' },
-    { path: '/frameworks/distribucion',  icon: Map,       label: t('nav.distribution'), requiredTier: 'pro' },
-    { path: '/frameworks/contenido',     icon: Flame,     label: t('nav.content'),      requiredTier: 'pro' },
-    { path: '/frameworks/escalado',      icon: Layers,    label: t('nav.scaling'),      requiredTier: 'pro' },
+    { path: '/meta-analysis',           icon: BarChart2, label: 'Meta Análisis'                        },
+    { path: '/frameworks/mercado',      icon: Globe2,    label: t('nav.market'),       requiredTier: 'pro' },
+    { path: '/frameworks/competencia',  icon: Crosshair, label: t('nav.competition'),  requiredTier: 'pro' },
+    { path: '/frameworks/distribucion', icon: Map,       label: t('nav.distribution'), requiredTier: 'pro' },
+    { path: '/frameworks/contenido',    icon: Flame,     label: t('nav.content'),      requiredTier: 'pro' },
+    { path: '/frameworks/escalado',     icon: Layers,    label: t('nav.scaling'),      requiredTier: 'pro' },
   ]
 
   const NAV_LEGAL = [
-    { path: '/privacy', icon: ShieldCheck, label: t('nav.privacy')  },
-    { path: '/terms',   icon: FileText,    label: t('nav.terms')    },
-    { path: '/cookies', icon: Cookie,      label: t('nav.cookies')  },
+    { path: '/privacy', icon: ShieldCheck, label: t('nav.privacy') },
+    { path: '/terms',   icon: FileText,    label: t('nav.terms')   },
+    { path: '/cookies', icon: Cookie,      label: t('nav.cookies') },
   ]
 
   const isMoreActive = [...NAV_TOOLS, ...NAV_LEGAL].some(
     item => pathname === item.path || pathname.startsWith(item.path + '/')
   )
 
-  const handleMoreNav = (path: string) => {
-    setMoreOpen(false)
-    navigate(path)
-  }
+  const handleMoreNav = (path: string) => { setMoreOpen(false); navigate(path) }
 
   return (
     <>
       {/* ── Desktop sidebar ──────────────────────────────────────────────── */}
-      <aside className="hidden md:flex fixed inset-y-0 left-0 z-30 w-[60px] bg-zinc-950 border-r border-white/5 flex-col items-center py-4 gap-2 overflow-y-auto">
+      <aside className="hidden md:flex fixed inset-y-0 left-0 z-30 w-[210px] bg-zinc-950 border-r border-white/5 flex-col py-4 overflow-y-auto">
+
+        {/* Logo */}
         <button
           onClick={() => navigate('/home')}
-          title={t('nav.home')}
-          className="w-8 h-8 rounded-lg bg-indigo-500 hover:bg-indigo-400 flex items-center justify-center shadow-lg shadow-indigo-500/30 mb-1 flex-shrink-0 transition-colors cursor-pointer"
+          className="flex items-center gap-2.5 px-4 mb-5 hover:opacity-80 transition-opacity cursor-pointer"
         >
-          <Zap size={15} className="text-white" />
+          <div className="w-7 h-7 rounded-lg bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 flex-shrink-0">
+            <Zap size={13} className="text-white" />
+          </div>
+          <span className="text-sm font-black text-white">AgencyOS</span>
         </button>
 
-        <nav className="flex flex-col items-center gap-1.5">
-          {NAV_MAIN.map(item => <NavItem key={item.path} {...item} />)}
+        {/* Main nav */}
+        <nav className="flex flex-col gap-0.5 px-2">
+          {NAV_MAIN.map(item => <NavItem key={item.path} path={item.path} icon={item.icon} label={item.label} />)}
         </nav>
 
-        <div className="w-6 h-px bg-white/8 my-1" />
-        <span className="text-[8px] font-black text-zinc-700 uppercase tracking-widest select-none">tools</span>
-        <nav className="flex flex-col items-center gap-1.5">
+        {/* Tools */}
+        <div className="px-4 mt-4 mb-1">
+          <p className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Herramientas</p>
+        </div>
+        <nav className="flex flex-col gap-0.5 px-2">
           {NAV_TOOLS.map(item => (
             <NavItem
               key={item.path}
@@ -134,33 +131,33 @@ export default function Sidebar() {
           ))}
         </nav>
 
-        <div className="w-6 h-px bg-white/8 my-1" />
-        <span className="text-[8px] font-black text-zinc-700 uppercase tracking-widest select-none">legal</span>
-        <nav className="flex flex-col items-center gap-1.5">
-          {NAV_LEGAL.map(item => <NavItem key={item.path} {...item} />)}
+        {/* Legal */}
+        <div className="px-4 mt-4 mb-1">
+          <p className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Legal</p>
+        </div>
+        <nav className="flex flex-col gap-0.5 px-2">
+          {NAV_LEGAL.map(item => <NavItem key={item.path} path={item.path} icon={item.icon} label={item.label} />)}
         </nav>
 
-        <div className="flex flex-col items-center gap-2 mt-auto pt-2">
+        {/* Bottom: logout + user */}
+        <div className="mt-auto border-t border-white/5 pt-3 px-2 space-y-0.5">
           <button
             onClick={() => { logout(); navigate('/login', { replace: true }) }}
-            title={t('nav.logout')}
-            className="group relative flex items-center justify-center w-10 h-10 rounded-xl text-zinc-600 hover:text-red-400 hover:bg-red-400/8 transition-all"
+            className="flex items-center gap-2.5 px-3 py-2 w-full rounded-xl text-[13px] font-medium text-zinc-500 hover:text-red-400 hover:bg-red-400/8 transition-all"
           >
-            <LogOut size={16} />
-            <span className="pointer-events-none absolute left-full ml-3 px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-white/8 text-xs font-semibold text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50 shadow-xl">
-              {t('nav.logout')}
-            </span>
+            <LogOut size={15} />
+            {t('nav.logout')}
           </button>
-          <div
-            title={user?.name ?? ''}
-            className={`w-8 h-8 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center shadow-sm cursor-default`}
-          >
-            <span className="text-[11px] font-bold text-white">{initials}</span>
+          <div className="flex items-center gap-2.5 px-3 py-2">
+            <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${gradient} flex-shrink-0 flex items-center justify-center`}>
+              <span className="text-[9px] font-bold text-white">{initials}</span>
+            </div>
+            <span className="text-[13px] text-zinc-500 truncate">{user?.name ?? ''}</span>
           </div>
         </div>
       </aside>
 
-      {/* ── Mobile bottom navigation bar ─────────────────────────────────── */}
+      {/* ── Mobile bottom bar ─────────────────────────────────────────────── */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-zinc-950 border-t border-white/5 flex items-stretch safe-area-pb">
         <Link to="/home" className="flex flex-col items-center justify-center gap-1 flex-1 py-2 min-w-0">
           <Zap size={20} className={pathname === '/home' ? 'text-indigo-400' : 'text-zinc-600'} />
@@ -171,7 +168,6 @@ export default function Sidebar() {
         {NAV_MAIN.map(item => (
           <BottomNavItem key={item.path} path={item.path} icon={item.icon} label={item.mobileLabel} />
         ))}
-        {/* More button — opens slide-up drawer with Tools + Legal */}
         <button
           onClick={() => setMoreOpen(true)}
           className="flex flex-col items-center justify-center gap-1 flex-1 py-2 min-w-0"
@@ -186,14 +182,8 @@ export default function Sidebar() {
       {/* ── Mobile "Más" drawer ───────────────────────────────────────────── */}
       {moreOpen && (
         <>
-          {/* Backdrop */}
-          <div
-            className="md:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
-            onClick={() => setMoreOpen(false)}
-          />
-          {/* Sheet */}
+          <div className="md:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={() => setMoreOpen(false)} />
           <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-zinc-900 rounded-t-2xl border-t border-white/8 pb-safe">
-            {/* Handle + close */}
             <div className="flex items-center justify-between px-5 pt-4 pb-2">
               <div className="w-10 h-1 rounded-full bg-zinc-700 mx-auto absolute left-1/2 -translate-x-1/2 top-3" />
               <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Menú</span>
@@ -201,25 +191,21 @@ export default function Sidebar() {
                 <X size={18} />
               </button>
             </div>
-
             <div className="px-4 pb-6 space-y-4">
-              {/* Tools section */}
               <div>
                 <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest px-2 mb-2">Tools</p>
                 <div className="space-y-1">
                   {NAV_TOOLS.map(item => {
-                    const isActive = pathname === item.path || pathname.startsWith(item.path + '/')
+                    const isActive   = pathname === item.path || pathname.startsWith(item.path + '/')
                     const itemLocked = item.requiredTier === 'pro' && proLocked
                     return (
                       <button
                         key={item.path}
                         onClick={() => handleMoreNav(item.path)}
                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left ${
-                          isActive
-                            ? 'bg-indigo-500/15 text-indigo-400'
-                            : itemLocked
-                            ? 'text-zinc-600 hover:bg-white/5'
-                            : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
+                          isActive    ? 'bg-indigo-500/15 text-indigo-400'
+                          : itemLocked ? 'text-zinc-600 hover:bg-white/5'
+                          : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
                         }`}
                       >
                         <item.icon size={16} />
@@ -230,8 +216,6 @@ export default function Sidebar() {
                   })}
                 </div>
               </div>
-
-              {/* Legal section */}
               <div>
                 <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest px-2 mb-2">Legal</p>
                 <div className="space-y-1">
@@ -242,9 +226,7 @@ export default function Sidebar() {
                         key={item.path}
                         onClick={() => handleMoreNav(item.path)}
                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left ${
-                          isActive
-                            ? 'bg-indigo-500/15 text-indigo-400'
-                            : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
+                          isActive ? 'bg-indigo-500/15 text-indigo-400' : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
                         }`}
                       >
                         <item.icon size={16} />
@@ -254,8 +236,6 @@ export default function Sidebar() {
                   })}
                 </div>
               </div>
-
-              {/* Logout */}
               <button
                 onClick={() => { setMoreOpen(false); logout(); navigate('/login', { replace: true }) }}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-400 hover:bg-red-400/8 transition-all text-left"
