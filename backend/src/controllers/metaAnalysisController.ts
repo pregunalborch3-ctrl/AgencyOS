@@ -27,65 +27,27 @@ export const upload = multer({
   },
 })
 
-// ─── CSV parser ───────────────────────────────────────────────────────────────
-function parseCSV(text: string): Array<Record<string, string>> {
-  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim().split('\n')
-  if (lines.length < 2) return []
-
-  // Detect delimiter (comma or semicolon)
-  const firstLine = lines[0]
-  const delimiter = (firstLine.match(/;/g) ?? []).length > (firstLine.match(/,/g) ?? []).length ? ';' : ','
-
-  function parseLine(line: string): string[] {
-    const result: string[] = []
-    let current = ''
-    let inQuotes = false
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i]
-      if (ch === '"') {
-        if (inQuotes && line[i + 1] === '"') { current += '"'; i++ }
-        else inQuotes = !inQuotes
-      } else if (ch === delimiter && !inQuotes) {
-        result.push(current.trim())
-        current = ''
-      } else {
-        current += ch
-      }
-    }
-    result.push(current.trim())
-    return result
-  }
-
-  const headers = parseLine(lines[0]).map(h => h.replace(/^"|"$/g, '').trim())
-  return lines.slice(1)
-    .filter(l => l.trim())
-    .map(line => {
-      const values = parseLine(line)
-      const row: Record<string, string> = {}
-      headers.forEach((h, i) => { row[h] = (values[i] ?? '').replace(/^"|"$/g, '').trim() })
-      return row
-    })
-}
-
 // ─── Parse Excel/CSV buffer → rows ───────────────────────────────────────────
+// Uses XLSX for both formats — handles RFC 4180 edge cases: quoted fields with
+// embedded commas, newlines, and escaped double-quotes ("").
 function parseFile(buffer: Buffer, mimetype: string, originalname: string): Array<Record<string, string>> {
-  const isExcel = originalname.toLowerCase().endsWith('.xlsx') || originalname.toLowerCase().endsWith('.xls')
+  const name    = originalname.toLowerCase()
+  const isExcel = name.endsWith('.xlsx') || name.endsWith('.xls')
     || mimetype.includes('spreadsheet') || mimetype.includes('excel')
 
-  if (isExcel) {
-    const wb = XLSX.read(buffer, { type: 'buffer' })
-    const ws = wb.Sheets[wb.SheetNames[0]]
-    const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' })
-    return rows.map(row => {
-      const out: Record<string, string> = {}
-      for (const [k, v] of Object.entries(row)) {
-        out[String(k)] = String(v ?? '')
-      }
-      return out
-    })
-  }
+  const wb = isExcel
+    ? XLSX.read(buffer, { type: 'buffer' })
+    : XLSX.read(buffer.toString('utf-8'), { type: 'string', raw: false })
 
-  return parseCSV(buffer.toString('utf-8'))
+  const ws   = wb.Sheets[wb.SheetNames[0]]
+  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' })
+  return rows.map(row => {
+    const out: Record<string, string> = {}
+    for (const [k, v] of Object.entries(row)) {
+      out[String(k)] = String(v ?? '')
+    }
+    return out
+  })
 }
 
 // ─── Format raw rows as a readable table for Claude ──────────────────────────
