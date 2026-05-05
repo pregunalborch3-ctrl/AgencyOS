@@ -72,15 +72,15 @@ export default function Sidebar() {
   const gradient = GRADIENTS[(user?.name?.charCodeAt(0) ?? 0) % GRADIENTS.length]
 
   const NAV_MAIN = [
-    { path: '/dashboard', icon: Rocket,       label: t('nav.campaign'), mobileLabel: t('nav.campaign_short') },
-    { path: '/calendar',  icon: CalendarDays, label: t('nav.calendar'), mobileLabel: t('nav.calendar_short') },
-    { path: '/historial', icon: Clock,        label: t('nav.history'),  mobileLabel: t('nav.history_short')  },
-    { path: '/settings',  icon: Settings,     label: t('nav.settings'), mobileLabel: t('nav.settings_short') },
+    { path: '/dashboard',    icon: Rocket,       label: t('nav.campaign'), mobileLabel: t('nav.campaign_short') },
+    { path: '/content-tools', icon: Wand2,       label: 'Herramientas IA', mobileLabel: 'IA'                   },
+    { path: '/calendar',     icon: CalendarDays, label: t('nav.calendar'), mobileLabel: t('nav.calendar_short') },
+    { path: '/historial',    icon: Clock,        label: t('nav.history'),  mobileLabel: t('nav.history_short')  },
+    { path: '/settings',     icon: Settings,     label: t('nav.settings'), mobileLabel: t('nav.settings_short') },
   ]
 
   const proLocked = !hasAccess('pro')
   const NAV_TOOLS: { path: string; icon: React.ElementType; label: string; requiredTier?: PlanTier }[] = [
-    { path: '/content-tools',            icon: Wand2,     label: 'Herramientas IA'                       },
     { path: '/meta-analysis',            icon: BarChart2, label: 'Meta Análisis'                         },
     { path: '/frameworks/mercado',       icon: Globe2,    label: t('nav.market'),       requiredTier: 'pro' },
     { path: '/frameworks/competencia',   icon: Crosshair, label: t('nav.competition'),  requiredTier: 'pro' },
