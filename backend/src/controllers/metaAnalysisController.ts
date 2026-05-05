@@ -142,39 +142,77 @@ export async function analyzeMetaAds(req: Request, res: Response): Promise<void>
     const msg = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4000,
-      system: 'Eres un experto analista de Meta Ads con 10 años de experiencia. Analizas datos reales de campañas y das recomendaciones accionables. Responde SOLO con JSON válido, sin markdown ni bloques de código.',
+      system: `Eres un auditor forense de paid media con 10+ años auditando cuentas de Meta Ads. \
+Tu metodología evalúa cada euro gastado con la precisión de un auditor financiero: ningún dato sin contrastar, ninguna ineficiencia sin cuantificar, ninguna recomendación sin impacto de negocio estimado. \
+Diagnosticas fatiga creativa, saturación de audiencia, eficiencia de coste por placement y salud estructural de la cuenta. \
+Responde SOLO con JSON válido. Sin markdown, sin bloques de código, sin texto fuera del JSON.`,
       messages: [{
         role: 'user',
-        content: `Analiza estos datos reales exportados de Meta Ads Manager. Los datos están en formato tabla (columnas separadas por tabulador). Usa los valores exactos de la tabla — no inventes ni estimes datos.
+        content: `Realiza una auditoría experta de estos datos reales de Meta Ads Manager. \
+Cada hallazgo debe citar valores exactos de la tabla. No inventes ni estimes datos.
 
-DATOS REALES (${rows.length} filas):
+DATOS (${rows.length} filas, columnas separadas por tabulador):
 ${rawTable}
 
-BENCHMARKS DE REFERENCIA (ecommerce España):
-- CTR: bueno >1.5%, malo <0.5%
-- CPC: bueno <€0.70, malo >€1.50
-- CPM: bueno <€12, malo >€25
-- ROAS: bueno >3.5x, mínimo aceptable 2.0x
-- Coste por resultado: evalúa según el objetivo de la campaña
+━━━ FRAMEWORK DE AUDITORÍA ━━━
 
-Devuelve ÚNICAMENTE este JSON (en español, con los nombres y valores exactos de la tabla):
+1. FATIGA CREATIVA Y SATURACIÓN DE AUDIENCIA
+   Señales de fatiga: Frecuencia >3 = alerta, >5 = crítico (pausa inmediata)
+   Saturación: Alcance estancado + Frecuencia subiendo = audiencia agotada
+   CTR decreciente con CPM creciente = señal temprana de fatiga
+
+2. EFICIENCIA DE COSTE POR PLACEMENT (benchmarks reales España/Europa)
+   CPM:  Feed Noticias €8-18 (>€25 crítico) | Stories €5-12 | Reels €6-15 | Audience Network €2-6
+   CTR:  Feed >1.5% bueno, <0.7% pobre | Stories >0.8% bueno | Reels >1.0% bueno
+   CPC:  <€0.50 excelente | €0.50-1.20 aceptable | >€1.50 ineficiente | >€2.50 crítico
+   ROAS: >5x excelente | 3.5-5x bueno | 2-3.5x mínimo aceptable | <2x ineficiente
+   Frecuencia óptima por objetivo: Awareness 1.5-2.5 | Consideración 2-4 | Conversión 3-6
+
+3. DIAGNÓSTICO ESTRUCTURAL
+   Evalúa: Coste por resultado vs objetivo de campaña | Distribución de presupuesto entre elementos
+   Identifica: Ganadores claros (escalar) | Perdedores confirmados (pausar) | Oportunidades sin explotar
+
+4. IMPACTO DE NEGOCIO
+   Cada hallazgo crítico debe incluir el impacto estimado si se actúa vs si se ignora.
+   Prioriza por: (severidad × presupuesto afectado) — los problemas que queman más dinero van primero.
+
+━━━ FORMATO DE RESPUESTA ━━━
+
+Devuelve ÚNICAMENTE este JSON con los valores exactos de la tabla:
 {
-  "summary": "2-3 frases sobre el estado general usando cifras reales de la tabla",
+  "summary": "3-4 frases de diagnóstico directo: estado real de la cuenta, eficiencia global del gasto, y el hallazgo más crítico con su cifra exacta",
   "performingWell": [
-    { "name": "nombre exacto de la fila", "reason": "por qué destaca con valores concretos de la tabla", "highlight": "la métrica clave con su valor exacto" }
+    {
+      "name": "nombre exacto del elemento en la tabla",
+      "reason": "por qué supera benchmarks: métrica concreta vs referencia del sector",
+      "highlight": "la cifra clave que lo demuestra (ej: CTR 2.8% — 87% sobre benchmark feed)"
+    }
   ],
   "performingPoorly": [
-    { "name": "nombre exacto de la fila", "reason": "problema específico con valores concretos", "action": "acción inmediata y concreta" }
+    {
+      "name": "nombre exacto del elemento en la tabla",
+      "reason": "diagnóstico preciso con valor exacto y qué lo causa (fatiga, saturación, segmentación, etc.)",
+      "action": "acción inmediata específica: qué pausar, qué ajustar, con qué sustituirlo y en qué plazo"
+    }
   ],
   "belowAverage": [
-    { "metric": "nombre de columna", "value": "valor promedio calculado de la tabla", "benchmark": "referencia del sector", "fix": "cómo mejorarlo" }
+    {
+      "metric": "nombre de la columna exacta",
+      "value": "valor promedio calculado de los datos reales",
+      "benchmark": "referencia del sector para este placement/objetivo",
+      "fix": "acción correctora concreta con impacto estimado (ej: reducir CPM un 20% segmentando por intereses)"
+    }
   ],
   "recommendations": [
-    { "priority": "alta", "title": "acción concreta", "description": "qué hacer exactamente y por qué, referenciando datos reales" },
+    {
+      "priority": "alta",
+      "title": "acción concreta con verbo imperativo",
+      "description": "qué hacer exactamente, por qué ahora, qué impacto tiene en gasto/resultado, con datos reales de la tabla"
+    },
     { "priority": "media", "title": "...", "description": "..." },
     { "priority": "baja",  "title": "...", "description": "..." }
   ],
-  "executiveSummary": "4-6 frases para el cliente usando cifras reales, sin jerga técnica, con próximos pasos"
+  "executiveSummary": "5-6 frases para presentar al cliente: rendimiento actual en cifras reales, qué está funcionando y por qué, qué está fallando y el coste de no actuar, próximos 3 pasos priorizados. Sin jerga técnica."
 }`,
       }],
     })
