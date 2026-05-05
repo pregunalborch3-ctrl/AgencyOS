@@ -74,8 +74,6 @@ const TOOLS: ToolDef[] = [
     fields: [
       { key: 'metrics', label: 'Datos exportados', type: 'textarea',
         placeholder: 'Sube un archivo o pega tus métricas aquí…' },
-      { key: 'format', label: 'Formato principal analizado', type: 'select',
-        options: ['Reel', 'Carrusel', 'Foto', 'Story', 'Directo', 'Mixto'] },
     ],
   },
 ]

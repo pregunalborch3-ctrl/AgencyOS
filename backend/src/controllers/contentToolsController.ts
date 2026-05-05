@@ -181,7 +181,7 @@ Masivos (>500K): [10 hashtags]
   },
 
   'reach-diagnosis': {
-    requiredInputs: ['metrics', 'format'],
+    requiredInputs: ['metrics'],
     system: `Eres un auditor forense de paid media especializado en Meta Ads y TikTok Ads para el mercado europeo (España/EU, 2024-2025).
 
 REGLAS DE DIAGNÓSTICO:
@@ -206,10 +206,8 @@ SEÑALES QUE DETECTAS ACTIVAMENTE:
 - Desajuste objetivo-puja: coste por resultado >2x benchmark del sector
 - Concentración presupuestaria ineficiente: un elemento absorbe >60% del presupuesto sin ser el mejor performer`,
 
-    buildPrompt: ({ metrics, format }) => `
+    buildPrompt: ({ metrics }) => `
 Auditoría forense de campaña de pago con datos reales exportados.
-
-PLATAFORMA / FORMATO: ${format}
 
 DATOS EXPORTADOS:
 ${metrics}
