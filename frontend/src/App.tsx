@@ -25,6 +25,7 @@ import Terms                   from './pages/legal/Terms'
 import Cookies                 from './pages/legal/Cookies'
 import PublicationCalendar     from './pages/PublicationCalendar'
 import MetaAnalysis            from './pages/MetaAnalysis'
+import ContentTools            from './pages/ContentTools'
 import NotFound                from './pages/NotFound'
 import PlanGate               from './components/PlanGate'
 
@@ -63,6 +64,7 @@ export default function App() {
                 <Route path="/historial"      element={<HistorialPage />} />
                 <Route path="/calendar"       element={<PublicationCalendar />} />
                 <Route path="/meta-analysis"  element={<MetaAnalysis />} />
+                <Route path="/content-tools"  element={<ContentTools />} />
               </Route>
             </Route>
 

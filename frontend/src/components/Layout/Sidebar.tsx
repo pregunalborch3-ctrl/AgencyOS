@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import {
   Rocket, Settings, LogOut, Clock, CalendarDays,
   Globe2, Crosshair, Map, Flame, Layers, Zap,
-  ShieldCheck, FileText, Cookie, MoreHorizontal, X, BarChart2, Lock,
+  ShieldCheck, FileText, Cookie, MoreHorizontal, X, BarChart2, Lock, Wand2,
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { usePlan, type PlanTier } from '../../hooks/usePlan'
@@ -81,6 +81,7 @@ export default function Sidebar() {
   const proLocked = !hasAccess('pro')
   const NAV_TOOLS: { path: string; icon: React.ElementType; label: string; requiredTier?: PlanTier }[] = [
     { path: '/meta-analysis',            icon: BarChart2, label: 'Meta Análisis'                         },
+    { path: '/content-tools',            icon: Wand2,     label: 'Herramientas IA'                       },
     { path: '/frameworks/mercado',       icon: Globe2,    label: t('nav.market'),       requiredTier: 'pro' },
     { path: '/frameworks/competencia',   icon: Crosshair, label: t('nav.competition'),  requiredTier: 'pro' },
     { path: '/frameworks/distribucion',  icon: Map,       label: t('nav.distribution'), requiredTier: 'pro' },

@@ -27,8 +27,9 @@ import homeRoutes         from './routes/home'
 import frameworkRoutes    from './routes/frameworks'
 import settingsRoutes     from './routes/settings'
 import apiKeyRoutes       from './routes/apiKeys'
-import metaAnalysisRoutes from './routes/metaAnalysis'
-import capiRoutes         from './routes/capi'
+import metaAnalysisRoutes  from './routes/metaAnalysis'
+import capiRoutes          from './routes/capi'
+import contentToolsRoutes  from './routes/contentTools'
 
 const app  = express()
 const PORT = process.env.PORT ?? 3001
@@ -91,8 +92,9 @@ app.use('/api/home',         homeRoutes)
 app.use('/api/frameworks',   frameworkRoutes)
 app.use('/api/settings',     settingsRoutes)
 app.use('/api/apikeys',      apiKeyRoutes)
-app.use('/api/meta',        metaAnalysisRoutes)
-app.use('/api/capi',        capiRoutes)
+app.use('/api/meta',          metaAnalysisRoutes)
+app.use('/api/capi',          capiRoutes)
+app.use('/api/content-tools', contentToolsRoutes)
 
 // Meta CAPI Gateway verification — Meta llama a esta URL sin prefijo /api
 app.get('/capig/autoconfig', (req, res) => {
