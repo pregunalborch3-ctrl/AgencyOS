@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Rocket, Settings, LogOut, Clock, CalendarDays,
-  Globe2, Crosshair, Map, Flame, Layers, Zap,
+  Globe2, Crosshair, Layers, Zap,
   ShieldCheck, FileText, Cookie, MoreHorizontal, X, BarChart2, Lock, Wand2,
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
@@ -75,11 +75,9 @@ export default function Sidebar() {
   const proLocked = !hasAccess('pro')
   const NAV_TOOLS: { path: string; icon: React.ElementType; label: string; requiredTier?: PlanTier }[] = [
     { path: '/meta-analysis',           icon: BarChart2, label: 'Meta Análisis'                        },
-    { path: '/frameworks/mercado',      icon: Globe2,    label: t('nav.market'),       requiredTier: 'pro' },
-    { path: '/frameworks/competencia',  icon: Crosshair, label: t('nav.competition'),  requiredTier: 'pro' },
-    { path: '/frameworks/distribucion', icon: Map,       label: t('nav.distribution'), requiredTier: 'pro' },
-    { path: '/frameworks/contenido',    icon: Flame,     label: t('nav.content'),      requiredTier: 'pro' },
-    { path: '/frameworks/escalado',     icon: Layers,    label: t('nav.scaling'),      requiredTier: 'pro' },
+    { path: '/frameworks/mercado',     icon: Globe2,    label: t('nav.market'),      requiredTier: 'pro' },
+    { path: '/frameworks/competencia', icon: Crosshair, label: t('nav.competition'), requiredTier: 'pro' },
+    { path: '/frameworks/escalado',    icon: Layers,    label: t('nav.scaling'),     requiredTier: 'pro' },
   ]
 
   const NAV_LEGAL = [

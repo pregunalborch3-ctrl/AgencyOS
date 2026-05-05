@@ -17,8 +17,6 @@ import HistorialPage            from './pages/HistorialPage'
 import Home                    from './pages/Home'
 import MarketAnalysis          from './pages/frameworks/MarketAnalysis'
 import CompetitionMap          from './pages/frameworks/CompetitionMap'
-import DistributionPlan        from './pages/frameworks/DistributionPlan'
-import ViralContent            from './pages/frameworks/ViralContent'
 import ScalingRoadmap          from './pages/frameworks/ScalingRoadmap'
 import Privacy                 from './pages/legal/Privacy'
 import Terms                   from './pages/legal/Terms'
@@ -54,11 +52,9 @@ export default function App() {
                 <Route path="/settings"              element={<Settings />} />
 
                 <Route path="/home"                      element={<Home />} />
-                <Route path="/frameworks/mercado"      element={<PlanGate required="pro"><MarketAnalysis /></PlanGate>} />
-                <Route path="/frameworks/competencia"  element={<PlanGate required="pro"><CompetitionMap /></PlanGate>} />
-                <Route path="/frameworks/distribucion" element={<PlanGate required="pro"><DistributionPlan /></PlanGate>} />
-                <Route path="/frameworks/contenido"    element={<PlanGate required="pro"><ViralContent /></PlanGate>} />
-                <Route path="/frameworks/escalado"     element={<PlanGate required="pro"><ScalingRoadmap /></PlanGate>} />
+                <Route path="/frameworks/mercado"     element={<PlanGate required="pro"><MarketAnalysis /></PlanGate>} />
+                <Route path="/frameworks/competencia" element={<PlanGate required="pro"><CompetitionMap /></PlanGate>} />
+                <Route path="/frameworks/escalado"    element={<PlanGate required="pro"><ScalingRoadmap /></PlanGate>} />
                 {/* Main app — paywall handled in-app */}
                 <Route path="/dashboard"      element={<CampaignApp />} />
                 <Route path="/historial"      element={<HistorialPage />} />
