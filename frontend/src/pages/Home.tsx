@@ -4,6 +4,7 @@ import {
   Zap, Rocket, TrendingUp, Target, Clock,
   Calendar, Loader2, ChevronRight, Lightbulb,
 } from 'lucide-react'
+import { InfoTooltip } from '../components/InfoTooltip'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   Cell,
@@ -103,19 +104,20 @@ function thisWeekCount(campaigns: SavedCampaign[]): number {
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-function StatCard({ label, value, icon: Icon, sub }: {
-  label: string; value: string; icon: React.ElementType; sub?: string
+function StatCard({ label, value, icon: Icon, sub, info }: {
+  label: string; value: string; icon: React.ElementType; sub?: string; info: string
 }) {
   return (
-    <div className="rounded-2xl border border-white/5 bg-zinc-900 p-5 flex items-start gap-4">
-      <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
-        <Icon size={17} className="text-indigo-400" />
+    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 flex items-start gap-4">
+      <div className="w-11 h-11 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
+        <Icon size={19} className="text-indigo-400" />
       </div>
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <p className="text-2xl font-black text-white leading-none">{value}</p>
         <p className="text-xs text-zinc-500 mt-1 leading-tight">{label}</p>
         {sub && <p className="text-[10px] text-zinc-600 mt-0.5">{sub}</p>}
       </div>
+      <InfoTooltip text={info} />
     </div>
   )
 }
@@ -204,7 +206,7 @@ export default function Home() {
       )}
 
       {/* ── 1. Header ─────────────────────────────────────────────────────── */}
-      <div className="px-4 py-5 md:px-8 md:py-6 border-b border-white/5 flex items-center justify-between">
+      <div className="px-4 py-5 md:px-8 md:py-7 border-b border-zinc-800/70 flex items-center justify-between">
         <div>
           <p className="text-zinc-500 text-sm">Panel principal</p>
           <h1 className="text-2xl font-black text-white mt-0.5 flex items-center gap-2">
@@ -216,7 +218,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="p-4 md:p-8 space-y-6 flex-1">
+      <div className="p-4 md:p-8 space-y-8 flex-1">
 
         {/* ── 2. Mensaje motivador ──────────────────────────────────────────── */}
         <div className="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-indigo-500/8 border border-indigo-500/20">
@@ -230,17 +232,20 @@ export default function Home() {
             icon={Rocket}
             label="Campañas guardadas"
             value={String(campaigns.length)}
+            info="Total de campañas generadas y guardadas en tu cuenta."
           />
           <StatCard
             icon={Target}
             label="Nicho más usado"
             value={topNiche ? (NICHE_LABELS[topNiche.niche] ?? topNiche.niche) : '—'}
             sub={topNiche ? `${topNiche.count} campaña${topNiche.count !== 1 ? 's' : ''}` : undefined}
+            info="El nicho de producto para el que más has creado campañas."
           />
           <StatCard
             icon={Clock}
             label="Última campaña"
             value={lastCampaign ?? '—'}
+            info="Tiempo transcurrido desde la última campaña generada."
           />
         </div>
 
@@ -248,10 +253,11 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
           {/* Campañas por semana */}
-          <div className="rounded-2xl border border-white/5 bg-zinc-900 p-5">
-            <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4">
-              Campañas por semana
-            </p>
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Campañas por semana</p>
+              <InfoTooltip text="Evolución del número de campañas generadas en las últimas 5 semanas." />
+            </div>
             {weeklyData.every(w => w.count === 0) ? (
               <div className="h-32 flex items-center justify-center text-zinc-700 text-sm">
                 Sin datos aún
@@ -273,10 +279,11 @@ export default function Home() {
           </div>
 
           {/* Nichos usados */}
-          <div className="rounded-2xl border border-white/5 bg-zinc-900 p-5">
-            <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4">
-              Nichos usados
-            </p>
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Nichos usados</p>
+              <InfoTooltip text="Distribución de tus campañas guardadas por sector o nicho de producto." />
+            </div>
             {nicheData.length === 0 ? (
               <div className="h-32 flex items-center justify-center text-zinc-700 text-sm">
                 Sin datos aún
@@ -302,10 +309,13 @@ export default function Home() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
           {/* Suscripción */}
-          <div className="rounded-2xl border border-white/5 bg-zinc-900 p-5 flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <Calendar size={14} className="text-zinc-500" />
-              <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Suscripción</p>
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calendar size={14} className="text-zinc-500" />
+                <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Suscripción</p>
+              </div>
+              <InfoTooltip text="Estado de tu plan actual y días restantes hasta la próxima renovación." />
             </div>
             {daysLeft !== null && isActive ? (
               <>
@@ -337,10 +347,13 @@ export default function Home() {
           </div>
 
           {/* Consejo del día */}
-          <div className="rounded-2xl border border-white/5 bg-zinc-900 p-5 flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <Lightbulb size={14} className="text-amber-400" />
-              <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Consejo del día</p>
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Lightbulb size={14} className="text-amber-400" />
+                <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Consejo del día</p>
+              </div>
+              <InfoTooltip text="Tip de marketing generado por IA. Se actualiza automáticamente cada día." />
             </div>
             {tip ? (
               <p className="text-sm text-zinc-300 leading-relaxed flex-1">{tip}</p>
@@ -353,10 +366,13 @@ export default function Home() {
           </div>
 
           {/* Meta semanal */}
-          <div className="rounded-2xl border border-white/5 bg-zinc-900 p-5 flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <TrendingUp size={14} className="text-emerald-400" />
-              <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Meta semanal</p>
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <TrendingUp size={14} className="text-emerald-400" />
+                <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Meta semanal</p>
+              </div>
+              <InfoTooltip text="Objetivo de campañas a generar cada semana. El contador se reinicia cada lunes." />
             </div>
             <div>
               <p className="text-3xl font-black text-white leading-none">
@@ -381,11 +397,11 @@ export default function Home() {
 
         {/* ── 6. Últimas 3 campañas ─────────────────────────────────────────── */}
         <div>
-          <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-3">
+          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
             Últimas campañas guardadas
           </p>
           {last3.length === 0 ? (
-            <div className="rounded-2xl border border-white/5 bg-zinc-900 p-6 text-center">
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 text-center">
               <p className="text-sm text-zinc-600">Todavía no tienes campañas guardadas.</p>
             </div>
           ) : (
@@ -394,7 +410,7 @@ export default function Home() {
                 <div
                   key={c.id}
                   onClick={() => navigate('/historial')}
-                  className="flex items-center gap-4 p-4 rounded-2xl border border-white/5 bg-zinc-900 hover:border-white/10 transition-all cursor-pointer group"
+                  className="flex items-center gap-4 p-4 rounded-2xl border border-zinc-800 bg-zinc-900 hover:border-zinc-700 hover:bg-zinc-800/50 transition-all cursor-pointer group"
                 >
                   <div
                     className="w-2.5 h-2.5 rounded-full flex-shrink-0"

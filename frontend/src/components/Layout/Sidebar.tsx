@@ -80,8 +80,8 @@ export default function Sidebar() {
 
   const proLocked = !hasAccess('pro')
   const NAV_TOOLS: { path: string; icon: React.ElementType; label: string; requiredTier?: PlanTier }[] = [
-    { path: '/meta-analysis',            icon: BarChart2, label: 'Meta Análisis'                         },
     { path: '/content-tools',            icon: Wand2,     label: 'Herramientas IA'                       },
+    { path: '/meta-analysis',            icon: BarChart2, label: 'Meta Análisis'                         },
     { path: '/frameworks/mercado',       icon: Globe2,    label: t('nav.market'),       requiredTier: 'pro' },
     { path: '/frameworks/competencia',   icon: Crosshair, label: t('nav.competition'),  requiredTier: 'pro' },
     { path: '/frameworks/distribucion',  icon: Map,       label: t('nav.distribution'), requiredTier: 'pro' },

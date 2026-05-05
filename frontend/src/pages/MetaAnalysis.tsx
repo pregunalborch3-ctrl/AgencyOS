@@ -5,6 +5,7 @@ import {
   X, BarChart2,
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { InfoTooltip } from '../components/InfoTooltip'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface AnalysisResult {
@@ -95,14 +96,17 @@ export default function MetaAnalysis() {
     <div className="flex-1 flex flex-col min-h-screen bg-zinc-950">
       {/* Header */}
       <div className="px-4 py-5 md:px-8 md:py-6 border-b border-white/5">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
-            <BarChart2 size={17} className="text-indigo-400" />
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+              <BarChart2 size={17} className="text-indigo-400" />
+            </div>
+            <div>
+              <h1 className="text-xl font-black text-white">Análisis Meta Ads</h1>
+              <p className="text-xs text-zinc-500 mt-0.5">Sube tu export de Meta Ads Manager y obtén insights con IA</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-black text-white">Análisis Meta Ads</h1>
-            <p className="text-xs text-zinc-500 mt-0.5">Sube tu export de Meta Ads Manager y obtén insights con IA</p>
-          </div>
+          <InfoTooltip text="Sube tu export CSV o Excel de Meta Ads Manager. La IA analiza rendimiento, detecta campañas con problemas y genera un resumen ejecutivo listo para el cliente." />
         </div>
       </div>
 

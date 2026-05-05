@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Wand2, ChevronDown, Loader2, Copy, CheckCheck, RotateCcw } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { InfoTooltip } from '../components/InfoTooltip'
 
 // ─── Tool definitions ─────────────────────────────────────────────────────────
 type FieldType = 'text' | 'textarea' | 'select'
@@ -272,11 +273,14 @@ export default function ContentTools() {
 
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-9 h-9 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center">
-              <Wand2 size={16} className="text-indigo-400" />
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center">
+                <Wand2 size={16} className="text-indigo-400" />
+              </div>
+              <h1 className="text-xl font-bold text-white">Herramientas IA</h1>
             </div>
-            <h1 className="text-xl font-bold text-white">Herramientas IA</h1>
+            <InfoTooltip text="Genera contenido optimizado para Instagram y TikTok con prompts expertos. Estrategias virales, hooks, carruseles, captions y diagnóstico de alcance." />
           </div>
           <p className="text-sm text-zinc-500 ml-12">
             5 herramientas de contenido para Instagram y TikTok. Rellena los campos y Claude genera el resultado al instante.

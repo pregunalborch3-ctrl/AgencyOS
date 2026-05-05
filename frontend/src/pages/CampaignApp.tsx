@@ -8,6 +8,7 @@ import {
   Bookmark, BookmarkCheck, FileDown,
 } from 'lucide-react'
 import { saveToHistory, type HistoryEntry } from '../lib/history'
+import { InfoTooltip } from '../components/InfoTooltip'
 import { saveCampaign } from '../lib/campaignsApi'
 import { useSubscription } from '../contexts/SubscriptionContext'
 import { useAuth } from '../contexts/AuthContext'
@@ -1046,7 +1047,12 @@ export default function CampaignApp() {
 
       {/* ── Input block (hidden during paywall and demo) ─────────────────── */}
       {!isPaywall && !isDemo && (
-        <div className={`border-b border-white/5 transition-all duration-500 ${isIdle ? 'py-16' : 'py-5'}`}>
+        <div className={`relative border-b border-white/5 transition-all duration-500 ${isIdle ? 'py-16' : 'py-5'}`}>
+          {isIdle && (
+            <div className="absolute top-4 right-5 z-10">
+              <InfoTooltip text="Crea briefings y campañas completas para tus clientes en minutos. Copies, hooks, creativos, segmentación y estructura de funnel generados con IA." />
+            </div>
+          )}
           <div className={`mx-auto px-6 transition-all duration-500 ${isIdle ? 'max-w-2xl' : 'max-w-5xl'}`}>
 
             {isIdle && (
