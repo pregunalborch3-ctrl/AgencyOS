@@ -46,137 +46,69 @@ const TOOLS: Record<string, {
   requiredInputs: string[]
 }> = {
 
-  'viral-strategy': {
-    requiredInputs: ['niche', 'accountSize', 'audience'],
-    system: `Eres un estratega de contenido viral con 10 años de experiencia en Instagram y TikTok.
-Creas planes de contenido específicos, accionables y basados en patrones de viralidad probados.
-Tus planes incluyen hooks concretos, formatos testados y estructura diaria sin relleno.`,
-    buildPrompt: ({ niche, accountSize, audience }) => `
-Crea un plan de contenido viral de 30 días para esta cuenta:
-- Nicho: ${niche}
-- Tamaño actual: ${accountSize} seguidores
-- Audiencia objetivo: ${audience}
+  'proposal': {
+    requiredInputs: ['tipoCliente', 'sector', 'presupuesto', 'servicios', 'painPoint'],
+    system: `Eres un director de cuentas senior con 10 años cerrando contratos para agencias de marketing digital. Tu especialidad es escribir propuestas comerciales que convierten reuniones en clientes.`,
+    buildPrompt: ({ tipoCliente, sector, presupuesto, servicios, painPoint }) => `
+El cliente es: ${tipoCliente}
+Sector: ${sector}
+Presupuesto mensual aproximado: ${presupuesto}
+Servicios que necesita: ${servicios}
+Pain point principal: ${painPoint}
 
-Estructura tu respuesta así:
+Escribe una propuesta comercial completa con esta estructura:
+1. RESUMEN EJECUTIVO (3-4 líneas que enganchen, enfocadas en resultados, no en servicios)
+2. DIAGNÓSTICO (qué está fallando ahora en su marketing, sé específico para su sector)
+3. NUESTRA SOLUCIÓN (qué vamos a hacer exactamente, mes a mes)
+4. POR QUÉ NOSOTROS (3 razones concretas, sin clichés)
+5. INVERSIÓN (desglosa el presupuesto por servicio de forma clara)
+6. PRÓXIMOS PASOS (3 pasos simples para arrancar)
 
-## Los 4 pilares de contenido para este nicho
-[Un párrafo por pilar: nombre, por qué funciona, ejemplos concretos]
-
-## Estructura semanal (qué publicar cada día)
-[Tabla o lista con tipo de contenido por día de la semana y formato recomendado]
-
-## 30 ideas de posts (una por día)
-[Para cada una: Día N · Formato · Hook · Objetivo]
-
-## Mejores horarios para esta audiencia
-[Horas específicas por día de la semana con justificación]
-
-## Estrategia de hashtags
-Grupo nicho (alta especificidad): [10 hashtags]
-Grupo categoría (alcance medio): [10 hashtags]
-Grupo masivo (>500K): [5 hashtags]
+Tono: profesional pero cercano, directo, orientado a negocio. Nada de palabrería vacía.
 `.trim(),
   },
 
-  'scroll-hook': {
-    requiredInputs: ['topic', 'audience', 'tone'],
-    system: `Eres un copywriter especialista en hooks virales para redes sociales.
-Dominas los patrones psicológicos que detienen el scroll: curiosidad, contraste, provocación, beneficio inmediato.
-Cada hook que escribes tiene una razón específica para funcionar y está optimizado para el algoritmo.`,
-    buildPrompt: ({ topic, audience, tone }) => `
-Escribe 10 ganchos para parar el scroll sobre:
-- Tema: ${topic}
-- Audiencia: ${audience}
-- Tono: ${tone}
+  'monthly-report': {
+    requiredInputs: ['periodo', 'cliente', 'canales', 'metricas', 'objetivo', 'presupuesto'],
+    system: `Eres un account manager experto en comunicar resultados de marketing a clientes no técnicos. Tu objetivo es que el cliente entienda exactamente qué pasó, por qué, y qué viene ahora.`,
+    buildPrompt: ({ periodo, cliente, canales, metricas, objetivo, presupuesto }) => `
+Periodo: ${periodo}
+Cliente: ${cliente}
+Canales trabajados: ${canales}
+Métricas principales: ${metricas}
+Objetivo que teníamos: ${objetivo}
+Presupuesto invertido: ${presupuesto}
 
-Para cada gancho usa este formato exacto:
+Genera un informe ejecutivo con esta estructura:
+## RESUMEN DEL MES (máx 4 líneas)
+## QUÉ FUNCIONÓ Y POR QUÉ (2-3 puntos con datos concretos)
+## QUÉ MEJORAREMOS (2-3 puntos como oportunidades con acción concreta)
+## FOCO DEL PRÓXIMO MES (3 prioridades con objetivo medible)
+## CONCLUSIÓN (2 líneas que dejen al cliente con confianza)
 
-**Hook N**
-[El gancho — máximo 2 líneas, listo para copiar]
-→ Trigger: [el mecanismo psicológico que activa: curiosidad / contraste / urgencia / etc.]
-→ Mejor para: [Reel / Carrusel / Story / Foto]
-
-Usa una variedad de patrones:
-- Afirmación que contradice la creencia común
-- Pregunta incómoda que nadie quiere responder
-- Dato sorprendente con número concreto
-- Contraste antes/después
-- Lista con número impar
-- Secreto que "no quieren que sepas"
-- Error que comete el 90% de [audiencia]
-- Promesa de resultado en tiempo récord
-- Historia que empieza por el final
-- Provocación directa a la audiencia
+Usa lenguaje de negocio, no de marketing. Evita jerga técnica.
 `.trim(),
   },
 
-  'carousel': {
-    requiredInputs: ['topic', 'niche', 'audienceLevel'],
-    system: `Eres un experto en carruseles virales de Instagram que generan guardados masivos.
-Sabes que los carruseles que se guardan tienen estructura muy específica: hook potente, valor accionable por slide, progresión lógica y CTA irresistible.
-Cada slide tiene una sola idea y lleva al siguiente de forma natural.`,
-    buildPrompt: ({ topic, niche, audienceLevel }) => `
-Crea un carrusel completo de 8 slides sobre:
-- Tema: ${topic}
-- Nicho: ${niche}
-- Nivel de la audiencia: ${audienceLevel}
+  'difficult-email': {
+    requiredInputs: ['cliente', 'situacion', 'tonoRelacion', 'objetivoEmail'],
+    system: `Eres un director de cuentas con 10 años gestionando relaciones con clientes complicados. Un email mal escrito puede perder un cliente, uno bien escrito puede salvar la relación.`,
+    buildPrompt: ({ cliente, situacion, tonoRelacion, objetivoEmail }) => `
+Cliente: ${cliente}
+Situación: ${situacion}
+Tono de la relación: ${tonoRelacion}
+Objetivo del email: ${objetivoEmail}
 
-Para cada slide usa este formato:
+Escribe el email completo con:
+- ASUNTO: directo y no alarmista
+- Apertura directa (sin "espero que estés bien")
+- Reconocer la situación sin excusas vacías
+- Explicación honesta y breve (máx 3 líneas)
+- Lo que vamos a hacer exactamente para solucionarlo
+- Propuesta concreta de siguiente paso
+- Cierre que mantenga la confianza
 
----
-**SLIDE [N] — [Título del slide]**
-Texto: [2-4 líneas directas y escaneables]
-Visual: [qué mostrar en el diseño: icono, ilustración, dato destacado, etc.]
----
-
-Estructura obligatoria:
-- Slide 1: Hook que promete un resultado claro (haz que quieran pasar al 2)
-- Slides 2-7: Un punto de valor por slide (fácil de leer, fácil de recordar)
-- Slide 8: CTA que invite a guardar + seguir + comentar
-
-Al final añade:
-**Caption de acompañamiento** (3-4 líneas)
-**5 hashtags recomendados**
-`.trim(),
-  },
-
-  'caption': {
-    requiredInputs: ['topic', 'objective', 'tone'],
-    system: `Eres un copywriter de redes sociales especializado en captions que generan acción real.
-Entiendes que cada objetivo (engagement, conversión, crecimiento) requiere estructura y CTA diferentes.
-Adaptas el tono, la longitud y el gancho inicial al algoritmo y a la psicología de la audiencia.`,
-    buildPrompt: ({ topic, objective, tone }) => `
-Escribe los captions para esta publicación:
-- Tema: ${topic}
-- Objetivo principal: ${objective}
-- Tono: ${tone}
-
----
-
-## CAPTION LARGO
-(Para feed, carrusel o cuando quieras maximizar alcance y comentarios)
-
-[Hook de 1-2 líneas que engancha]
-
-[Desarrollo de 4-6 líneas: historia, valor o contexto]
-
-[CTA específico para el objetivo "${objective}"]
-
-Longitud objetivo: 150-220 palabras
-
----
-
-## CAPTION CORTO
-(Para Reels, Stories o posts de impacto rápido)
-
-[Máximo 3 líneas + CTA directo]
-
----
-
-## HASHTAGS (30)
-Nicho (alta especificidad): [10 hashtags]
-Categoría (alcance medio): [10 hashtags]
-Masivos (>500K): [10 hashtags]
+Tono: profesional, directo, humano. Sin victimismo ni exceso de disculpas.
 `.trim(),
   },
 

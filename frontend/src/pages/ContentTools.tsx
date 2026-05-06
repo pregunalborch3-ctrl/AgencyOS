@@ -19,58 +19,50 @@ interface ToolDef {
 
 const TOOLS: ToolDef[] = [
   {
-    id:          'viral-strategy',
-    emoji:       '🚀',
-    title:       'Estrategia de contenido viral',
-    description: 'Plan de 30 días con pilares, ideas diarias, horarios y hashtags para tu nicho.',
+    id:          'proposal',
+    emoji:       '📋',
+    title:       'Propuesta comercial',
+    description: 'Propuesta completa con diagnóstico, solución, inversión y próximos pasos lista para enviar.',
     fields: [
-      { key: 'niche',       label: 'Nicho',              placeholder: 'ej. fitness femenino, finanzas personales…', type: 'text' },
-      { key: 'accountSize', label: 'Tamaño de la cuenta', placeholder: 'ej. 2.500 seguidores',                      type: 'text' },
-      { key: 'audience',    label: 'Audiencia objetivo',  placeholder: 'ej. mujeres 25-35 que quieren perder peso', type: 'text' },
+      { key: 'tipoCliente', label: 'Tipo de cliente',    placeholder: 'ej. ecommerce de moda, clínica dental, SaaS B2B…',          type: 'text' },
+      { key: 'sector',      label: 'Sector',              placeholder: 'ej. retail, salud, tecnología…',                            type: 'text' },
+      { key: 'presupuesto', label: 'Presupuesto mensual', placeholder: 'ej. €2.000/mes',                                            type: 'text' },
+      { key: 'servicios',   label: 'Servicios que necesita', placeholder: 'ej. Meta Ads, SEO, contenido…',                         type: 'text' },
+      { key: 'painPoint',   label: 'Pain point principal', placeholder: 'ej. no consigue ventas online, pierde clientes a la competencia…', type: 'text' },
     ],
   },
   {
-    id:          'scroll-hook',
-    emoji:       '⚡',
-    title:       'Gancho que para el scroll',
-    description: '10 hooks con el trigger psicológico de cada uno y el formato ideal.',
+    id:          'monthly-report',
+    emoji:       '📈',
+    title:       'Reporte mensual para cliente',
+    description: 'Informe ejecutivo claro y orientado a negocio. Sin jerga técnica.',
     fields: [
-      { key: 'topic',    label: 'Tema del post',   placeholder: 'ej. cómo ahorrar 500€ al mes',        type: 'text' },
-      { key: 'audience', label: 'Audiencia',        placeholder: 'ej. emprendedores que empiezan',      type: 'text' },
-      { key: 'tone',     label: 'Tono',             type: 'select',
-        options: ['Educativo', 'Entretenido', 'Inspiracional', 'Provocador', 'Directo'] },
+      { key: 'periodo',     label: 'Periodo',             placeholder: 'ej. Abril 2026',                                            type: 'text' },
+      { key: 'cliente',     label: 'Cliente',             placeholder: 'ej. Clínica DentPlus',                                      type: 'text' },
+      { key: 'canales',     label: 'Canales trabajados',  placeholder: 'ej. Meta Ads, Google Ads, Email…',                          type: 'text' },
+      { key: 'metricas',    label: 'Métricas principales', placeholder: 'ej. 150 leads a €12 CPL, ROAS 4.2x, CTR 2.1%…',           type: 'textarea' },
+      { key: 'objetivo',    label: 'Objetivo del mes',    placeholder: 'ej. conseguir 100 leads a menos de €15…',                   type: 'text' },
+      { key: 'presupuesto', label: 'Presupuesto invertido', placeholder: 'ej. €3.500 en ads + €800 gestión',                       type: 'text' },
     ],
   },
   {
-    id:          'carousel',
-    emoji:       '🎠',
-    title:       'Carrusel que genera guardados',
-    description: '8 slides completos con texto, visual sugerido, caption y hashtags.',
+    id:          'difficult-email',
+    emoji:       '✉️',
+    title:       'Email difícil al cliente',
+    description: 'El email complicado redactado con precisión. Directo, humano, sin excusas.',
     fields: [
-      { key: 'topic',         label: 'Tema',                  placeholder: 'ej. 7 errores al invertir en bolsa', type: 'text' },
-      { key: 'niche',         label: 'Nicho',                  placeholder: 'ej. inversión para principiantes',  type: 'text' },
-      { key: 'audienceLevel', label: 'Nivel de la audiencia',  type: 'select',
-        options: ['Principiante', 'Intermedio', 'Avanzado'] },
-    ],
-  },
-  {
-    id:          'caption',
-    emoji:       '✍️',
-    title:       'Caption que convierte',
-    description: 'Caption largo + corto + 30 hashtags optimizados para tu objetivo.',
-    fields: [
-      { key: 'topic',     label: 'Tema',      placeholder: 'ej. lanzamiento de mi nuevo curso',          type: 'text' },
-      { key: 'objective', label: 'Objetivo',  type: 'select',
-        options: ['Generar comentarios', 'Conseguir ventas', 'Ganar seguidores', 'Aumentar guardados', 'Dirigir tráfico al link'] },
-      { key: 'tone',      label: 'Tono',      type: 'select',
-        options: ['Cercano y personal', 'Profesional', 'Motivacional', 'Educativo', 'Humorístico'] },
+      { key: 'cliente',       label: 'Cliente',              placeholder: 'ej. Carlos de Muebles García',                            type: 'text' },
+      { key: 'situacion',     label: 'Situación',            placeholder: 'ej. resultados por debajo del objetivo por fallo en el pixel…', type: 'textarea' },
+      { key: 'tonoRelacion',  label: 'Tono de la relación',  type: 'select',
+        options: ['Formal y profesional', 'Cercano y de confianza', 'Tenso o conflictivo', 'Nuevo cliente (relación corta)'] },
+      { key: 'objetivoEmail', label: 'Objetivo del email',   placeholder: 'ej. reconocer el problema, presentar plan de acción y mantener la confianza…', type: 'text' },
     ],
   },
   {
     id:          'reach-diagnosis',
-    emoji:       '📊',
-    title:       'Diagnóstico de alcance',
-    description: 'Análisis forense de tus métricas reales + protocolo de 14 días para recuperar alcance.',
+    emoji:       '🔬',
+    title:       'Diagnóstico de campañas paid media',
+    description: 'Auditoría forense de Meta Ads y TikTok Ads. Sube tu export CSV/Excel y detecta saturación, fatiga y oportunidades.',
     fields: [
       { key: 'metrics', label: 'Datos exportados', type: 'textarea',
         placeholder: 'Sube un archivo o pega tus métricas aquí…' },
@@ -419,7 +411,7 @@ export default function ContentTools() {
             <InfoTooltip text="Genera contenido optimizado para Instagram y TikTok con prompts expertos. Estrategias virales, hooks, carruseles, captions y diagnóstico de alcance." />
           </div>
           <p className="text-sm text-zinc-500 ml-12">
-            5 herramientas de contenido para Instagram y TikTok. Rellena los campos y Claude genera el resultado al instante.
+            4 herramientas para el día a día de la agencia. Rellena los campos y Claude genera el resultado al instante.
           </p>
         </div>
 

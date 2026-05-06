@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import {
   Rocket, Settings, LogOut, Clock, CalendarDays,
   Globe2, Crosshair, Layers, Zap,
-  ShieldCheck, FileText, Cookie, MoreHorizontal, X, BarChart2, Lock, Wand2,
+  MoreHorizontal, X, BarChart2, Lock, Wand2,
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { usePlan, type PlanTier } from '../../hooks/usePlan'
@@ -80,13 +80,7 @@ export default function Sidebar() {
     { path: '/frameworks/escalado',    icon: Layers,    label: t('nav.scaling'),     requiredTier: 'pro' },
   ]
 
-  const NAV_LEGAL = [
-    { path: '/privacy', icon: ShieldCheck, label: t('nav.privacy') },
-    { path: '/terms',   icon: FileText,    label: t('nav.terms')   },
-    { path: '/cookies', icon: Cookie,      label: t('nav.cookies') },
-  ]
-
-  const isMoreActive = [...NAV_TOOLS, ...NAV_LEGAL].some(
+  const isMoreActive = NAV_TOOLS.some(
     item => pathname === item.path || pathname.startsWith(item.path + '/')
   )
 
@@ -129,15 +123,7 @@ export default function Sidebar() {
           ))}
         </nav>
 
-        {/* Legal */}
-        <div className="px-4 mt-4 mb-1">
-          <p className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Legal</p>
-        </div>
-        <nav className="flex flex-col gap-0.5 px-2">
-          {NAV_LEGAL.map(item => <NavItem key={item.path} path={item.path} icon={item.icon} label={item.label} />)}
-        </nav>
-
-        {/* Bottom: logout + user */}
+        {/* Bottom: logout + user + legal */}
         <div className="mt-auto border-t border-white/5 pt-3 px-2 space-y-0.5">
           <button
             onClick={() => { logout(); navigate('/login', { replace: true }) }}
@@ -151,6 +137,13 @@ export default function Sidebar() {
               <span className="text-[9px] font-bold text-white">{initials}</span>
             </div>
             <span className="text-[13px] text-zinc-500 truncate">{user?.name ?? ''}</span>
+          </div>
+          <div className="flex items-center justify-center gap-1.5 px-3 py-1.5">
+            <Link to="/privacy" className="text-[10px] text-zinc-700 hover:text-zinc-500 transition-colors">Privacidad</Link>
+            <span className="text-zinc-800 text-[10px]">·</span>
+            <Link to="/terms"   className="text-[10px] text-zinc-700 hover:text-zinc-500 transition-colors">Términos</Link>
+            <span className="text-zinc-800 text-[10px]">·</span>
+            <Link to="/cookies" className="text-[10px] text-zinc-700 hover:text-zinc-500 transition-colors">Cookies</Link>
           </div>
         </div>
       </aside>
@@ -214,26 +207,6 @@ export default function Sidebar() {
                   })}
                 </div>
               </div>
-              <div>
-                <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest px-2 mb-2">Legal</p>
-                <div className="space-y-1">
-                  {NAV_LEGAL.map(item => {
-                    const isActive = pathname === item.path
-                    return (
-                      <button
-                        key={item.path}
-                        onClick={() => handleMoreNav(item.path)}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left ${
-                          isActive ? 'bg-indigo-500/15 text-indigo-400' : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
-                        }`}
-                      >
-                        <item.icon size={16} />
-                        {item.label}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
               <button
                 onClick={() => { setMoreOpen(false); logout(); navigate('/login', { replace: true }) }}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-400 hover:bg-red-400/8 transition-all text-left"
@@ -241,6 +214,13 @@ export default function Sidebar() {
                 <LogOut size={16} />
                 {t('nav.logout')}
               </button>
+              <div className="flex items-center justify-center gap-2 pt-1">
+                <Link to="/privacy" onClick={() => setMoreOpen(false)} className="text-[11px] text-zinc-600 hover:text-zinc-400 transition-colors">Privacidad</Link>
+                <span className="text-zinc-700 text-[11px]">·</span>
+                <Link to="/terms"   onClick={() => setMoreOpen(false)} className="text-[11px] text-zinc-600 hover:text-zinc-400 transition-colors">Términos</Link>
+                <span className="text-zinc-700 text-[11px]">·</span>
+                <Link to="/cookies" onClick={() => setMoreOpen(false)} className="text-[11px] text-zinc-600 hover:text-zinc-400 transition-colors">Cookies</Link>
+              </div>
             </div>
           </div>
         </>
