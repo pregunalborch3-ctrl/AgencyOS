@@ -8,6 +8,7 @@ import {
   Bookmark, BookmarkCheck, FileDown,
 } from 'lucide-react'
 import { saveToHistory, type HistoryEntry } from '../lib/history'
+import { usePersistedState } from '../lib/persistedState'
 import { InfoTooltip } from '../components/InfoTooltip'
 import { saveCampaign, generateCampaignCalendar } from '../lib/campaignsApi'
 import { toast } from 'sonner'
@@ -901,18 +902,18 @@ export default function CampaignApp() {
   const { isActive, subscribe } = useSubscription()
   const { token } = useAuth()
 
-  const [input,     setInput]     = useState('')
-  const [niche,     setNiche]     = useState('')
-  const [objective, setObjective] = useState('ventas')
-  const [style,     setStyle]     = useState('performance')
+  const [input,     setInput]     = usePersistedState<string>('campaignApp.input', '')
+  const [niche,     setNiche]     = usePersistedState<string>('campaignApp.niche', '')
+  const [objective, setObjective] = usePersistedState<string>('campaignApp.objective', 'ventas')
+  const [style,     setStyle]     = usePersistedState<string>('campaignApp.style', 'performance')
   const [error,     setError]     = useState<string | null>(null)
 
-  const [appState,  setAppState]  = useState<AppState>('idle')
-  const [result,    setResult]    = useState<CampaignResult | null>(null)
-  const [activeTab, setActiveTab] = useState('ads')
-  const [isDemo,    setIsDemo]    = useState(false)
+  const [appState,  setAppState]  = usePersistedState<AppState>('campaignApp.appState', 'idle')
+  const [result,    setResult]    = usePersistedState<CampaignResult | null>('campaignApp.result', null)
+  const [activeTab, setActiveTab] = usePersistedState<string>('campaignApp.activeTab', 'ads')
+  const [isDemo,    setIsDemo]    = usePersistedState<boolean>('campaignApp.isDemo', false)
   const [isSaving,  setIsSaving]  = useState(false)
-  const [savedId,   setSavedId]   = useState<string | null>(null)
+  const [savedId,   setSavedId]   = usePersistedState<string | null>('campaignApp.savedId', null)
 
   const lastParams = useRef({ input, niche, objective, style })
 
