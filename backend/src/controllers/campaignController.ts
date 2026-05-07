@@ -427,14 +427,7 @@ export async function generateCampaign(req: Request, res: Response): Promise<voi
 }
 
 // ─── 30-day calendar generation ───────────────────────────────────────────────
-const CALENDAR_SYSTEM = `Eres un estratega experto en paid media y content marketing para ecommerce.
-Creas planes de 30 días que integran publicación orgánica, gestión de campañas pagadas y análisis de datos.
-Tu metodología por fases:
-- Días 1-7: Lanzamiento y captura de señales. Activa anuncios base, publica contenido de valor.
-- Días 8-14: Optimización. A/B test de creativos, ajuste de públicos basado en primeros datos reales.
-- Días 15-21: Escalado agresivo. Creativos ganadores x2 presupuesto, expansión lookalike 1-3%.
-- Días 22-30: Consolidación. Retargeting avanzado, lookalike 3-5%, preparar siguiente ciclo.
-Cada día tiene UNA acción concreta y accionable. Nunca días genéricos ni de "descanso".`
+const CALENDAR_SYSTEM = `Eres un director de cuentas de agencia de marketing digital con 10 años de experiencia gestionando campañas de clientes. Responde SOLO con JSON válido, sin markdown.`
 
 function buildCalendarPrompt(p: {
   product: string; niche: string; objective: string
@@ -442,34 +435,61 @@ function buildCalendarPrompt(p: {
   shortCopies: Array<{ hook: string; type: string; platform: string }>
   campaignStructure: { funnel?: Array<{ stage: string; format: string }> }
 }): string {
-  const hooks  = (p.hooks ?? []).slice(0, 4).map(h => `[${h.type}] "${h.text}"`).join(' | ')
-  const copies = (p.shortCopies ?? []).slice(0, 3).map(c => `[${c.type}·${c.platform}] "${c.hook}"`).join(' | ')
-  const funnel = (p.campaignStructure?.funnel ?? []).map(f => `${f.stage}: ${f.format}`).join(' | ')
-  return `Genera el plan de acción de exactamente 30 días para:
+  const campaignData = JSON.stringify({
+    producto: p.product,
+    nicho: p.niche,
+    objetivo: p.objective,
+    hooks: (p.hooks ?? []).slice(0, 4).map(h => ({ tipo: h.type, texto: h.text })),
+    copies: (p.shortCopies ?? []).slice(0, 3).map(c => ({ tipo: c.type, plataforma: c.platform, hook: c.hook })),
+    funnel: (p.campaignStructure?.funnel ?? []).map(f => ({ stage: f.stage, formato: f.format })),
+  }, null, 2)
 
-PRODUCTO: ${p.product}
-NICHO: ${p.niche}
-OBJETIVO: ${p.objective}
-HOOKS DISPONIBLES: ${hooks}
-COPIES TOP: ${copies}
-FUNNEL: ${funnel}
+  return `Eres un director de cuentas de agencia de marketing digital con 10 años de experiencia gestionando campañas de clientes.
 
-Para cada día alterna entre:
-- "publicar" → formato (reel/carrusel/story/foto), plataforma y qué hook/copy concreto usar
-- "analizar" → métrica exacta y threshold que activa la siguiente acción
-- "optimizar" → cambio específico en anuncio con porcentaje o acción concreta
-- "test" → variable a testear + métrica de éxito
-- "presupuesto" → subir/bajar X% o pausar anuncio con condición específica
+Genera un plan de acción de 30 días para gestionar esta campaña de forma profesional:
 
-Plataformas válidas: instagram, tiktok, facebook.
+Campaña: ${campaignData}
 
-Responde SOLO con JSON (sin markdown):
-{
-  "days": [
-    { "day": 1, "type": "publicar", "platform": "instagram", "title": "Lanzar Reel de presentación", "content": "Descripción de 2-3 frases con el hook específico del material, objetivo del día y métrica a vigilar las primeras 2h." },
-    ... 30 entradas total
-  ]
-}`
+Genera exactamente 30 entradas de calendario, una por día, con esta estructura para cada una:
+- Título corto y claro (máx 40 caracteres, sin puntos suspensivos)
+- Canal: Meta Ads / TikTok Ads / Instagram / Email / Interno
+- Tipo: Lanzamiento / Análisis / Optimización / Reporte / Test / Reunión
+
+El plan debe seguir esta lógica por semanas:
+
+SEMANA 1 (días 1-7): Lanzamiento y primeros datos
+- Día 1: Lanzar campaña y verificar que todo está activo
+- Día 2-3: Monitorizar métricas iniciales (CTR, CPC, frecuencia)
+- Día 4-5: Primer A/B test de creatividades
+- Día 6: Ajuste de segmentación si CTR < 1%
+- Día 7: Primer mini-reporte interno
+
+SEMANA 2 (días 8-14): Optimización activa
+- Pausar anuncios con peor rendimiento
+- Escalar presupuesto en los ganadores
+- Revisar frecuencia (si > 2.5 rotar creatividades)
+- Reporte de primera semana al cliente
+
+SEMANA 3 (días 15-21): Escala y nuevos formatos
+- Probar nuevos formatos (vídeo, carrusel, estático)
+- Expandir públicos lookalike si ROAS > 2
+- Reunión de seguimiento con el cliente
+- Ajuste de presupuesto según resultados acumulados
+
+SEMANA 4 (días 22-30): Cierre y análisis
+- Análisis completo de rendimiento
+- Decisiones de continuidad o cambio de estrategia
+- Reporte mensual completo para el cliente
+- Planificación del mes siguiente
+
+Devuelve los 30 días envueltos en un objeto JSON con la clave "days", con estos campos exactos por entrada:
+- date: fecha en formato ISO
+- title: título de la acción (máx 40 chars)
+- description: descripción detallada de qué hacer exactamente y por qué
+- platform: canal principal
+- type: tipo de acción
+
+Formato exacto: { "days": [ { "date": "...", "title": "...", "description": "...", "platform": "...", "type": "..." }, ... 30 entradas ] }`
 }
 
 export async function generateCalendar(req: Request, res: Response): Promise<void> {
@@ -488,21 +508,35 @@ export async function generateCalendar(req: Request, res: Response): Promise<voi
 
   try {
     const result = await claudeJSON<{
-      days: Array<{ day: number; type: string; platform: string; title: string; content: string }>
+      days: Array<{ date?: string; type?: string; platform?: string; title?: string; description?: string }>
     }>(CALENDAR_SYSTEM, buildCalendarPrompt({ product, niche, objective, hooks: hooks ?? [], shortCopies: shortCopies ?? [], campaignStructure: campaignStructure ?? {} }))
 
     const today = new Date()
-    const validPlatforms = new Set(['instagram', 'tiktok', 'facebook', 'twitter', 'linkedin', 'youtube'])
-    const postsData = result.days.slice(0, 30).map(d => {
+    const platformMap: Record<string, string> = {
+      'meta ads':       'facebook',
+      'meta':           'facebook',
+      'facebook ads':   'facebook',
+      'facebook':       'facebook',
+      'tiktok ads':     'tiktok',
+      'tiktok':         'tiktok',
+      'instagram ads':  'instagram',
+      'instagram':      'instagram',
+      'email':          'email',
+      'interno':        'interno',
+    }
+    const validPlatforms = new Set(['instagram', 'tiktok', 'facebook', 'email', 'interno'])
+    const postsData = result.days.slice(0, 30).map((d, idx) => {
       const date = new Date(today)
-      date.setDate(today.getDate() + d.day)
+      date.setDate(today.getDate() + idx + 1)
       date.setHours(9, 0, 0, 0)
+      const normalized = (d.platform ?? '').toLowerCase().trim()
+      const platform = platformMap[normalized] ?? (validPlatforms.has(normalized) ? normalized : 'instagram')
       return {
         userId,
-        title:    (d.title ?? `Día ${d.day}`).slice(0, 120),
+        title:    (d.title ?? `Día ${idx + 1}`).slice(0, 120),
         date:     date.toISOString(),
-        platform: validPlatforms.has(d.platform) ? d.platform : 'instagram',
-        content:  d.content ?? '',
+        platform,
+        content:  d.description ?? '',
         status:   'programado',
       }
     })
