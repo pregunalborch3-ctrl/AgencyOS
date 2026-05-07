@@ -60,7 +60,7 @@ export default function FrameworkLayout({
               <Loader2 size={22} className="animate-spin text-indigo-400" />
             </div>
             <div className="text-center">
-              <p className="text-white font-semibold text-sm">Claude está analizando…</p>
+              <p className="text-white font-semibold text-sm">Agenciesos está analizando…</p>
               <p className="text-zinc-600 text-xs mt-1">Puede tardar 10-20 segundos</p>
             </div>
           </div>

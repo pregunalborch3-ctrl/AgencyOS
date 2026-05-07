@@ -1,4 +1,5 @@
 import { useState, useRef, type DragEvent } from 'react'
+import { usePersistedState } from '../lib/persistedState'
 import {
   Wand2, ChevronDown, ChevronUp, Loader2, Copy, CheckCheck, RotateCcw,
   Upload, FileSpreadsheet, X,
@@ -95,16 +96,17 @@ function ResultBlock({ text }: { text: string }) {
 
 // ─── Single tool card ─────────────────────────────────────────────────────────
 function ToolCard({ tool, token }: { tool: ToolDef; token: string | null }) {
-  const [open,          setOpen]          = useState(false)
-  const [inputs,        setInputs]        = useState<Record<string, string>>(initInputs(tool))
-  const [loading,       setLoading]       = useState(false)
-  const [result,        setResult]        = useState<string | null>(null)
-  const [error,         setError]         = useState<string | null>(null)
+  const k = `contentTool.${tool.id}`
+  const [open,          setOpen]          = usePersistedState<boolean>(`${k}.open`, false)
+  const [inputs,        setInputs]        = usePersistedState<Record<string, string>>(`${k}.inputs`, () => initInputs(tool))
+  const [loading,       setLoading]       = usePersistedState<boolean>(`${k}.loading`, false)
+  const [result,        setResult]        = usePersistedState<string | null>(`${k}.result`, null)
+  const [error,         setError]         = usePersistedState<string | null>(`${k}.error`, null)
   const [copied,        setCopied]        = useState(false)
-  const [reachFile,     setReachFile]     = useState<File | null>(null)
+  const [reachFile,     setReachFile]     = usePersistedState<File | null>(`${k}.reachFile`, null)
   const [reachParsing,  setReachParsing]  = useState(false)
   const [reachDragging, setReachDragging] = useState(false)
-  const [showFull,      setShowFull]      = useState(false)
+  const [showFull,      setShowFull]      = usePersistedState<boolean>(`${k}.showFull`, false)
   const reachInputRef = useRef<HTMLInputElement>(null)
 
   const isReachDiagnosis = tool.id === 'reach-diagnosis'
@@ -411,7 +413,7 @@ export default function ContentTools() {
             <InfoTooltip text="4 herramientas de IA para el día a día de tu agencia: genera propuestas comerciales listas para enviar, informes mensuales para clientes, emails difíciles redactados con precisión y diagnósticos completos de campañas paid media." />
           </div>
           <p className="text-sm text-zinc-500 ml-12">
-            4 herramientas para el día a día de la agencia. Rellena los campos y Claude genera el resultado al instante.
+            4 herramientas para el día a día de la agencia. Rellena los campos y Agenciesos genera el resultado al instante.
           </p>
         </div>
 

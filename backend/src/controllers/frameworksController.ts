@@ -13,6 +13,8 @@ function getClient(): Anthropic {
 // ─── Shared helper ────────────────────────────────────────────────────────────
 const CLAUDE_TIMEOUT_MS = 120_000
 
+const EUR_INSTRUCTION = 'Usa siempre el símbolo € (euros) para todas las cifras monetarias. Nunca uses $ ni ninguna otra divisa.'
+
 async function claudeJSON<T>(system: string, user: string): Promise<T> {
   let lastErr: unknown
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -37,8 +39,8 @@ async function claudeJSONAttempt<T>(system: string, user: string): Promise<T> {
     getClient().messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4000,
-      system,
-      messages: [{ role: 'user', content: user }],
+      system: `${system}\n\n${EUR_INSTRUCTION}`,
+      messages: [{ role: 'user', content: `${user}\n\n${EUR_INSTRUCTION}` }],
     }),
     timeout,
   ])

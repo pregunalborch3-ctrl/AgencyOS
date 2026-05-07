@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Sparkles, Copy, RefreshCw, Check, Hash, Loader2 } from 'lucide-react'
 import Header from '../components/Layout/Header'
 import type { ContentRequest, Platform, ContentTone, ContentType } from '../types'
+import { usePersistedState } from '../lib/persistedState'
 
 const platforms: { value: Platform; label: string; color: string }[] = [
   { value: 'instagram', label: 'Instagram', color: 'bg-pink-100 text-pink-700 border-pink-200' },
@@ -17,7 +18,7 @@ const contentTypes: ContentType[] = ['post', 'story', 'reel', 'carrusel', 'artí
 
 
 export default function ContentGenerator() {
-  const [form, setForm] = useState<ContentRequest>({
+  const [form, setForm] = usePersistedState<ContentRequest>('contentGenerator.form', {
     platform: 'instagram',
     tone: 'profesional',
     contentType: 'post',
@@ -26,8 +27,8 @@ export default function ContentGenerator() {
     keywords: '',
     callToAction: '',
   })
-  const [results, setResults] = useState<string[]>([])
-  const [loading, setLoading] = useState(false)
+  const [results, setResults] = usePersistedState<string[]>('contentGenerator.results', [])
+  const [loading, setLoading] = usePersistedState<boolean>('contentGenerator.loading', false)
   const [copied, setCopied] = useState<number | null>(null)
 
   const set = (key: keyof ContentRequest, val: string) =>

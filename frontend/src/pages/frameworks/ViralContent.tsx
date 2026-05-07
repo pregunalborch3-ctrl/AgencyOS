@@ -1,10 +1,10 @@
-import { useState } from 'react'
 import { Flame } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import FrameworkLayout, {
   ResultSection, FormField, inputCls, selectCls,
 } from '../../components/FrameworkLayout'
 import { printHTML, downloadCSV } from '../../lib/exportUtils'
+import { usePersistedState } from '../../lib/persistedState'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Hook      { type: string; text: string; why: string }
@@ -68,12 +68,12 @@ function toCSV(niche: string, d: ViralData) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function ViralContent() {
   const { token } = useAuth()
-  const [niche,        setNiche]        = useState('')
-  const [tone,         setTone]         = useState(TONES[0])
-  const [selPlatforms, setSelPlatforms] = useState<string[]>(['Meta Ads', 'TikTok'])
-  const [isLoading,    setIsLoading]    = useState(false)
-  const [error,        setError]        = useState<string | null>(null)
-  const [data,         setData]         = useState<ViralData | null>(null)
+  const [niche,        setNiche]        = usePersistedState<string>('viralContent.niche', '')
+  const [tone,         setTone]         = usePersistedState<string>('viralContent.tone', TONES[0])
+  const [selPlatforms, setSelPlatforms] = usePersistedState<string[]>('viralContent.platforms', ['Meta Ads', 'TikTok'])
+  const [isLoading,    setIsLoading]    = usePersistedState<boolean>('viralContent.isLoading', false)
+  const [error,        setError]        = usePersistedState<string | null>('viralContent.error', null)
+  const [data,         setData]         = usePersistedState<ViralData | null>('viralContent.data', null)
 
   function togglePlatform(p: string) {
     setSelPlatforms(prev =>

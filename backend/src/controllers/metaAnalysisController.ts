@@ -9,6 +9,8 @@ function getClient(): Anthropic {
   return new Anthropic({ apiKey: key })
 }
 
+const EUR_INSTRUCTION = 'Usa siempre el símbolo € (euros) para todas las cifras monetarias. Nunca uses $ ni ninguna otra divisa.'
+
 export const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
@@ -107,7 +109,9 @@ export async function analyzeMetaAds(req: Request, res: Response): Promise<void>
       system: `Eres un auditor forense de paid media con 10+ años auditando cuentas de Meta Ads. \
 Tu metodología evalúa cada euro gastado con la precisión de un auditor financiero: ningún dato sin contrastar, ninguna ineficiencia sin cuantificar, ninguna recomendación sin impacto de negocio estimado. \
 Diagnosticas fatiga creativa, saturación de audiencia, eficiencia de coste por placement y salud estructural de la cuenta. \
-Responde SOLO con JSON válido. Sin markdown, sin bloques de código, sin texto fuera del JSON.`,
+Responde SOLO con JSON válido. Sin markdown, sin bloques de código, sin texto fuera del JSON.
+
+${EUR_INSTRUCTION}`,
       messages: [{
         role: 'user',
         content: `Realiza una auditoría experta de estos datos reales de Meta Ads Manager. \
@@ -175,7 +179,9 @@ Devuelve ÚNICAMENTE este JSON con los valores exactos de la tabla:
     { "priority": "baja",  "title": "...", "description": "..." }
   ],
   "executiveSummary": "5-6 frases para presentar al cliente: rendimiento actual en cifras reales, qué está funcionando y por qué, qué está fallando y el coste de no actuar, próximos 3 pasos priorizados. Sin jerga técnica."
-}`,
+}
+
+${EUR_INSTRUCTION}`,
       }],
     })
 

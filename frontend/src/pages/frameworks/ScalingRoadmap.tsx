@@ -1,10 +1,10 @@
-import { useState } from 'react'
 import { Layers } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import FrameworkLayout, {
   ResultSection, FormField, inputCls, selectCls,
 } from '../../components/FrameworkLayout'
 import { printHTML, downloadCSV } from '../../lib/exportUtils'
+import { usePersistedState } from '../../lib/persistedState'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Phase {
@@ -69,12 +69,12 @@ function toCSV(target: string, d: RoadmapData) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function ScalingRoadmap() {
   const { token } = useAuth()
-  const [currentRevenue, setCurrentRevenue] = useState('')
-  const [target,         setTarget]         = useState('')
-  const [timeframe,      setTimeframe]      = useState(TIMEFRAMES[1])
-  const [isLoading,      setIsLoading]      = useState(false)
-  const [error,          setError]          = useState<string | null>(null)
-  const [data,           setData]           = useState<RoadmapData | null>(null)
+  const [currentRevenue, setCurrentRevenue] = usePersistedState<string>('scalingRoadmap.currentRevenue', '')
+  const [target,         setTarget]         = usePersistedState<string>('scalingRoadmap.target', '')
+  const [timeframe,      setTimeframe]      = usePersistedState<string>('scalingRoadmap.timeframe', TIMEFRAMES[1])
+  const [isLoading,      setIsLoading]      = usePersistedState<boolean>('scalingRoadmap.isLoading', false)
+  const [error,          setError]          = usePersistedState<string | null>('scalingRoadmap.error', null)
+  const [data,           setData]           = usePersistedState<RoadmapData | null>('scalingRoadmap.data', null)
 
   async function handleGenerate() {
     if (!currentRevenue.trim() || !target.trim()) return

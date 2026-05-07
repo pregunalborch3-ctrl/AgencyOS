@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { InfoTooltip } from '../components/InfoTooltip'
+import { usePersistedState } from '../lib/persistedState'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface AnalysisResult {
@@ -28,11 +29,11 @@ const PRIORITY_LABELS: Record<string, string> = { alta: 'Alta', media: 'Media', 
 export default function MetaAnalysis() {
   const { token } = useAuth()
 
-  const [file,      setFile]      = useState<File | null>(null)
+  const [file,      setFile]      = usePersistedState<File | null>('metaAnalysis.file', null)
   const [dragging,  setDragging]  = useState(false)
-  const [loading,   setLoading]   = useState(false)
-  const [error,     setError]     = useState<string | null>(null)
-  const [result,    setResult]    = useState<{ analysis: AnalysisResult; rowCount: number } | null>(null)
+  const [loading,   setLoading]   = usePersistedState<boolean>('metaAnalysis.loading', false)
+  const [error,     setError]     = usePersistedState<string | null>('metaAnalysis.error', null)
+  const [result,    setResult]    = usePersistedState<{ analysis: AnalysisResult; rowCount: number } | null>('metaAnalysis.result', null)
   const [copyDone,  setCopyDone]  = useState(false)
 
   const inputRef = useRef<HTMLInputElement>(null)

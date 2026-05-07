@@ -314,7 +314,7 @@ const PLANS_LIST: { key: PlanKey; name: string; price: string; tagline: string; 
   {
     key: 'starter',
     name: 'Starter',
-    price: '€49',
+    price: '€49,99',
     tagline: 'Lo esencial para empezar a operar.',
     features: [
       'Generación ilimitada de campañas',
@@ -325,7 +325,7 @@ const PLANS_LIST: { key: PlanKey; name: string; price: string; tagline: string; 
   {
     key: 'pro',
     name: 'Pro',
-    price: '€129',
+    price: '€129,99',
     tagline: 'Para agencias en crecimiento.',
     highlighted: true,
     features: [
@@ -339,7 +339,7 @@ const PLANS_LIST: { key: PlanKey; name: string; price: string; tagline: string; 
   {
     key: 'enterprise',
     name: 'Enterprise',
-    price: '€299',
+    price: '€259,99',
     tagline: 'Acceso programático y control total.',
     features: [
       'Todo lo de Pro',

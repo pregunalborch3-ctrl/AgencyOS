@@ -39,6 +39,8 @@ function getClient(): Anthropic {
   return new Anthropic({ apiKey: key })
 }
 
+const EUR_INSTRUCTION = 'Usa siempre el símbolo € (euros) para todas las cifras monetarias. Nunca uses $ ni ninguna otra divisa.'
+
 // ─── Tool definitions ─────────────────────────────────────────────────────────
 const TOOLS: Record<string, {
   system: string
@@ -229,8 +231,8 @@ export async function generateContentTool(req: Request, res: Response): Promise<
     const msg = await client.messages.create({
       model:      'claude-sonnet-4-6',
       max_tokens: 2500,
-      system:     toolDef.system,
-      messages:   [{ role: 'user', content: toolDef.buildPrompt(inputs) }],
+      system:     `${toolDef.system}\n\n${EUR_INSTRUCTION}`,
+      messages:   [{ role: 'user', content: `${toolDef.buildPrompt(inputs)}\n\n${EUR_INSTRUCTION}` }],
     })
 
     const result = (msg.content[0] as { text: string }).text.trim()

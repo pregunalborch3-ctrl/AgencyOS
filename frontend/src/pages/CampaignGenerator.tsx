@@ -5,6 +5,7 @@ import {
   AlertCircle, Sparkles, Search, Download,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { usePersistedState } from '../lib/persistedState'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface ShortCopy  { hook: string; body: string; cta: string; type: string; platform: string }
@@ -351,15 +352,15 @@ const OBJECTIVES = [
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function CampaignGenerator() {
-  const [productDescription, setProductDescription] = useState('')
-  const [productUrl,         setProductUrl]         = useState('')
-  const [niche,              setNiche]              = useState('')
-  const [objective,          setObjective]          = useState('')
-  const [loading,            setLoading]            = useState(false)
-  const [analyzingUrl,       setAnalyzingUrl]       = useState(false)
-  const [error,              setError]              = useState<string | null>(null)
-  const [result,             setResult]             = useState<CampaignResult | null>(null)
-  const [activeTab,          setActiveTab]          = useState('ads')
+  const [productDescription, setProductDescription] = usePersistedState<string>('campaignGen.productDescription', '')
+  const [productUrl,         setProductUrl]         = usePersistedState<string>('campaignGen.productUrl', '')
+  const [niche,              setNiche]              = usePersistedState<string>('campaignGen.niche', '')
+  const [objective,          setObjective]          = usePersistedState<string>('campaignGen.objective', '')
+  const [loading,            setLoading]            = usePersistedState<boolean>('campaignGen.loading', false)
+  const [analyzingUrl,       setAnalyzingUrl]       = usePersistedState<boolean>('campaignGen.analyzingUrl', false)
+  const [error,              setError]              = usePersistedState<string | null>('campaignGen.error', null)
+  const [result,             setResult]             = usePersistedState<CampaignResult | null>('campaignGen.result', null)
+  const [activeTab,          setActiveTab]          = usePersistedState<string>('campaignGen.activeTab', 'ads')
 
   async function handleAnalyzeUrl() {
     if (!productUrl.trim()) return

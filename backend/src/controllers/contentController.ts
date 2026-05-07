@@ -9,6 +9,8 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 const CLAUDE_TIMEOUT_MS = 30_000
 
+const EUR_INSTRUCTION = 'Usa siempre el símbolo € (euros) para todas las cifras monetarias. Nunca uses $ ni ninguna otra divisa.'
+
 async function generateThreeVariations(body: ContentRequest): Promise<string[]> {
   const timeout = new Promise<never>((_, reject) =>
     setTimeout(() => reject(new Error('La IA tardó demasiado. Por favor, inténtalo de nuevo.')), CLAUDE_TIMEOUT_MS),
@@ -36,7 +38,9 @@ Cada caption debe:
 - Ser claramente distinto a los otros dos (diferente ángulo, tono o estructura)
 
 Responde ÚNICAMENTE con este JSON (sin markdown, sin comentarios):
-{"captions": ["caption1", "caption2", "caption3"]}`,
+{"captions": ["caption1", "caption2", "caption3"]}
+
+${EUR_INSTRUCTION}`,
       }],
     }),
     timeout,

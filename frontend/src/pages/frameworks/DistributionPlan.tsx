@@ -1,10 +1,10 @@
-import { useState } from 'react'
 import { Map } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import FrameworkLayout, {
   ResultSection, RoiBadge, FormField, inputCls,
 } from '../../components/FrameworkLayout'
 import { printHTML, downloadCSV } from '../../lib/exportUtils'
+import { usePersistedState } from '../../lib/persistedState'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Channel {
@@ -68,12 +68,12 @@ const ROI_ORDER = { alto: 0, medio: 1, bajo: 2 }
 
 export default function DistributionPlan() {
   const { token } = useAuth()
-  const [product,   setProduct]   = useState('')
-  const [audience,  setAudience]  = useState('')
-  const [budget,    setBudget]    = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [error,     setError]     = useState<string | null>(null)
-  const [data,      setData]      = useState<DistributionData | null>(null)
+  const [product,   setProduct]   = usePersistedState<string>('distributionPlan.product', '')
+  const [audience,  setAudience]  = usePersistedState<string>('distributionPlan.audience', '')
+  const [budget,    setBudget]    = usePersistedState<string>('distributionPlan.budget', '')
+  const [isLoading, setIsLoading] = usePersistedState<boolean>('distributionPlan.isLoading', false)
+  const [error,     setError]     = usePersistedState<string | null>('distributionPlan.error', null)
+  const [data,      setData]      = usePersistedState<DistributionData | null>('distributionPlan.data', null)
 
   async function handleGenerate() {
     if (!product.trim() || !audience.trim() || !budget.trim()) return

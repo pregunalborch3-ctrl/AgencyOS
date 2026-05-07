@@ -28,7 +28,7 @@ export async function getDailyTip(req: Request, res: Response): Promise<void> {
         max_tokens: 120,
         messages: [{
           role: 'user',
-          content: 'Dame un consejo de marketing digital breve y accionable para agencias que gestionan campañas de Meta Ads y TikTok. Máximo 2 frases cortas. En español. Solo el consejo, sin introducción ni comillas.',
+          content: 'Dame un consejo de marketing digital breve y accionable para agencias que gestionan campañas de Meta Ads y TikTok. Máximo 2 frases cortas. En español. Solo el consejo, sin introducción ni comillas.\n\nUsa siempre el símbolo € (euros) para todas las cifras monetarias. Nunca uses $ ni ninguna otra divisa.',
         }],
       }),
       timeout,

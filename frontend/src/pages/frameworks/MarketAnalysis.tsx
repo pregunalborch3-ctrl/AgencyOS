@@ -1,10 +1,10 @@
-import { useState } from 'react'
 import { Globe2 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import FrameworkLayout, {
   ResultSection, ImpactBadge, FormField, inputCls,
 } from '../../components/FrameworkLayout'
 import { printHTML, downloadCSV } from '../../lib/exportUtils'
+import { usePersistedState } from '../../lib/persistedState'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface MarketData {
@@ -55,10 +55,10 @@ function toCSV(nicho: string, d: MarketData) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function MarketAnalysis() {
   const { token } = useAuth()
-  const [nicho,     setNicho]     = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [error,     setError]     = useState<string | null>(null)
-  const [data,      setData]      = useState<MarketData | null>(null)
+  const [nicho,     setNicho]     = usePersistedState<string>('marketAnalysis.nicho', '')
+  const [isLoading, setIsLoading] = usePersistedState<boolean>('marketAnalysis.isLoading', false)
+  const [error,     setError]     = usePersistedState<string | null>('marketAnalysis.error', null)
+  const [data,      setData]      = usePersistedState<MarketData | null>('marketAnalysis.data', null)
 
   async function handleGenerate() {
     if (!nicho.trim()) return

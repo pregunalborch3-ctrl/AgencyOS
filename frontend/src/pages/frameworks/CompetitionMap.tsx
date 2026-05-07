@@ -1,10 +1,10 @@
-import { useState } from 'react'
 import { Crosshair } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import FrameworkLayout, {
   ResultSection, FormField, inputCls,
 } from '../../components/FrameworkLayout'
 import { printHTML, downloadCSV } from '../../lib/exportUtils'
+import { usePersistedState } from '../../lib/persistedState'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Competitor {
@@ -66,11 +66,11 @@ function toCSV(industry: string, d: CompetitionData) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function CompetitionMap() {
   const { token } = useAuth()
-  const [industry,    setIndustry]    = useState('')
-  const [competitors, setCompetitors] = useState(['', '', '', '', ''])
-  const [isLoading,   setIsLoading]   = useState(false)
-  const [error,       setError]       = useState<string | null>(null)
-  const [data,        setData]        = useState<CompetitionData | null>(null)
+  const [industry,    setIndustry]    = usePersistedState<string>('competitionMap.industry', '')
+  const [competitors, setCompetitors] = usePersistedState<string[]>('competitionMap.competitors', ['', '', '', '', ''])
+  const [isLoading,   setIsLoading]   = usePersistedState<boolean>('competitionMap.isLoading', false)
+  const [error,       setError]       = usePersistedState<string | null>('competitionMap.error', null)
+  const [data,        setData]        = usePersistedState<CompetitionData | null>('competitionMap.data', null)
 
   function updateCompetitor(i: number, val: string) {
     setCompetitors(prev => { const n = [...prev]; n[i] = val; return n })
