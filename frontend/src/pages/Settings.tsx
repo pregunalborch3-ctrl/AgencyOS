@@ -301,15 +301,157 @@ function SecuritySection() {
   )
 }
 
+// ─── Plans data (used in Billing) ─────────────────────────────────────────────
+type PlanKey = 'starter' | 'pro' | 'enterprise'
+
+const FRONT_PRICE_IDS: Record<PlanKey, string | undefined> = {
+  starter:    import.meta.env.VITE_STRIPE_PRICE_ID_STARTER    as string | undefined,
+  pro:        import.meta.env.VITE_STRIPE_PRICE_ID_PRO        as string | undefined,
+  enterprise: import.meta.env.VITE_STRIPE_PRICE_ID_ENTERPRISE as string | undefined,
+}
+
+const PLANS_LIST: { key: PlanKey; name: string; price: string; tagline: string; features: string[]; highlighted?: boolean }[] = [
+  {
+    key: 'starter',
+    name: 'Starter',
+    price: '€49',
+    tagline: 'Lo esencial para empezar a operar.',
+    features: [
+      'Generación ilimitada de campañas',
+      'Herramientas IA',
+      'Calendario editorial',
+    ],
+  },
+  {
+    key: 'pro',
+    name: 'Pro',
+    price: '€129',
+    tagline: 'Para agencias en crecimiento.',
+    highlighted: true,
+    features: [
+      'Todo lo de Starter',
+      'Meta Análisis',
+      'Frameworks con IA — Análisis de mercado',
+      'Mapa de competencia',
+      'Roadmap estratégico',
+    ],
+  },
+  {
+    key: 'enterprise',
+    name: 'Enterprise',
+    price: '€299',
+    tagline: 'Acceso programático y control total.',
+    features: [
+      'Todo lo de Pro',
+      'API Keys',
+      'Acceso programático completo',
+    ],
+  },
+]
+
+function tierFromPriceId(priceId?: string | null): PlanKey | null {
+  if (!priceId) return null
+  if (priceId === FRONT_PRICE_IDS.enterprise) return 'enterprise'
+  if (priceId === FRONT_PRICE_IDS.pro)        return 'pro'
+  if (priceId === FRONT_PRICE_IDS.starter)    return 'starter'
+  return null
+}
+
+function PlansGrid({
+  currentTier,
+  loadingPlan,
+  onSelect,
+}: {
+  currentTier: PlanKey | null
+  loadingPlan: PlanKey | null
+  onSelect: (key: PlanKey, priceId: string) => void
+}) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {PLANS_LIST.map(plan => {
+        const isCurrent = currentTier === plan.key
+        const priceId   = FRONT_PRICE_IDS[plan.key]
+        const loading   = loadingPlan === plan.key
+        const disabled  = isCurrent || !priceId || loading
+        return (
+          <div
+            key={plan.key}
+            className={`card p-5 flex flex-col relative ${
+              isCurrent
+                ? 'ring-2 ring-emerald-400 shadow-md shadow-emerald-100'
+                : plan.highlighted
+                ? 'ring-2 ring-indigo-400 shadow-md shadow-indigo-100'
+                : ''
+            }`}
+          >
+            {isCurrent ? (
+              <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] font-bold uppercase tracking-wider bg-emerald-500 text-white px-2.5 py-1 rounded-full whitespace-nowrap">
+                Tu plan actual
+              </span>
+            ) : plan.highlighted ? (
+              <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] font-bold uppercase tracking-wider bg-indigo-500 text-white px-2.5 py-1 rounded-full whitespace-nowrap">
+                Más popular
+              </span>
+            ) : null}
+
+            <div className="flex-1">
+              <h4 className="text-base font-black text-gray-900">{plan.name}</h4>
+              <div className="flex items-end gap-1 mt-2 mb-1">
+                <span className="text-3xl font-black text-gray-900">{plan.price}</span>
+                <span className="text-sm text-gray-400 mb-1">/mes</span>
+              </div>
+              <p className="text-xs text-gray-500 mb-4">{plan.tagline}</p>
+              <ul className="space-y-1.5 mb-5">
+                {plan.features.map(f => (
+                  <li key={f} className="flex items-start gap-2 text-xs text-gray-700">
+                    <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0 mt-0.5" />
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <button
+              type="button"
+              className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                isCurrent
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default'
+                  : plan.highlighted
+                  ? 'bg-indigo-500 text-white hover:bg-indigo-600 shadow-md shadow-indigo-200'
+                  : 'border border-gray-200 text-gray-700 hover:border-indigo-300 hover:text-indigo-600'
+              }`}
+              onClick={() => priceId && !isCurrent && onSelect(plan.key, priceId)}
+              disabled={disabled}
+            >
+              {loading
+                ? <><Loader2 size={14} className="animate-spin" /> Procesando…</>
+                : isCurrent
+                ? <><Check size={14} /> Plan actual</>
+                : currentTier
+                ? 'Cambiar a este plan'
+                : <><Sparkles size={14} /> Empezar ahora</>}
+            </button>
+            {!priceId && !isCurrent && (
+              <p className="text-[10px] text-gray-400 text-center mt-2">Plan no disponible en este entorno.</p>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ─── Billing Section ──────────────────────────────────────────────────────────
 function BillingSection() {
   const { t } = useTranslation()
   const { subscription, isActive, isLoading, subscribe, openPortal, cancel, reactivate } = useSubscription()
   const [canceling,     setCanceling]     = useState(false)
   const [reactivating,  setReactivating]  = useState(false)
-  const [subscribing,   setSubscribing]   = useState(false)
+  const [subscribingPlan, setSubscribingPlan] = useState<PlanKey | null>(null)
   const [confirmCancel, setConfirmCancel] = useState(false)
   const [portalLoading, setPortalLoading] = useState(false)
+
+  const currentTier = tierFromPriceId(subscription?.priceId)
 
   const handleCancel = async () => {
     if (!confirmCancel) { setConfirmCancel(true); return }
@@ -320,9 +462,18 @@ function BillingSection() {
     setReactivating(true)
     try { await reactivate() } finally { setReactivating(false) }
   }
-  const handleSubscribe = async () => {
-    setSubscribing(true)
-    try { await subscribe() } catch { setSubscribing(false) }
+  const handleSelectPlan = async (key: PlanKey, priceId: string) => {
+    setSubscribingPlan(key)
+    try {
+      // If already subscribed, send to Stripe portal so they can swap plans
+      if (subscription) {
+        await openPortal()
+      } else {
+        await subscribe(priceId)
+      }
+    } catch {
+      setSubscribingPlan(null)
+    }
   }
   const handlePortal = async () => {
     setPortalLoading(true)
@@ -354,23 +505,20 @@ function BillingSection() {
           <div className="w-14 h-14 rounded-2xl gradient-indigo flex items-center justify-center mx-auto mb-5 shadow-lg shadow-indigo-200">
             <Crown size={24} className="text-white" />
           </div>
-          <h2 className="text-2xl font-black text-gray-900 mb-2">{t('settings.billing.no_subscription')}</h2>
-          <p className="text-gray-500 mb-7 max-w-sm mx-auto leading-relaxed">
-            {t('settings.billing.no_subscription_desc')}
+          <h2 className="text-2xl font-black text-gray-900 mb-2">Elige tu plan</h2>
+          <p className="text-gray-500 max-w-md mx-auto leading-relaxed">
+            Tres planes pensados para distintos momentos de tu agencia. Elige el que mejor encaje y empieza ahora.
           </p>
-          <div className="flex items-end justify-center gap-1 mb-6">
-            <span className="text-5xl font-black text-gray-900">{t('settings.billing.price')}</span>
-            <span className="text-gray-400 text-lg mb-1.5">{t('settings.billing.per_month')}</span>
-          </div>
-          <button className="btn-primary py-3.5 px-10 text-base font-semibold" onClick={handleSubscribe} disabled={subscribing}>
-            {subscribing
-              ? <><Loader2 size={16} className="animate-spin" /> {t('settings.billing.redirecting')}</>
-              : <><Sparkles size={16} /> {t('settings.billing.start_trial')}</>
-            }
-          </button>
-          <p className="text-xs text-gray-400 mt-3">{t('settings.billing.secure_payment')}</p>
         </div>
       </div>
+
+      <PlansGrid
+        currentTier={null}
+        loadingPlan={subscribingPlan}
+        onSelect={handleSelectPlan}
+      />
+
+      <p className="text-xs text-gray-400 text-center">{t('settings.billing.secure_payment')}</p>
     </div>
   )
 
@@ -489,18 +637,22 @@ function BillingSection() {
         </div>
       </div>
 
-      <div className="card p-6">
-        <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <Sparkles size={16} className="text-indigo-500" /> {t('settings.billing.included_title')}
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {(['feature1','feature2','feature3','feature4','feature5','feature6'] as const).map(k => (
-            <div key={k} className="flex items-center gap-2.5 py-1">
-              <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0" />
-              <span className="text-sm text-gray-700">{t(`settings.billing.${k}`)}</span>
-            </div>
-          ))}
+      <div>
+        <div className="flex items-center justify-between mb-3 px-1">
+          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+            <Sparkles size={16} className="text-indigo-500" /> Cambia o actualiza tu plan
+          </h3>
+          {currentTier && (
+            <span className="text-xs text-gray-400">
+              Los cambios de plan se gestionan desde el portal de Stripe.
+            </span>
+          )}
         </div>
+        <PlansGrid
+          currentTier={currentTier}
+          loadingPlan={subscribingPlan}
+          onSelect={handleSelectPlan}
+        />
       </div>
     </div>
   )

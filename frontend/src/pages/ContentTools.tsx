@@ -408,7 +408,7 @@ export default function ContentTools() {
               </div>
               <h1 className="text-xl font-bold text-white">Herramientas IA</h1>
             </div>
-            <InfoTooltip text="Genera contenido optimizado para Instagram y TikTok con prompts expertos. Estrategias virales, hooks, carruseles, captions y diagnóstico de alcance." />
+            <InfoTooltip text="4 herramientas de IA para el día a día de tu agencia: genera propuestas comerciales listas para enviar, informes mensuales para clientes, emails difíciles redactados con precisión y diagnósticos completos de campañas paid media." />
           </div>
           <p className="text-sm text-zinc-500 ml-12">
             4 herramientas para el día a día de la agencia. Rellena los campos y Claude genera el resultado al instante.
