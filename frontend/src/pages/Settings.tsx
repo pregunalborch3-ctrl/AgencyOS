@@ -441,6 +441,50 @@ function PlansGrid({
   )
 }
 
+// ─── Launch Offer Banner (Billing) ────────────────────────────────────────────
+function LaunchOfferBillingBanner() {
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-indigo-300/60 shadow-lg shadow-indigo-100">
+      {/* Gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-600 opacity-[0.08]" />
+      <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/40" />
+
+      {/* Top accent bar */}
+      <div className="h-1 w-full bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-600" />
+
+      <div className="relative px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          {/* Pulsing badge */}
+          <div className="relative flex-shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-md shadow-indigo-200">
+              <span className="text-lg">🎉</span>
+            </div>
+            <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-amber-400 border-2 border-white animate-ping" />
+            <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-amber-400 border-2 border-white" />
+          </div>
+
+          <div>
+            <p className="text-[11px] font-bold text-indigo-500 uppercase tracking-wider mb-0.5">
+              Oferta de lanzamiento
+            </p>
+            <p className="text-gray-900 font-black text-base leading-tight">
+              50% de descuento en tu primer mes
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Solo por tiempo limitado · Sin permanencia · Cancela cuando quieras
+            </p>
+          </div>
+        </div>
+
+        {/* Highlight pill */}
+        <div className="flex-shrink-0 bg-gradient-to-r from-indigo-500 to-violet-600 text-white text-sm font-black px-5 py-2.5 rounded-xl shadow-md shadow-indigo-200 whitespace-nowrap">
+          −50% aplicado al contratar
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Billing Section ──────────────────────────────────────────────────────────
 function BillingSection() {
   const { t } = useTranslation()
@@ -511,6 +555,8 @@ function BillingSection() {
           </p>
         </div>
       </div>
+
+      <LaunchOfferBillingBanner />
 
       <PlansGrid
         currentTier={null}
@@ -648,11 +694,16 @@ function BillingSection() {
             </span>
           )}
         </div>
-        <PlansGrid
-          currentTier={currentTier}
-          loadingPlan={subscribingPlan}
-          onSelect={handleSelectPlan}
-        />
+
+        <LaunchOfferBillingBanner />
+
+        <div className="mt-4">
+          <PlansGrid
+            currentTier={currentTier}
+            loadingPlan={subscribingPlan}
+            onSelect={handleSelectPlan}
+          />
+        </div>
       </div>
     </div>
   )
