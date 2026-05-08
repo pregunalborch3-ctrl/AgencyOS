@@ -8,7 +8,8 @@ import {
 } from '../services/emailService'
 import { sendPurchase } from '../services/metaCAPIService'
 
-const FRONTEND = process.env.FRONTEND_URL ?? 'http://localhost:5173'
+const FRONTEND   = process.env.FRONTEND_URL ?? 'http://localhost:5173'
+const PROMO_ID   = process.env.STRIPE_PROMO_LANZAMIENTO50_ID ?? ''
 
 function planLabel(priceId: string): string {
   if (priceId === PRICE_IDS.enterprise) return 'Enterprise'
@@ -70,8 +71,8 @@ export async function createCheckoutSession(req: Request, res: Response): Promis
     success_url: `${FRONTEND}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url:  `${FRONTEND}/subscription/canceled`,
     client_reference_id: user.id,
-    ...(couponId
-      ? { discounts: [{ coupon: couponId }] }
+    ...(couponId && PROMO_ID
+      ? { discounts: [{ promotion_code: PROMO_ID }] }
       : { allow_promotion_codes: true }
     ),
   })
