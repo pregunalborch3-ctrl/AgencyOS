@@ -45,14 +45,19 @@ export default function TrialBanner() {
         <span className={`shrink-0 text-base ${isUrgent ? 'text-amber-400' : 'text-indigo-400'}`}>
           {isUrgent ? '⚠️' : '🎁'}
         </span>
-        <span className="truncate">
-          {message}
-          {isUrgent && (
-            <span className="ml-1 text-amber-200/80 font-normal">
-              Activa tu plan para no perder el acceso.
-            </span>
-          )}
-        </span>
+        <div className="min-w-0">
+          <span className="truncate block">
+            {message}
+            {isUrgent && (
+              <span className="ml-1 text-amber-200/80 font-normal">
+                Activa tu plan para no perder el acceso.
+              </span>
+            )}
+          </span>
+          <span className={`text-xs font-normal opacity-75 ${isUrgent ? 'text-amber-200' : 'text-indigo-300'}`}>
+            Usa el código <strong className="font-bold">LANZAMIENTO50</strong> en el checkout
+          </span>
+        </div>
       </div>
 
       <div className="flex items-center gap-2 shrink-0">

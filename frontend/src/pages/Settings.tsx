@@ -431,6 +431,11 @@ function PlansGrid({
                 ? 'Cambiar a este plan'
                 : <><Sparkles size={14} /> Empezar ahora</>}
             </button>
+            {!isCurrent && !currentTier && priceId && (
+              <p className="text-[10px] text-gray-400 text-center mt-2">
+                Introduce el código <strong className="text-indigo-400 font-semibold">LANZAMIENTO50</strong> al pagar para obtener el 50% de descuento
+              </p>
+            )}
             {!priceId && !isCurrent && (
               <p className="text-[10px] text-gray-400 text-center mt-2">Plan no disponible en este entorno.</p>
             )}
