@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import {
   Rocket, Settings, LogOut, Clock, CalendarDays,
   Globe2, Crosshair, Layers, Zap,
-  MoreHorizontal, X, BarChart2, Lock, Wand2,
+  MoreHorizontal, X, BarChart2, Lock, Wand2, Home,
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { usePlan, type PlanTier } from '../../hooks/usePlan'
@@ -65,6 +65,7 @@ export default function Sidebar() {
   const gradient = GRADIENTS[(user?.name?.charCodeAt(0) ?? 0) % GRADIENTS.length]
 
   const NAV_MAIN = [
+    { path: '/home',          icon: Home,         label: 'Inicio',          mobileLabel: 'Inicio'                },
     { path: '/dashboard',     icon: Rocket,       label: t('nav.campaign'), mobileLabel: t('nav.campaign_short') },
     { path: '/content-tools', icon: Wand2,        label: 'Herramientas IA', mobileLabel: 'IA'                   },
     { path: '/calendar',      icon: CalendarDays, label: t('nav.calendar'), mobileLabel: t('nav.calendar_short') },
@@ -92,15 +93,12 @@ export default function Sidebar() {
       <aside className="hidden md:flex fixed inset-y-0 left-0 z-30 w-[210px] bg-zinc-950 border-r border-white/5 flex-col py-4 overflow-y-auto">
 
         {/* Logo */}
-        <button
-          onClick={() => navigate('/home')}
-          className="flex items-center gap-2.5 px-4 mb-5 hover:opacity-80 transition-opacity cursor-pointer"
-        >
+        <div className="flex items-center gap-2.5 px-4 mb-5">
           <div className="w-7 h-7 rounded-lg bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 flex-shrink-0">
             <Zap size={13} className="text-white" />
           </div>
           <span className="text-sm font-black text-white">AgencyOS</span>
-        </button>
+        </div>
 
         {/* Main nav */}
         <nav className="flex flex-col gap-0.5 px-2">

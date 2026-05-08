@@ -334,13 +334,25 @@ export default function Home() {
                 </p>
               </>
             ) : (
-              <div className="flex-1 flex flex-col justify-center">
-                <p className="text-sm text-zinc-500">Sin suscripción activa</p>
+              <div className="flex-1 flex flex-col justify-between gap-2">
+                <p className="text-[11px] text-zinc-500 font-medium">Elige tu plan</p>
+                <div className="space-y-1.5">
+                  {[
+                    { name: 'Starter',    price: '€49,99' },
+                    { name: 'Pro',        price: '€129,99', highlight: true },
+                    { name: 'Enterprise', price: '€259,99' },
+                  ].map(p => (
+                    <div key={p.name} className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg ${p.highlight ? 'bg-indigo-500/10 border border-indigo-500/20' : 'bg-zinc-800/60'}`}>
+                      <span className={`text-[11px] font-semibold ${p.highlight ? 'text-indigo-300' : 'text-zinc-400'}`}>{p.name}</span>
+                      <span className={`text-[11px] font-black ${p.highlight ? 'text-indigo-300' : 'text-zinc-500'}`}>{p.price}<span className="font-normal text-[9px] ml-0.5">/mes</span></span>
+                    </div>
+                  ))}
+                </div>
                 <button
-                  onClick={() => navigate('/settings')}
-                  className="mt-2 text-xs text-indigo-400 hover:text-indigo-300 font-semibold text-left transition-colors"
+                  onClick={() => navigate('/settings?tab=facturacion')}
+                  className="mt-1 w-full py-1.5 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white text-[11px] font-bold transition-colors"
                 >
-                  Activar ahora →
+                  Ver planes →
                 </button>
               </div>
             )}
