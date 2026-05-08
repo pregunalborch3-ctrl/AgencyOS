@@ -97,7 +97,7 @@ export default function Sidebar() {
           <div className="w-7 h-7 rounded-lg bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 flex-shrink-0">
             <Zap size={13} className="text-white" />
           </div>
-          <span className="text-sm font-black text-white">AgencyOS</span>
+          <span className="text-sm font-black text-white">AgenciesOS</span>
         </div>
 
         {/* Main nav */}
