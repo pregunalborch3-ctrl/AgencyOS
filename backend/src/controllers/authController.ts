@@ -6,7 +6,7 @@ import crypto from "crypto"
 import { UserStore, User, prisma } from "../models/User"
 import type { JwtPayload } from "../middleware/authMiddleware"
 import { logFailedLogin } from "../middleware/security"
-import { sendWelcomeEmail, sendPasswordResetEmail } from "../services/emailService"
+import { sendWelcomeEmail, sendPasswordResetEmail, sendTrialActivationEmail } from "../services/emailService"
 import { sendCompleteRegistration } from "../services/metaCAPIService"
 
 const BCRYPT_ROUNDS = 12
@@ -66,7 +66,7 @@ export async function register(req: Request, res: Response): Promise<void> {
     }
 
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS)
-    const user = await UserStore.create({
+    let user = await UserStore.create({
       id: uuid(),
       name: name.trim(),
       email: email.toLowerCase().trim(),
@@ -78,11 +78,17 @@ export async function register(req: Request, res: Response): Promise<void> {
       onboardingDone: false,
     })
 
+    const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    user = await UserStore.update(user.id, { subscriptionStatus: "trialing", trialEnd })
+
     const token = signToken(user, "30d")
     res.status(201).json({
       success: true,
       data: { token, user: UserStore.toPublic(user) },
     })
+
+    sendTrialActivationEmail(user.email, user.name)
+      .catch((err: unknown) => console.error("[email] Trial activation:", err))
 
     sendCompleteRegistration({
       email:     user.email,

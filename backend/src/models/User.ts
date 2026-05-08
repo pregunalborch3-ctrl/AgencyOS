@@ -40,11 +40,11 @@ function toUser(u: any): User {
     createdAt: u.createdAt.toISOString(),
     lastLoginAt: u.lastLoginAt ? u.lastLoginAt.toISOString() : null,
     stripeCustomerId: u.stripeCustomerId,
-    subscription: u.subscriptionId ? {
-      stripeSubscriptionId: u.subscriptionId,
+    subscription: (u.subscriptionId || u.subscriptionStatus === 'trialing') ? {
+      stripeSubscriptionId: u.subscriptionId ?? "",
       status: u.subscriptionStatus as SubStatus,
       currentPeriodEnd: u.subscriptionEnd ? u.subscriptionEnd.toISOString() : "",
-      cancelAtPeriodEnd: u.cancelAtPeriodEnd,
+      cancelAtPeriodEnd: u.cancelAtPeriodEnd ?? false,
       priceId: u.priceId ?? "",
       trialEnd: u.trialEnd ? u.trialEnd.toISOString() : null,
     } : null,

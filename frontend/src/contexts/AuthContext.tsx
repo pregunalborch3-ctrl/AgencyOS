@@ -1,6 +1,15 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+export interface AuthSubscription {
+  stripeSubscriptionId: string
+  status: string
+  currentPeriodEnd: string
+  cancelAtPeriodEnd: boolean
+  priceId: string
+  trialEnd: string | null
+}
+
 export interface AuthUser {
   id: string
   name: string
@@ -9,6 +18,7 @@ export interface AuthUser {
   createdAt: string
   lastLoginAt: string | null
   onboardingDone: boolean
+  subscription: AuthSubscription | null
 }
 
 export interface OnboardingSettings {

@@ -219,7 +219,7 @@ function Hero() {
             to="/register"
             className="flex items-center gap-2 px-7 py-3.5 bg-indigo-500 hover:bg-indigo-400 text-white font-bold rounded-xl transition-all shadow-xl shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:-translate-y-0.5"
           >
-            Empezar ahora <ArrowRight size={16} />
+            Empezar gratis — 7 días <ArrowRight size={16} />
           </Link>
           <a
             href="#demo"
@@ -229,7 +229,7 @@ function Hero() {
           </a>
         </div>
 
-        <p className="text-xs text-zinc-600">Empieza gratis. Sin tarjeta. Cancela cuando quieras.</p>
+        <p className="text-xs text-zinc-600">7 días gratis. Sin tarjeta de crédito. Cancela cuando quieras.</p>
 
         {/* Dashboard mock */}
         <div className="w-full pt-4">
@@ -611,6 +611,22 @@ function Demo() {
 // Tipado mínimo para fbq (Meta Pixel global)
 declare function fbq(event: string, name: string, params?: Record<string, string>): void
 
+// ─── Launch Offer Banner ──────────────────────────────────────────────────────
+function LaunchOfferBanner() {
+  return (
+    <div className="w-full bg-gradient-to-r from-indigo-600/20 via-violet-600/20 to-indigo-600/20 border-y border-indigo-500/20 py-4 px-6">
+      <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-2 text-center sm:text-left">
+        <span className="text-lg">🎉</span>
+        <p className="text-sm font-semibold text-indigo-200">
+          <span className="text-white font-bold">Oferta de lanzamiento:</span>{' '}
+          50% de descuento en tu primer mes.
+        </p>
+        <p className="text-xs text-zinc-400 sm:ml-2">Solo por tiempo limitado · Sin permanencia</p>
+      </div>
+    </div>
+  )
+}
+
 // ─── Section: Pricing ─────────────────────────────────────────────────────────
 const PLANS = [
   {
@@ -953,12 +969,27 @@ export default function Landing() {
       <SocialProof />
       <HowItWorks />
       <Benefits />
+      <LaunchOfferBanner />
       <Pricing />
       <Demo />
       <Testimonials />
       <FinalCta />
       <FAQ />
       <Footer />
+
+      {/* WhatsApp floating button */}
+      <a
+        href="https://wa.me/34643656725"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Contactar por WhatsApp"
+        className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full shadow-2xl transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-black"
+        style={{ background: '#25D366' }}
+      >
+        <svg viewBox="0 0 32 32" width="30" height="30" fill="white" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16.004 2.667C8.64 2.667 2.667 8.64 2.667 16c0 2.347.613 4.587 1.774 6.56L2.667 29.333l6.947-1.747A13.27 13.27 0 0 0 16.004 29.333c7.36 0 13.33-5.973 13.33-13.333S23.364 2.667 16.004 2.667zm0 24.267a11 11 0 0 1-5.6-1.534l-.4-.24-4.12 1.04 1.067-3.987-.267-.413A10.987 10.987 0 0 1 5.001 16c0-6.08 4.947-11.027 11.003-11.027S27.007 9.92 27.007 16 22.06 26.934 16.004 26.934zm6.04-8.24c-.333-.16-1.96-.96-2.267-1.067-.306-.107-.52-.16-.746.16-.226.32-.867 1.067-1.067 1.28-.2.213-.4.24-.733.08a9.227 9.227 0 0 1-2.72-1.68 10.093 10.093 0 0 1-1.88-2.347c-.2-.346-.02-.533.147-.706.147-.147.333-.387.5-.573.16-.187.213-.32.32-.533.107-.213.053-.4-.027-.56-.08-.16-.746-1.8-1.027-2.467-.267-.64-.546-.56-.746-.573h-.64c-.214 0-.56.08-.854.387-.293.306-1.12 1.093-1.12 2.667s1.147 3.093 1.307 3.307c.16.213 2.24 3.413 5.44 4.787.76.333 1.36.533 1.826.68.773.24 1.48.213 2.027.133.62-.093 1.9-.773 2.173-1.52.267-.746.267-1.386.187-1.52-.08-.133-.293-.213-.627-.373z" />
+        </svg>
+      </a>
     </div>
   )
 }

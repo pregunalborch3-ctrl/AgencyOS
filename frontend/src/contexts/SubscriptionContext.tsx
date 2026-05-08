@@ -92,7 +92,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     await refetch()
   }, [refetch])
 
-  const isActive = subscription?.status === 'active' || subscription?.status === 'trialing'
+  const trialStillValid = subscription?.status === 'trialing' &&
+    !!subscription.trialEnd && new Date(subscription.trialEnd) > new Date()
+  const isActive = subscription?.status === 'active' || trialStillValid
     || (user as any)?.role === 'admin'
 
   return (

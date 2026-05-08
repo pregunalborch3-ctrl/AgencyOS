@@ -14,6 +14,7 @@ console.log('  ✓ Variables de entorno OK\n')
 
 import { prisma } from './models/User'
 import { sendRenewalReminderEmail } from './services/emailService'
+import { sendTrialEmails } from './services/trialEmailScheduler'
 import authRoutes         from './routes/auth'
 import subscriptionRoutes from './routes/subscription'
 import { handleWebhook }  from './controllers/subscriptionController'
@@ -184,6 +185,8 @@ app.listen(PORT, () => {
   setInterval(cleanupExpiredTokens, 24 * 60 * 60 * 1000)
   sendRenewalReminders()
   setInterval(sendRenewalReminders, 24 * 60 * 60 * 1000)
+  sendTrialEmails()
+  setInterval(sendTrialEmails, 24 * 60 * 60 * 1000)
 })
 
 export default app

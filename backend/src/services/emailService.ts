@@ -751,3 +751,156 @@ export async function sendPasswordResetEmail(to: string, rawName: string, resetU
     throw new Error(error.message)
   }
 }
+
+// ─── TRIAL EMAIL SEQUENCE ────────────────────────────────────────────────────
+
+function trialEmailBase(bodyHtml: string, year: number): string {
+  return `<!DOCTYPE html>
+<html lang="es" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+</head>
+<body style="margin:0;padding:0;background:#09090b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#09090b;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="560" cellpadding="0" cellspacing="0" style="background:#18181b;border-radius:16px;overflow:hidden;border:1px solid #3f3f46;">
+          <tr><td style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:32px 40px;text-align:center;">
+            <p style="margin:0;font-size:13px;color:#c4b5fd;letter-spacing:.08em;text-transform:uppercase;font-weight:600;">Agenciesos</p>
+          </td></tr>
+          <tr><td style="padding:40px;">
+            ${bodyHtml}
+            <hr style="border:none;border-top:1px solid #27272a;margin:32px 0;" />
+            <p style="margin:0;color:#3f3f46;font-size:12px;text-align:center;">
+              © ${year} Agenciesos · agenciesosapp@gmail.com<br/>
+              <a href="mailto:agenciesosapp@gmail.com?subject=unsubscribe" style="color:#52525b;">Cancelar suscripción</a>
+            </p>
+          </td></tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+}
+
+export async function sendTrialActivationEmail(to: string, rawName: string): Promise<void> {
+  if (!process.env.RESEND_API_KEY) return
+  const name = escHtml(rawName)
+  const dashUrl = `${process.env.FRONTEND_URL ?? "https://agenciesos.com"}/dashboard`
+  const year = new Date().getFullYear()
+
+  const body = `
+    <h1 style="margin:0 0 8px;color:#fff;font-size:24px;font-weight:700;">🎁 Tu prueba de 7 días ha comenzado</h1>
+    <p style="margin:0 0 24px;color:#a1a1aa;font-size:15px;line-height:1.6;">Hola ${name}, tienes acceso completo a todas las funcionalidades Pro durante los próximos 7 días. Sin tarjeta de crédito.</p>
+    <p style="margin:0 0 12px;color:#e4e4e7;font-size:15px;font-weight:600;">Empieza con esto hoy:</p>
+    <table cellpadding="0" cellspacing="0" style="margin:0 0 28px;width:100%;">
+      ${['⚡ Genera tu primera campaña completa con IA', '📊 Analiza a tu competencia en segundos', '📅 Crea un calendario de contenido para toda la semana'].map(item => `
+      <tr><td style="padding:10px 0;border-bottom:1px solid #27272a;color:#a1a1aa;font-size:14px;">${item}</td></tr>`).join('')}
+    </table>
+    <a href="${dashUrl}" style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;font-size:15px;">Ir al dashboard →</a>
+    <p style="margin:24px 0 0;color:#71717a;font-size:13px;">Cualquier duda, responde a este email. Estamos aquí.</p>`
+
+  const { error } = await resend.emails.send({
+    from: FROM, to: [to], replyTo: "agenciesosapp@gmail.com",
+    subject: `🎁 Tu prueba gratuita de 7 días ha comenzado, ${rawName}`,
+    html: trialEmailBase(body, year),
+    text: `Hola ${rawName},\n\nTu prueba gratuita de 7 días ha comenzado. Accede al dashboard: ${dashUrl}\n\n© ${year} Agenciesos`,
+  })
+  if (error) console.error("[email] Error trial activation →", error)
+}
+
+export async function sendTrialDay2Email(to: string, rawName: string): Promise<void> {
+  if (!process.env.RESEND_API_KEY) return
+  const name = escHtml(rawName)
+  const dashUrl = `${process.env.FRONTEND_URL ?? "https://agenciesos.com"}/dashboard`
+  const year = new Date().getFullYear()
+
+  const body = `
+    <h1 style="margin:0 0 8px;color:#fff;font-size:24px;font-weight:700;">¿Ya generaste tu primera campaña?</h1>
+    <p style="margin:0 0 24px;color:#a1a1aa;font-size:15px;line-height:1.6;">Hola ${name}, llevas 2 días en Agenciesos. Si aún no has probado el generador de campañas, este es el mejor momento.</p>
+    <p style="margin:0 0 16px;color:#e4e4e7;font-size:15px;line-height:1.6;">En menos de 2 minutos puedes tener: copy listo para publicar, hooks para redes sociales y un guión para tu próximo vídeo.</p>
+    <a href="${dashUrl}" style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;font-size:15px;">Probar el generador →</a>`
+
+  const { error } = await resend.emails.send({
+    from: FROM, to: [to], replyTo: "agenciesosapp@gmail.com",
+    subject: `${rawName}, ¿ya generaste tu primera campaña con IA?`,
+    html: trialEmailBase(body, year),
+    text: `Hola ${rawName},\n\n¿Ya generaste tu primera campaña? Pruébalo ahora: ${dashUrl}\n\n© ${year} Agenciesos`,
+  })
+  if (error) console.error("[email] Error trial day2 →", error)
+}
+
+export async function sendTrialDay4Email(to: string, rawName: string): Promise<void> {
+  if (!process.env.RESEND_API_KEY) return
+  const name = escHtml(rawName)
+  const dashUrl = `${process.env.FRONTEND_URL ?? "https://agenciosos.com"}/dashboard`
+  const year = new Date().getFullYear()
+
+  const body = `
+    <h1 style="margin:0 0 8px;color:#fff;font-size:24px;font-weight:700;">⏳ Te quedan 3 días de prueba</h1>
+    <p style="margin:0 0 24px;color:#a1a1aa;font-size:15px;line-height:1.6;">Hola ${name}, tu prueba gratuita termina en 3 días. Es un buen momento para explorar todo lo que no hayas probado todavía.</p>
+    <p style="margin:0 0 16px;color:#e4e4e7;font-size:15px;line-height:1.6;">¿Has probado el análisis de competencia? Muchos usuarios dicen que es lo que más les sorprende.</p>
+    <a href="${dashUrl}" style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;font-size:15px;">Seguir explorando →</a>`
+
+  const { error } = await resend.emails.send({
+    from: FROM, to: [to], replyTo: "agenciesosapp@gmail.com",
+    subject: `⏳ 3 días para que termine tu prueba, ${rawName}`,
+    html: trialEmailBase(body, year),
+    text: `Hola ${rawName},\n\nTe quedan 3 días de prueba. Sigue explorando: ${dashUrl}\n\n© ${year} Agenciesos`,
+  })
+  if (error) console.error("[email] Error trial day4 →", error)
+}
+
+export async function sendTrialDay6Email(to: string, rawName: string): Promise<void> {
+  if (!process.env.RESEND_API_KEY) return
+  const name = escHtml(rawName)
+  const pricingUrl = `${process.env.FRONTEND_URL ?? "https://agenciesos.com"}/pricing`
+  const year = new Date().getFullYear()
+
+  const body = `
+    <h1 style="margin:0 0 8px;color:#fff;font-size:24px;font-weight:700;">🔔 Mañana termina tu prueba</h1>
+    <p style="margin:0 0 24px;color:#a1a1aa;font-size:15px;line-height:1.6;">Hola ${name}, mañana termina tu acceso gratuito a Agenciosos.</p>
+    <div style="background:#1e1b4b;border:1px solid #4338ca;border-radius:12px;padding:20px;margin:0 0 24px;">
+      <p style="margin:0 0 4px;color:#a5b4fc;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Oferta de lanzamiento</p>
+      <p style="margin:0 0 4px;color:#fff;font-size:28px;font-weight:700;">50% de descuento</p>
+      <p style="margin:0;color:#818cf8;font-size:14px;">en tu primer mes · Solo por tiempo limitado</p>
+    </div>
+    <a href="${pricingUrl}" style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;font-size:15px;">Activar mi plan con 50% OFF →</a>
+    <p style="margin:20px 0 0;color:#71717a;font-size:13px;">Sin permanencia. Cancela cuando quieras.</p>`
+
+  const { error } = await resend.emails.send({
+    from: FROM, to: [to], replyTo: "agenciesosapp@gmail.com",
+    subject: `🔔 Mañana termina tu prueba — 50% OFF en tu primer mes`,
+    html: trialEmailBase(body, year),
+    text: `Hola ${rawName},\n\nMañana termina tu prueba. Activa tu plan con 50% de descuento: ${pricingUrl}\n\n© ${year} Agenciosos`,
+  })
+  if (error) console.error("[email] Error trial day6 →", error)
+}
+
+export async function sendTrialEndEmail(to: string, rawName: string): Promise<void> {
+  if (!process.env.RESEND_API_KEY) return
+  const name = escHtml(rawName)
+  const pricingUrl = `${process.env.FRONTEND_URL ?? "https://agenciosos.com"}/pricing`
+  const year = new Date().getFullYear()
+
+  const body = `
+    <h1 style="margin:0 0 8px;color:#fff;font-size:24px;font-weight:700;">Tu prueba gratuita ha terminado</h1>
+    <p style="margin:0 0 24px;color:#a1a1aa;font-size:15px;line-height:1.6;">Hola ${name}, tu período de prueba de 7 días ha concluido. Esperamos que hayas visto el valor que Agenciesos puede aportar a tu agencia.</p>
+    <div style="background:#1e1b4b;border:1px solid #4338ca;border-radius:12px;padding:20px;margin:0 0 24px;">
+      <p style="margin:0 0 4px;color:#a5b4fc;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Oferta de lanzamiento</p>
+      <p style="margin:0 0 4px;color:#fff;font-size:28px;font-weight:700;">50% de descuento</p>
+      <p style="margin:0;color:#818cf8;font-size:14px;">en tu primer mes · Aún disponible</p>
+    </div>
+    <a href="${pricingUrl}" style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;font-size:15px;">Recuperar acceso con 50% OFF →</a>
+    <p style="margin:20px 0 0;color:#71717a;font-size:13px;">Sin permanencia. Cancela cuando quieras.</p>`
+
+  const { error } = await resend.emails.send({
+    from: FROM, to: [to], replyTo: "agenciesosapp@gmail.com",
+    subject: `Tu prueba de Agenciesos ha terminado — 50% OFF todavía disponible`,
+    html: trialEmailBase(body, year),
+    text: `Hola ${rawName},\n\nTu prueba ha terminado. Activa tu plan con 50% de descuento: ${pricingUrl}\n\n© ${year} Agenciosos`,
+  })
+  if (error) console.error("[email] Error trial end →", error)
+}
