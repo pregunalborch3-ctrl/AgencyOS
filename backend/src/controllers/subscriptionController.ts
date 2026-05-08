@@ -38,7 +38,7 @@ export async function createCheckoutSession(req: Request, res: Response): Promis
   const user = await UserStore.findById(req.user!.userId)
   if (!user) { res.status(404).json({ success: false, error: 'Usuario no encontrado.' }); return }
 
-  const { priceId: requestedPriceId } = req.body as { priceId?: string }
+  const { priceId: requestedPriceId, couponId } = req.body as { priceId?: string; couponId?: string }
   const allowedIds = Object.values(PRICE_IDS).filter(Boolean)
   const priceId = (requestedPriceId && allowedIds.includes(requestedPriceId))
     ? requestedPriceId
@@ -70,7 +70,10 @@ export async function createCheckoutSession(req: Request, res: Response): Promis
     success_url: `${FRONTEND}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url:  `${FRONTEND}/subscription/canceled`,
     client_reference_id: user.id,
-    allow_promotion_codes: true,
+    ...(couponId
+      ? { discounts: [{ coupon: couponId }] }
+      : { allow_promotion_codes: true }
+    ),
   })
 
   res.json({ success: true, data: { url: session.url } })

@@ -856,7 +856,7 @@ export async function sendTrialDay4Email(to: string, rawName: string): Promise<v
 export async function sendTrialDay6Email(to: string, rawName: string): Promise<void> {
   if (!process.env.RESEND_API_KEY) return
   const name = escHtml(rawName)
-  const pricingUrl = `${process.env.FRONTEND_URL ?? "https://agenciesos.com"}/pricing`
+  const pricingUrl = `${process.env.FRONTEND_URL ?? "https://agenciesos.com"}/home?coupon=pDQrERMK`
   const year = new Date().getFullYear()
 
   const body = `
@@ -882,7 +882,7 @@ export async function sendTrialDay6Email(to: string, rawName: string): Promise<v
 export async function sendTrialEndEmail(to: string, rawName: string): Promise<void> {
   if (!process.env.RESEND_API_KEY) return
   const name = escHtml(rawName)
-  const pricingUrl = `${process.env.FRONTEND_URL ?? "https://agenciosos.com"}/pricing`
+  const pricingUrl = `${process.env.FRONTEND_URL ?? "https://agenciosos.com"}/home?coupon=pDQrERMK`
   const year = new Date().getFullYear()
 
   const body = `

@@ -25,7 +25,7 @@ interface SubContextType {
   isLoading:    boolean
   isActive:     boolean   // active or trialing
   refetch:      () => Promise<void>
-  subscribe:    (priceId?: string) => Promise<void>
+  subscribe:    (priceId?: string, couponId?: string) => Promise<void>
   openPortal:   () => Promise<void>
   cancel:       () => Promise<void>
   reactivate:   () => Promise<void>
@@ -69,10 +69,13 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { setIsLoading(true); refetch() }, [refetch])
 
-  const subscribe = useCallback(async (priceId?: string) => {
+  const subscribe = useCallback(async (priceId?: string, couponId?: string) => {
+    const body: Record<string, string> = {}
+    if (priceId)  body.priceId  = priceId
+    if (couponId) body.couponId = couponId
     const { url } = await authFetch<{ url: string }>('/subscription/checkout', {
       method: 'POST',
-      body: priceId ? JSON.stringify({ priceId }) : undefined,
+      body: Object.keys(body).length ? JSON.stringify(body) : undefined,
     })
     window.location.href = url
   }, [])

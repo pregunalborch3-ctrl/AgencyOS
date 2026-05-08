@@ -1,9 +1,13 @@
 import { useSubscription } from '../contexts/SubscriptionContext'
 import { useAuth } from '../contexts/AuthContext'
 
+const LAUNCH_COUPON = 'pDQrERMK'
+
 export default function TrialExpiredModal() {
   const { user } = useAuth()
   const { subscription, isActive, subscribe } = useSubscription()
+  const urlCoupon = new URLSearchParams(window.location.search).get('coupon')
+  const coupon = urlCoupon ?? LAUNCH_COUPON
 
   if (!user) return null
   if (isActive) return null
@@ -39,7 +43,7 @@ export default function TrialExpiredModal() {
         </div>
 
         <button
-          onClick={() => subscribe()}
+          onClick={() => subscribe(undefined, coupon)}
           className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-colors text-base"
         >
           Activar mi plan ahora →

@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useSubscription } from '../contexts/SubscriptionContext'
 
+const LAUNCH_COUPON = 'pDQrERMK'
+
 function daysLeft(trialEnd: string): number {
   const ms = new Date(trialEnd).getTime() - Date.now()
   return Math.max(0, Math.ceil(ms / (1000 * 60 * 60 * 24)))
@@ -55,7 +57,7 @@ export default function TrialBanner() {
 
       <div className="flex items-center gap-2 shrink-0">
         <button
-          onClick={() => subscribe()}
+          onClick={() => subscribe(undefined, LAUNCH_COUPON)}
           className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors ${
             isUrgent
               ? 'bg-amber-500 hover:bg-amber-400 text-black'
