@@ -225,25 +225,51 @@ export default function Home() {
       )}
 
       {/* ── 1. Header ─────────────────────────────────────────────────────── */}
-      <div className="px-4 py-5 md:px-8 md:py-7 border-b border-zinc-800/70 flex items-center justify-between">
+      <div className="px-4 py-5 md:px-8 md:py-7 border-b border-zinc-800/70 flex items-center justify-between gap-4">
         <div>
           <p className="text-zinc-500 text-sm">Panel principal</p>
           <h1 className="text-2xl font-black text-white mt-0.5 flex items-center gap-2">
             Hola, {firstName} <Zap size={20} className="text-indigo-400" />
           </h1>
         </div>
-        <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg`}>
-          <span className="text-sm font-black text-white">{initials}</span>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-bold transition-all shadow-lg shadow-indigo-500/25 hover:-translate-y-0.5 active:translate-y-0"
+          >
+            <Zap size={14} /> Generar campaña
+          </button>
+          <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg`}>
+            <span className="text-sm font-black text-white">{initials}</span>
+          </div>
         </div>
       </div>
 
       <div className="p-4 md:p-8 space-y-8 flex-1">
 
-        {/* ── 2. Mensaje motivador ──────────────────────────────────────────── */}
-        <div className="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-indigo-500/8 border border-indigo-500/20">
-          <Zap size={15} className="text-indigo-400 flex-shrink-0" />
-          <p className="text-sm text-zinc-300 leading-relaxed">{motivational}</p>
-        </div>
+        {/* ── 2. Hero activación (0 campañas) o mensaje motivador ──────────── */}
+        {campaigns.length === 0 ? (
+          <div
+            onClick={() => navigate('/dashboard')}
+            className="cursor-pointer flex flex-col sm:flex-row items-center gap-5 px-6 py-6 rounded-2xl bg-gradient-to-r from-indigo-600/20 via-violet-600/10 to-indigo-600/20 border border-indigo-500/30 hover:border-indigo-400/50 transition-all group"
+          >
+            <div className="w-14 h-14 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-500/30 transition-colors">
+              <Rocket size={26} className="text-indigo-400" />
+            </div>
+            <div className="flex-1 text-center sm:text-left">
+              <p className="text-white font-black text-lg leading-tight">Genera tu primera campaña</p>
+              <p className="text-zinc-400 text-sm mt-1">Es el primer paso para ver el valor de AgenciesOS. Solo tarda 2 minutos.</p>
+            </div>
+            <div className="flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-500 group-hover:bg-indigo-400 text-white text-sm font-bold transition-colors whitespace-nowrap">
+              <Zap size={14} /> Empezar ahora
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-indigo-500/8 border border-indigo-500/20">
+            <Zap size={15} className="text-indigo-400 flex-shrink-0" />
+            <p className="text-sm text-zinc-300 leading-relaxed">{motivational}</p>
+          </div>
+        )}
 
         {/* ── 3. Stats ──────────────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -462,13 +488,15 @@ export default function Home() {
           )}
         </div>
 
-        {/* ── 7. CTA ────────────────────────────────────────────────────────── */}
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-indigo-500 hover:bg-indigo-400 text-white font-black text-base transition-all shadow-lg shadow-indigo-500/25 hover:-translate-y-0.5 active:translate-y-0"
-        >
-          <Zap size={18} /> Generar nueva campaña
-        </button>
+        {/* ── 7. CTA (solo si ya tiene campañas) ────────────────────────────── */}
+        {campaigns.length > 0 && (
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-indigo-500 hover:bg-indigo-400 text-white font-black text-base transition-all shadow-lg shadow-indigo-500/25 hover:-translate-y-0.5 active:translate-y-0"
+          >
+            <Zap size={18} /> Generar nueva campaña
+          </button>
+        )}
 
       </div>
     </div>
