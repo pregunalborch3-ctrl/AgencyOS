@@ -148,12 +148,6 @@ export default function Sidebar() {
 
       {/* ── Mobile bottom bar ─────────────────────────────────────────────── */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-zinc-950 border-t border-white/5 flex items-stretch safe-area-pb">
-        <Link to="/home" className="flex flex-col items-center justify-center gap-1 flex-1 py-2 min-w-0">
-          <Zap size={20} className={pathname === '/home' ? 'text-indigo-400' : 'text-zinc-600'} />
-          <span className={`text-[9px] font-semibold ${pathname === '/home' ? 'text-indigo-400' : 'text-zinc-600'}`}>
-            {t('nav.home')}
-          </span>
-        </Link>
         {NAV_MAIN.map(item => (
           <BottomNavItem key={item.path} path={item.path} icon={item.icon} label={item.mobileLabel} />
         ))}
