@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Zap, Rocket, TrendingUp, Target, Clock,
-  Calendar, Loader2, ChevronRight, Lightbulb,
+  Calendar, Loader2, ChevronRight, Lightbulb, Sparkles,
 } from 'lucide-react'
 import { InfoTooltip } from '../components/InfoTooltip'
 import {
@@ -203,6 +203,25 @@ export default function Home() {
 
       {showOnboarding && (
         <OnboardingModal onClose={handleOnboardingClose} />
+      )}
+
+      {/* ── 0. Banner oferta lanzamiento (solo trial) ─────────────────────── */}
+      {subscription?.status === 'trialing' && (
+        <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-gradient-to-r from-indigo-600/30 via-violet-600/20 to-indigo-600/30 border-b border-indigo-500/30">
+          <div className="flex items-center gap-2 min-w-0">
+            <Sparkles size={14} className="text-indigo-400 flex-shrink-0" />
+            <p className="text-xs text-indigo-200 truncate">
+              <span className="font-bold">🎉 Oferta de lanzamiento · 50% de descuento en tu primer mes</span>
+              <span className="hidden sm:inline text-indigo-300/80"> · Usa el código <strong className="text-white">LANZAMIENTO50</strong> al contratar</span>
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/settings?tab=facturacion')}
+            className="flex-shrink-0 px-3 py-1 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-bold transition-colors whitespace-nowrap"
+          >
+            Ver planes
+          </button>
+        </div>
       )}
 
       {/* ── 1. Header ─────────────────────────────────────────────────────── */}
