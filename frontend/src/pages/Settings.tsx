@@ -514,8 +514,9 @@ function BillingSection() {
   const handleSelectPlan = async (key: PlanKey, priceId: string) => {
     setSubscribingPlan(key)
     try {
-      // If already subscribed, send to Stripe portal so they can swap plans
-      if (subscription) {
+      // Trial users (no real Stripe sub yet) go to checkout, not portal
+      const hasRealSub = subscription?.stripeSubscriptionId && subscription.stripeSubscriptionId !== ''
+      if (hasRealSub) {
         await openPortal()
       } else {
         await subscribe(priceId)
