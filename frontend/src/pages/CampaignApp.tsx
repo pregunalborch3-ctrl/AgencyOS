@@ -1066,7 +1066,11 @@ export default function CampaignApp() {
         <div className={`relative border-b border-white/5 transition-all duration-500 ${isIdle ? 'py-16' : 'py-5'}`}>
           {isIdle && (
             <div className="absolute top-4 right-5 z-10">
-              <InfoTooltip text="Crea briefings y campañas completas para tus clientes en minutos. Copies, hooks, creativos, segmentación y estructura de funnel generados con IA." />
+              <InfoTooltip
+                prominent
+                align="right"
+                text="Pega la URL de tu tienda Shopify o describe el producto y la IA genera en segundos: copies para anuncios, hooks de scroll-stop, creativos para Meta y TikTok, segmentación de audiencia, estructura de funnel completa y descarga en PDF lista para entregar al cliente."
+              />
             </div>
           )}
           <div className={`mx-auto px-6 transition-all duration-500 ${isIdle ? 'max-w-2xl' : 'max-w-5xl'}`}>

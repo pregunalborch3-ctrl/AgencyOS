@@ -1,7 +1,15 @@
 import { useState, useRef, useEffect } from 'react'
 import { Info } from 'lucide-react'
 
-export function InfoTooltip({ text, align = 'right' }: { text: string; align?: 'left' | 'right' }) {
+export function InfoTooltip({
+  text,
+  align = 'right',
+  prominent = false,
+}: {
+  text: string
+  align?: 'left' | 'right'
+  prominent?: boolean
+}) {
   const [show, setShow] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -20,16 +28,20 @@ export function InfoTooltip({ text, align = 'right' }: { text: string; align?: '
         onMouseEnter={() => setShow(true)}
         onMouseLeave={() => setShow(false)}
         onClick={() => setShow(s => !s)}
-        className="w-5 h-5 rounded-full flex items-center justify-center text-zinc-700 hover:text-zinc-400 hover:bg-white/6 transition-colors"
+        className={
+          prominent
+            ? 'w-8 h-8 rounded-full flex items-center justify-center bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/25 hover:text-indigo-300 hover:border-indigo-400/50 transition-all shadow-md'
+            : 'w-5 h-5 rounded-full flex items-center justify-center text-zinc-700 hover:text-zinc-400 hover:bg-white/6 transition-colors'
+        }
         aria-label="Más información"
       >
-        <Info size={11} />
+        <Info size={prominent ? 15 : 11} />
       </button>
       {show && (
         <div
-          className={`absolute top-full mt-2 w-56 bg-zinc-800 border border-white/10 rounded-xl px-3.5 py-3 text-xs text-zinc-300 leading-relaxed z-50 shadow-2xl ${
+          className={`absolute top-full mt-2 bg-zinc-800 border border-white/10 rounded-xl px-4 py-3.5 text-xs text-zinc-300 leading-relaxed z-50 shadow-2xl ${
             align === 'right' ? 'right-0' : 'left-0'
-          }`}
+          } ${prominent ? 'w-72' : 'w-56'}`}
         >
           {text}
         </div>
