@@ -22,8 +22,9 @@ model User {
   trialEnd           DateTime?
   priceId            String?
   cancelAtPeriodEnd  Boolean    @default(false)
-  freeUsed           Boolean    @default(false)
-  onboardingDone     Boolean    @default(false)
+  freeUsed               Boolean    @default(false)
+  onboardingDone         Boolean    @default(false)
+  activationEmailSentAt  DateTime?
   agencySettings     Json?
   campaigns          Campaign[]
   briefings          Briefing[]

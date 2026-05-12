@@ -904,3 +904,41 @@ export async function sendTrialEndEmail(to: string, rawName: string): Promise<vo
   })
   if (error) console.error("[email] Error trial end →", error)
 }
+
+// ── Email de activación (usuarios con 0 campañas) ─────────────────────────────
+export async function sendActivationEmail(to: string, rawName: string): Promise<void> {
+  if (!process.env.RESEND_API_KEY) return
+  const name     = escHtml(rawName)
+  const dashUrl  = `${process.env.FRONTEND_URL ?? "https://agenciesos.com"}/dashboard`
+  const year     = new Date().getFullYear()
+
+  const body = `
+    <h2 style="color:#818cf8;font-size:20px;margin:0 0 12px">¿Todo bien por ahí, ${name}? 👋</h2>
+    <p style="color:#a1a1aa;line-height:1.7;margin:0 0 16px">
+      Nos dimos cuenta de que todavía no has generado tu primera campaña en AgenciesOS.
+    </p>
+    <p style="color:#a1a1aa;line-height:1.7;margin:0 0 20px">
+      El primer paso es el más importante — y solo tarda <strong style="color:#fff">2 minutos</strong>.
+      Una vez lo hagas, verás exactamente cómo la IA puede ahorrarte horas de trabajo cada semana.
+    </p>
+    <div style="background:#18181b;border-left:3px solid #6366f1;padding:16px 20px;border-radius:0 8px 8px 0;margin:0 0 24px">
+      <p style="color:#e4e4e7;font-size:14px;margin:0;line-height:1.6">
+        💡 <strong>Lo que consigues en tu primera campaña:</strong> copies para anuncios,
+        estructura de campaña, segmentación de audiencia y creatividades — todo generado con IA en segundos.
+      </p>
+    </div>
+    <a href="${dashUrl}" style="display:block;background:#6366f1;color:#fff;text-align:center;padding:14px 24px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;margin:0 0 20px">
+      Generar mi primera campaña →
+    </a>
+    <p style="color:#52525b;font-size:12px;text-align:center;margin:0">
+      Tienes tu prueba gratuita activa · Sin compromiso · AgenciesOS
+    </p>`
+
+  const { error } = await resend.emails.send({
+    from: FROM, to: [to], replyTo: "agenciesosapp@gmail.com",
+    subject: `¿Todo bien por ahí, ${rawName}? Genera tu primera campaña en 2 minutos`,
+    html: trialEmailBase(body, year),
+    text: `Hola ${rawName},\n\nTodavía no has generado tu primera campaña. Solo tarda 2 minutos: ${dashUrl}\n\n© ${year} AgenciesOS`,
+  })
+  if (error) console.error("[email] Error activation →", error)
+}
