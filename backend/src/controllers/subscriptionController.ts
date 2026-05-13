@@ -75,6 +75,11 @@ export async function createCheckoutSession(req: Request, res: Response): Promis
       ? { discounts: [{ promotion_code: PROMO_ID }] }
       : { allow_promotion_codes: true }
     ),
+    custom_text: {
+      submit_button: {
+        message: '🎁 Usa el código LANZAMIENTO50 para obtener un 50% de descuento en tu primer mes',
+      },
+    },
   })
 
   res.json({ success: true, data: { url: session.url } })
