@@ -201,15 +201,14 @@ function Hero() {
         {/* Headline */}
         <div className="space-y-3">
           <h1 className="text-5xl md:text-7xl font-black text-white leading-[1.05] tracking-tight">
-            Tus clientes reciben<br />
+            Analiza las campañas de Meta Ads<br />
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400">
-              su campaña hoy,
+              de tus clientes en 5 minutos,
             </span>
-            <br />no en una semana
+            <br />no en 5 horas
           </h1>
           <p className="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed font-medium">
-            Genera campañas completas para tus clientes en menos de 3 minutos.
-            Sin briefings eternos. Sin bloqueos creativos. Solo resultados.
+            Pega la URL del cliente y en 5 minutos tienes el análisis de Meta Ads, los hooks ganadores y la campaña lista para lanzar. Sin Excel. Sin reuniones. Solo resultados.
           </p>
         </div>
 
