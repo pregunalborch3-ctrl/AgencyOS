@@ -114,10 +114,11 @@ function fileToPlainText(
 }
 
 // ─── Robust JSON repair ───────────────────────────────────────────────────────
-// Walks the raw string char-by-char and escapes control characters that are
-// invalid inside JSON strings (literal \n, \r, \t, etc.). This fixes the
-// "Expected ',' or ']'" errors that occur when Claude includes unescaped
-// newlines or other control chars from CSV cell values.
+// Fixes two classes of malformed JSON that Claude occasionally produces:
+//  1. Unescaped control chars inside strings (newlines, tabs, etc.)
+//  2. Invalid JSON escape sequences (\-, \s, \d …) → escaped to \\x
+const VALID_JSON_ESCAPES = new Set(['"', '\\', '/', 'b', 'f', 'n', 'r', 't', 'u'])
+
 function repairJson(s: string): string {
   let out = ''
   let inString = false
@@ -127,16 +128,27 @@ function repairJson(s: string): string {
     const code = s.charCodeAt(i)
     if (inString) {
       if (ch === '\\') {
-        // pass through escape sequence as-is
-        out += ch + (s[i + 1] ?? '')
-        i += 2
+        const next = s[i + 1] ?? ''
+        if (next === 'u') {
+          // unicode escape: pass through \uXXXX
+          out += s.slice(i, i + 6)
+          i += 6
+        } else if (VALID_JSON_ESCAPES.has(next)) {
+          // valid escape: pass through as-is
+          out += ch + next
+          i += 2
+        } else {
+          // invalid escape (e.g. \-, \s, \d) → escape the backslash
+          out += '\\\\' + next
+          i += 2
+        }
         continue
       }
       if (ch === '"') {
         inString = false
         out += ch
       } else if (code < 0x20) {
-        // control char inside string → escape it
+        // unescaped control char inside string → escape it
         if      (code === 0x0a) out += '\\n'
         else if (code === 0x0d) out += '\\r'
         else if (code === 0x09) out += '\\t'
@@ -204,11 +216,12 @@ export async function analyzeMetaAds(req: Request, res: Response): Promise<void>
     try {
       msg = await client.messages.create({
         model: 'claude-sonnet-4-6',
-        max_tokens: 3000,
+        max_tokens: 4096,
       system: `Eres un auditor forense de paid media con 10+ años auditando cuentas de Meta Ads. \
 Tu metodología evalúa cada euro gastado con la precisión de un auditor financiero: ningún dato sin contrastar, ninguna ineficiencia sin cuantificar, ninguna recomendación sin impacto de negocio estimado. \
 Diagnosticas fatiga creativa, saturación de audiencia, eficiencia de coste por placement y salud estructural de la cuenta. \
-Responde SOLO con JSON válido. Sin markdown, sin bloques de código, sin texto fuera del JSON.
+Responde SOLO con JSON válido. Sin markdown, sin bloques de código, sin texto fuera del JSON. \
+IMPORTANTE: Todos los valores de string en el JSON deben estar en una sola línea. Nunca uses saltos de línea, tabuladores ni barras invertidas dentro de los valores. Usa solo caracteres ASCII seguros.
 
 ${EUR_INSTRUCTION}`,
       messages: [{
@@ -296,12 +309,22 @@ ${EUR_INSTRUCTION}`,
       return
     }
     clearTimeout(timer)
-    console.log(`[metaAnalysis] Claude responded — stopReason=${msg.stop_reason} outputTokens=${msg.usage?.output_tokens}`)
+    const stopReason    = msg.stop_reason
+    const outputTokens  = msg.usage?.output_tokens ?? 0
+    console.log(`[metaAnalysis] Claude responded — stopReason=${stopReason} outputTokens=${outputTokens}`)
+
+    // Truncated response = hit max_tokens limit → JSON is incomplete
+    if (stopReason === 'max_tokens') {
+      console.error('[metaAnalysis] Response truncated at max_tokens limit')
+      res.status(500).json({ success: false, error: 'La respuesta de la IA fue demasiado larga. Intenta con un CSV más pequeño.' })
+      return
+    }
 
     const raw   = (msg.content[0] as { text: string }).text.trim()
     const first = raw.indexOf('{')
     const last  = raw.lastIndexOf('}')
     if (first === -1 || last === -1) {
+      console.error('[metaAnalysis] No JSON found in response:', raw.slice(0, 300))
       res.status(500).json({ success: false, error: 'La IA devolvió una respuesta inesperada. Inténtalo de nuevo.' })
       return
     }
@@ -311,12 +334,13 @@ ${EUR_INSTRUCTION}`,
     try {
       analysis = JSON.parse(jsonSlice) as AnalysisResult
     } catch (e1) {
-      console.warn('[metaAnalysis] JSON.parse failed, trying repairJson:', (e1 as Error).message)
-      console.warn('[metaAnalysis] raw slice (first 500):', jsonSlice.slice(0, 500))
+      console.warn('[metaAnalysis] JSON.parse failed:', (e1 as Error).message)
+      console.warn('[metaAnalysis] raw response (first 1000):', raw.slice(0, 1000))
       try {
         analysis = JSON.parse(repairJson(jsonSlice)) as AnalysisResult
       } catch (e2) {
         console.error('[metaAnalysis] repairJson also failed:', (e2 as Error).message)
+        console.error('[metaAnalysis] full raw response:', raw)
         res.status(500).json({ success: false, error: 'La IA devolvió un formato inesperado. Inténtalo de nuevo.' })
         return
       }
