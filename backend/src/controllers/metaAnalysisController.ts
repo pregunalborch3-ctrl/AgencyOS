@@ -29,12 +29,57 @@ export const upload = multer({
   },
 })
 
+// ─── Columns to keep from Meta Ads exports ───────────────────────────────────
+// Meta Ads CSVs have 30-50 columns; most are useless for analysis.
+// Keeping only the analytically relevant ones shrinks the payload ~70%.
+const META_RELEVANT_COLS = new Set([
+  // identity
+  'nombre del conjunto de anuncios', 'nombre de la campaña', 'nombre del anuncio',
+  'ad set name', 'campaign name', 'ad name',
+  // delivery
+  'estado del conjunto de anuncios', 'estado de la campaña', 'estado del anuncio',
+  'delivery', 'estado', 'status',
+  // reach / impressions
+  'alcance', 'impresiones', 'reach', 'impressions', 'frecuencia', 'frequency',
+  // clicks
+  'clics en el enlace', 'clics', 'clicks', 'link clicks', 'ctr (todos)', 'ctr',
+  'ctr (tasa de clics del enlace)', 'ctr (link click-through rate)',
+  // cost
+  'importe gastado (eur)', 'importe gastado', 'amount spent (eur)', 'amount spent',
+  'coste por resultado', 'cost per result', 'cpm (coste por 1.000 impresiones)',
+  'cpm (cost per 1,000 impressions)', 'cpc (coste por clic en el enlace)',
+  'cpc (cost per link click)', 'cpc (all)',
+  // results
+  'resultados', 'results', 'tipo de resultado', 'result type',
+  // conversions / roas
+  'roas de compras en el sitio web', 'purchase roas', 'roas',
+  'compras en el sitio web', 'website purchases', 'compras', 'purchases',
+  'valor de conversión de compras en el sitio web', 'website purchase roas',
+  // video
+  'reproducciones de video al 25%', 'reproducciones de video al 75%',
+  'video plays at 25%', 'video plays at 75%', 'thruplay',
+])
+
+function filterCols(header: string[], rows: string[][]): { header: string[]; rows: string[][] } {
+  // Keep column if its normalized name is in the relevant set, or if no column
+  // matched the relevant set at all (fallback: keep everything)
+  const norm = (s: string) => s.toLowerCase().trim()
+  const keep = header.map(h => META_RELEVANT_COLS.has(norm(h)))
+  const anyMatch = keep.some(Boolean)
+  if (!anyMatch) return { header, rows } // unknown export format → keep all
+  const idx = keep.map((v, i) => v ? i : -1).filter(i => i !== -1)
+  return {
+    header: idx.map(i => header[i]),
+    rows:   rows.map(r => idx.map(i => r[i] ?? '')),
+  }
+}
+
 // ─── File → plain text for Claude ────────────────────────────────────────────
 // CSV: read the raw UTF-8 bytes directly — no intermediate parsing.
 //   XLSX.parse would mangle cell values that contain embedded newlines or
 //   special characters before we even reach Claude, producing corrupt JSON.
 // Excel: still needs XLSX to convert binary → TSV text.
-// Returns the plain-text table and an approximate row count.
+// Returns the plain-text table (max ~50 rows, relevant cols only) + row count.
 function fileToPlainText(
   buffer: Buffer,
   mimetype: string,
@@ -47,26 +92,30 @@ function fileToPlainText(
   if (isExcel) {
     const wb   = XLSX.read(buffer, { type: 'buffer' })
     const ws   = wb.Sheets[wb.SheetNames[0]]
-    const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' })
-    if (rows.length === 0) return { text: '', rowCount: 0 }
-    const capped = rows.slice(0, 100)
-    const cols   = Object.keys(capped[0])
-    const text   = [
-      cols.join('\t'),
-      ...capped.map(row => cols.map(c => String((row as Record<string, unknown>)[c] ?? '')).join('\t')),
-    ].join('\n')
-    return { text, rowCount: rows.length }
+    const allRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' })
+    if (allRows.length === 0) return { text: '', rowCount: 0 }
+    const cols   = Object.keys(allRows[0])
+    const data   = allRows.slice(0, 50).map(r => cols.map(c => String((r as Record<string, unknown>)[c] ?? '')))
+    const { header, rows } = filterCols(cols, data)
+    const text = [header.join('\t'), ...rows.map(r => r.join('\t'))].join('\n')
+    return { text, rowCount: allRows.length }
   }
 
-  // ── CSV: raw text, strip UTF-8 BOM if present, cap at 100 data rows ──────
-  const raw   = buffer.toString('utf-8').replace(/^﻿/, '')
-  const lines = raw.split(/\r?\n/)
-  const nonEmpty = lines.filter(l => l.trim() !== '')
-  const capped   = nonEmpty.slice(0, 101) // header + up to 100 rows
-  return {
-    text:     capped.join('\n'),
-    rowCount: Math.max(0, capped.length - 1),
-  }
+  // ── CSV: raw text, strip UTF-8 BOM, parse header + up to 50 data rows ────
+  const raw      = buffer.toString('utf-8').replace(/^﻿/, '')
+  const lines    = raw.split(/\r?\n/).filter(l => l.trim() !== '')
+  if (lines.length < 2) return { text: lines.join('\n'), rowCount: 0 }
+
+  const totalDataRows = lines.length - 1
+  const capped        = lines.slice(0, 51) // header + 50 rows
+
+  // Parse header to apply column filter
+  const header = capped[0].split(',').map(h => h.replace(/^"|"$/g, '').trim())
+  const dataRows = capped.slice(1).map(l => l.split(',').map(c => c.replace(/^"|"$/g, '').trim()))
+  const { header: fHeader, rows: fRows } = filterCols(header, dataRows)
+
+  const text = [fHeader.join('\t'), ...fRows.map(r => r.join('\t'))].join('\n')
+  return { text, rowCount: totalDataRows }
 }
 
 // ─── Robust JSON repair ───────────────────────────────────────────────────────
@@ -143,13 +192,24 @@ export async function analyzeMetaAds(req: Request, res: Response): Promise<void>
       return
     }
 
-    console.log('[metaAnalysis] rows received:', rowCount)
-    console.log('[metaAnalysis] first 200 chars:', plainText.slice(0, 200))
+    const textBytes = Buffer.byteLength(plainText, 'utf-8')
+    console.log(`[metaAnalysis] rows=${rowCount} textBytes=${textBytes} cols=${plainText.split('\n')[0]?.split('\t').length ?? '?'}`)
+    console.log('[metaAnalysis] header:', plainText.split('\n')[0]?.slice(0, 200))
+
+    // ── 55-second timeout — Railway proxy cuts at ~60s ────────────────────
+    const abort  = new AbortController()
+    const timer  = setTimeout(() => {
+      abort.abort()
+      console.error('[metaAnalysis] TIMEOUT — Claude did not respond in 55s')
+    }, 55_000)
 
     const client = getClient()
-    const msg = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 4000,
+    console.log('[metaAnalysis] calling Claude…')
+    let msg: Awaited<ReturnType<typeof client.messages.create>>
+    try {
+      msg = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 3000,
       system: `Eres un auditor forense de paid media con 10+ años auditando cuentas de Meta Ads. \
 Tu metodología evalúa cada euro gastado con la precisión de un auditor financiero: ningún dato sin contrastar, ninguna ineficiencia sin cuantificar, ninguna recomendación sin impacto de negocio estimado. \
 Diagnosticas fatiga creativa, saturación de audiencia, eficiencia de coste por placement y salud estructural de la cuenta. \
@@ -226,8 +286,22 @@ Devuelve ÚNICAMENTE este JSON con los valores exactos de la tabla:
 }
 
 ${EUR_INSTRUCTION}`,
-      }],
-    })
+        }],
+      }, { signal: abort.signal as AbortSignal })
+    } catch (aiErr: unknown) {
+      clearTimeout(timer)
+      const isTimeout = aiErr instanceof Error && (aiErr.name === 'AbortError' || aiErr.message.includes('abort'))
+      console.error('[metaAnalysis] Claude error:', aiErr instanceof Error ? aiErr.message : aiErr)
+      res.status(503).json({
+        success: false,
+        error: isTimeout
+          ? 'El análisis tardó demasiado. Intenta con un CSV más pequeño (menos filas o columnas).'
+          : 'Error al llamar a la IA. Inténtalo de nuevo.',
+      })
+      return
+    }
+    clearTimeout(timer)
+    console.log(`[metaAnalysis] Claude responded — stopReason=${msg.stop_reason} outputTokens=${msg.usage?.output_tokens}`)
 
     const raw   = (msg.content[0] as { text: string }).text.trim()
     const first = raw.indexOf('{')
@@ -241,10 +315,18 @@ ${EUR_INSTRUCTION}`,
     let analysis: AnalysisResult
     try {
       analysis = JSON.parse(jsonSlice) as AnalysisResult
-    } catch {
-      // Retry after repairing unescaped control characters in string values
-      analysis = JSON.parse(repairJson(jsonSlice)) as AnalysisResult
+    } catch (e1) {
+      console.warn('[metaAnalysis] JSON.parse failed, trying repairJson:', (e1 as Error).message)
+      console.warn('[metaAnalysis] raw slice (first 500):', jsonSlice.slice(0, 500))
+      try {
+        analysis = JSON.parse(repairJson(jsonSlice)) as AnalysisResult
+      } catch (e2) {
+        console.error('[metaAnalysis] repairJson also failed:', (e2 as Error).message)
+        res.status(500).json({ success: false, error: 'La IA devolvió un formato inesperado. Inténtalo de nuevo.' })
+        return
+      }
     }
+    console.log('[metaAnalysis] analysis parsed OK')
     res.json({ success: true, data: { analysis, rowCount } })
   } catch (err) {
     console.error('[metaAnalysis] Error:', err)
