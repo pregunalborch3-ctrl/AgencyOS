@@ -63,7 +63,9 @@ export default function MetaAnalysis() {
     try {
       const form = new FormData()
       form.append('file', file)
-      const res = await fetch('/api/meta/analyze', {
+      // Use Railway URL directly when set (bypasses Vercel proxy which doesn't support SSE)
+      const apiBase = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
+      const res = await fetch(`${apiBase}/api/meta/analyze`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: form,
