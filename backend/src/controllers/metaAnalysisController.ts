@@ -200,33 +200,45 @@ export async function analyzeMetaAds(req: Request, res: Response): Promise<void>
     }
 
     const textBytes = Buffer.byteLength(plainText, 'utf-8')
-    console.log(`[metaAnalysis] rows=${rowCount} textBytes=${textBytes} cols=${plainText.split('\n')[0]?.split('\t').length ?? '?'}`)
-    console.log('[metaAnalysis] header:', plainText.split('\n')[0]?.slice(0, 200))
+    console.log(`[metaAnalysis] rows=${rowCount} textBytes=${textBytes}`)
 
-    // ── 55-second timeout — Railway proxy cuts at ~60s ────────────────────
-    const abort  = new AbortController()
-    const timer  = setTimeout(() => {
-      abort.abort()
-      console.error('[metaAnalysis] TIMEOUT — Claude did not respond in 55s')
-    }, 55_000)
+    // ── SSE streaming — keeps Railway/Vercel connection alive ────────────────
+    // Instead of waiting for the full response (which hits the 60s proxy
+    // timeout), we stream SSE heartbeats every 15s while Claude thinks,
+    // then send the final JSON as the last event.
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8')
+    res.setHeader('Cache-Control', 'no-cache, no-transform')
+    res.setHeader('X-Accel-Buffering', 'no') // disable nginx buffering
+    res.flushHeaders()
+
+    const heartbeat = setInterval(() => {
+      res.write(': heartbeat\n\n')
+    }, 15_000)
+
+    function sendEvent(payload: object) {
+      clearInterval(heartbeat)
+      res.write(`data: ${JSON.stringify(payload)}\n\n`)
+      res.end()
+    }
 
     const client = getClient()
-    console.log('[metaAnalysis] calling Claude…')
-    let msg: Awaited<ReturnType<typeof client.messages.create>>
+    console.log('[metaAnalysis] streaming Claude…')
+
+    let fullText = ''
     try {
-      msg = await client.messages.create({
+      const stream = client.messages.stream({
         model: 'claude-sonnet-4-6',
         max_tokens: 4096,
-      system: `Eres un auditor forense de paid media con 10+ años auditando cuentas de Meta Ads. \
+        system: `Eres un auditor forense de paid media con 10+ años auditando cuentas de Meta Ads. \
 Tu metodología evalúa cada euro gastado con la precisión de un auditor financiero: ningún dato sin contrastar, ninguna ineficiencia sin cuantificar, ninguna recomendación sin impacto de negocio estimado. \
 Diagnosticas fatiga creativa, saturación de audiencia, eficiencia de coste por placement y salud estructural de la cuenta. \
 Responde SOLO con JSON válido. Sin markdown, sin bloques de código, sin texto fuera del JSON. \
-IMPORTANTE: Todos los valores de string en el JSON deben estar en una sola línea. Nunca uses saltos de línea, tabuladores ni barras invertidas dentro de los valores. Usa solo caracteres ASCII seguros.
+IMPORTANTE: Todos los valores de string deben estar en una sola línea. Nunca uses saltos de línea reales ni barras invertidas dentro de los valores. Usa solo caracteres ASCII seguros.
 
 ${EUR_INSTRUCTION}`,
-      messages: [{
-        role: 'user',
-        content: `Realiza una auditoría experta de estos datos reales de Meta Ads Manager. \
+        messages: [{
+          role: 'user',
+          content: `Realiza una auditoría experta de estos datos reales de Meta Ads Manager. \
 Cada hallazgo debe citar valores exactos de la tabla. No inventes ni estimes datos.
 
 DATOS (${rowCount} filas):
@@ -236,117 +248,85 @@ ${plainText}
 
 1. FATIGA CREATIVA Y SATURACIÓN DE AUDIENCIA
    Señales de fatiga: Frecuencia >3 = alerta, >5 = crítico (pausa inmediata)
-   Saturación: Alcance estancado + Frecuencia subiendo = audiencia agotada
    CTR decreciente con CPM creciente = señal temprana de fatiga
 
-2. EFICIENCIA DE COSTE POR PLACEMENT (benchmarks reales España/Europa)
-   CPM:  Feed Noticias €8-18 (>€25 crítico) | Stories €5-12 | Reels €6-15 | Audience Network €2-6
-   CTR:  Feed >1.5% bueno, <0.7% pobre | Stories >0.8% bueno | Reels >1.0% bueno
-   CPC:  <€0.50 excelente | €0.50-1.20 aceptable | >€1.50 ineficiente | >€2.50 crítico
-   ROAS: >5x excelente | 3.5-5x bueno | 2-3.5x mínimo aceptable | <2x ineficiente
-   Frecuencia óptima por objetivo: Awareness 1.5-2.5 | Consideración 2-4 | Conversión 3-6
+2. EFICIENCIA DE COSTE (benchmarks España/Europa)
+   CPM: Feed €8-18 | Stories €5-12 | Reels €6-15
+   CTR: Feed >1.5% bueno, <0.7% pobre | CPC: <€0.50 excelente, >€1.50 ineficiente
+   ROAS: >5x excelente | 3.5-5x bueno | <2x ineficiente
 
 3. DIAGNÓSTICO ESTRUCTURAL
-   Evalúa: Coste por resultado vs objetivo de campaña | Distribución de presupuesto entre elementos
-   Identifica: Ganadores claros (escalar) | Perdedores confirmados (pausar) | Oportunidades sin explotar
-
-4. IMPACTO DE NEGOCIO
-   Cada hallazgo crítico debe incluir el impacto estimado si se actúa vs si se ignora.
-   Prioriza por: (severidad × presupuesto afectado) — los problemas que queman más dinero van primero.
+   Ganadores (escalar), Perdedores (pausar), Oportunidades sin explotar
 
 ━━━ FORMATO DE RESPUESTA ━━━
 
-Devuelve ÚNICAMENTE este JSON con los valores exactos de la tabla:
+Devuelve ÚNICAMENTE este JSON (sin markdown, sin bloques de código):
 {
-  "summary": "3-4 frases de diagnóstico directo: estado real de la cuenta, eficiencia global del gasto, y el hallazgo más crítico con su cifra exacta",
-  "performingWell": [
-    {
-      "name": "nombre exacto del elemento en la tabla",
-      "reason": "por qué supera benchmarks: métrica concreta vs referencia del sector",
-      "highlight": "la cifra clave que lo demuestra (ej: CTR 2.8% — 87% sobre benchmark feed)"
-    }
-  ],
-  "performingPoorly": [
-    {
-      "name": "nombre exacto del elemento en la tabla",
-      "reason": "diagnóstico preciso con valor exacto y qué lo causa (fatiga, saturación, segmentación, etc.)",
-      "action": "acción inmediata específica: qué pausar, qué ajustar, con qué sustituirlo y en qué plazo"
-    }
-  ],
-  "belowAverage": [
-    {
-      "metric": "nombre de la columna exacta",
-      "value": "valor promedio calculado de los datos reales",
-      "benchmark": "referencia del sector para este placement/objetivo",
-      "fix": "acción correctora concreta con impacto estimado (ej: reducir CPM un 20% segmentando por intereses)"
-    }
-  ],
+  "summary": "2-3 frases: estado global, eficiencia del gasto, hallazgo más crítico con cifra exacta",
+  "performingWell": [{"name":"nombre exacto","reason":"por qué supera benchmarks","highlight":"cifra clave"}],
+  "performingPoorly": [{"name":"nombre exacto","reason":"diagnóstico con valor exacto","action":"acción inmediata"}],
+  "belowAverage": [{"metric":"columna exacta","value":"valor promedio real","benchmark":"referencia sector","fix":"acción correctora"}],
   "recommendations": [
-    {
-      "priority": "alta",
-      "title": "acción concreta con verbo imperativo",
-      "description": "qué hacer exactamente, por qué ahora, qué impacto tiene en gasto/resultado, con datos reales de la tabla"
-    },
-    { "priority": "media", "title": "...", "description": "..." },
-    { "priority": "baja",  "title": "...", "description": "..." }
+    {"priority":"alta","title":"acción imperativa","description":"qué hacer, por qué ahora, impacto estimado"},
+    {"priority":"media","title":"...","description":"..."},
+    {"priority":"baja","title":"...","description":"..."}
   ],
-  "executiveSummary": "5-6 frases para presentar al cliente: rendimiento actual en cifras reales, qué está funcionando y por qué, qué está fallando y el coste de no actuar, próximos 3 pasos priorizados. Sin jerga técnica."
+  "executiveSummary": "4-5 frases para el cliente: cifras reales, qué funciona, qué falla, próximos 3 pasos"
 }
 
 ${EUR_INSTRUCTION}`,
         }],
-      }, { signal: abort.signal as AbortSignal })
-    } catch (aiErr: unknown) {
-      clearTimeout(timer)
-      const isTimeout = aiErr instanceof Error && (aiErr.name === 'AbortError' || aiErr.message.includes('abort'))
-      console.error('[metaAnalysis] Claude error:', aiErr instanceof Error ? aiErr.message : aiErr)
-      res.status(503).json({
-        success: false,
-        error: isTimeout
-          ? 'El análisis tardó demasiado. Intenta con un CSV más pequeño (menos filas o columnas).'
-          : 'Error al llamar a la IA. Inténtalo de nuevo.',
       })
-      return
-    }
-    clearTimeout(timer)
-    const stopReason    = msg.stop_reason
-    const outputTokens  = msg.usage?.output_tokens ?? 0
-    console.log(`[metaAnalysis] Claude responded — stopReason=${stopReason} outputTokens=${outputTokens}`)
 
-    // Truncated response = hit max_tokens limit → JSON is incomplete
-    if (stopReason === 'max_tokens') {
-      console.error('[metaAnalysis] Response truncated at max_tokens limit')
-      res.status(500).json({ success: false, error: 'La respuesta de la IA fue demasiado larga. Intenta con un CSV más pequeño.' })
-      return
-    }
+      for await (const event of stream) {
+        if (
+          event.type === 'content_block_delta' &&
+          event.delta.type === 'text_delta'
+        ) {
+          fullText += event.delta.text
+        }
+      }
 
-    const raw   = (msg.content[0] as { text: string }).text.trim()
-    const first = raw.indexOf('{')
-    const last  = raw.lastIndexOf('}')
-    if (first === -1 || last === -1) {
-      console.error('[metaAnalysis] No JSON found in response:', raw.slice(0, 300))
-      res.status(500).json({ success: false, error: 'La IA devolvió una respuesta inesperada. Inténtalo de nuevo.' })
-      return
-    }
+      const finalMsg = await stream.finalMessage()
+      const stopReason   = finalMsg.stop_reason
+      const outputTokens = finalMsg.usage?.output_tokens ?? 0
+      console.log(`[metaAnalysis] done — stopReason=${stopReason} outputTokens=${outputTokens}`)
 
-    const jsonSlice = raw.slice(first, last + 1)
-    let analysis: AnalysisResult
-    try {
-      analysis = JSON.parse(jsonSlice) as AnalysisResult
-    } catch (e1) {
-      console.warn('[metaAnalysis] JSON.parse failed:', (e1 as Error).message)
-      console.warn('[metaAnalysis] raw response (first 1000):', raw.slice(0, 1000))
-      try {
-        analysis = JSON.parse(repairJson(jsonSlice)) as AnalysisResult
-      } catch (e2) {
-        console.error('[metaAnalysis] repairJson also failed:', (e2 as Error).message)
-        console.error('[metaAnalysis] full raw response:', raw)
-        res.status(500).json({ success: false, error: 'La IA devolvió un formato inesperado. Inténtalo de nuevo.' })
+      if (stopReason === 'max_tokens') {
+        sendEvent({ success: false, error: 'La respuesta fue demasiado larga. Intenta con un CSV más pequeño.' })
         return
       }
+
+      const first = fullText.indexOf('{')
+      const last  = fullText.lastIndexOf('}')
+      if (first === -1 || last === -1) {
+        console.error('[metaAnalysis] No JSON in response:', fullText.slice(0, 300))
+        sendEvent({ success: false, error: 'La IA devolvió una respuesta inesperada. Inténtalo de nuevo.' })
+        return
+      }
+
+      const jsonSlice = fullText.slice(first, last + 1)
+      let analysis: AnalysisResult
+      try {
+        analysis = JSON.parse(jsonSlice) as AnalysisResult
+      } catch (e1) {
+        console.warn('[metaAnalysis] JSON.parse failed, trying repair:', (e1 as Error).message)
+        console.warn('[metaAnalysis] raw (first 800):', fullText.slice(0, 800))
+        try {
+          analysis = JSON.parse(repairJson(jsonSlice)) as AnalysisResult
+        } catch (e2) {
+          console.error('[metaAnalysis] repair failed:', (e2 as Error).message)
+          console.error('[metaAnalysis] full raw:', fullText)
+          sendEvent({ success: false, error: 'La IA devolvió un formato inesperado. Inténtalo de nuevo.' })
+          return
+        }
+      }
+      console.log('[metaAnalysis] parsed OK')
+      sendEvent({ success: true, data: { analysis, rowCount } })
+    } catch (err) {
+      console.error('[metaAnalysis] stream error:', err instanceof Error ? err.message : err)
+      sendEvent({ success: false, error: 'Error al llamar a la IA. Inténtalo de nuevo.' })
     }
-    console.log('[metaAnalysis] analysis parsed OK')
-    res.json({ success: true, data: { analysis, rowCount } })
   } catch (err) {
     console.error('[metaAnalysis] Error:', err)
     const msg = err instanceof Error ? err.message : 'Error al analizar las campañas.'

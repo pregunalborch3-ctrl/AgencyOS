@@ -117,7 +117,7 @@ function StatCard({ label, value, icon: Icon, sub, info }: {
         <p className="text-xs text-zinc-500 mt-1 leading-tight">{label}</p>
         {sub && <p className="text-[10px] text-zinc-600 mt-0.5">{sub}</p>}
       </div>
-      <InfoTooltip text={info} />
+      <InfoTooltip prominent text={info} />
     </div>
   )
 }
@@ -301,7 +301,7 @@ export default function Home() {
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
             <div className="flex items-center justify-between mb-4">
               <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Campañas por semana</p>
-              <InfoTooltip text="Evolución del número de campañas generadas en las últimas 5 semanas." />
+              <InfoTooltip prominent text="Evolución del número de campañas generadas en las últimas 5 semanas." />
             </div>
             {weeklyData.every(w => w.count === 0) ? (
               <div className="h-32 flex items-center justify-center text-zinc-700 text-sm">
@@ -327,7 +327,7 @@ export default function Home() {
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
             <div className="flex items-center justify-between mb-4">
               <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Nichos usados</p>
-              <InfoTooltip text="Distribución de tus campañas guardadas por sector o nicho de producto." />
+              <InfoTooltip prominent text="Distribución de tus campañas guardadas por sector o nicho de producto." />
             </div>
             {nicheData.length === 0 ? (
               <div className="h-32 flex items-center justify-center text-zinc-700 text-sm">
@@ -360,7 +360,7 @@ export default function Home() {
                 <Calendar size={14} className="text-zinc-500" />
                 <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Suscripción</p>
               </div>
-              <InfoTooltip text="Estado de tu plan actual y días restantes hasta la próxima renovación." />
+              <InfoTooltip prominent text="Estado de tu plan actual y días restantes hasta la próxima renovación." />
             </div>
             {daysLeft !== null && isActive ? (
               <>
@@ -410,7 +410,7 @@ export default function Home() {
                 <Lightbulb size={14} className="text-amber-400" />
                 <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Consejo del día</p>
               </div>
-              <InfoTooltip text="Tip de marketing generado por IA. Se actualiza automáticamente cada día." />
+              <InfoTooltip prominent text="Tip de marketing generado por IA. Se actualiza automáticamente cada día." />
             </div>
             {tip ? (
               <p className="text-sm text-zinc-300 leading-relaxed flex-1">{tip}</p>
@@ -429,7 +429,7 @@ export default function Home() {
                 <TrendingUp size={14} className="text-emerald-400" />
                 <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Meta semanal</p>
               </div>
-              <InfoTooltip text="Objetivo de campañas a generar cada semana. El contador se reinicia cada lunes." />
+              <InfoTooltip prominent text="Objetivo de campañas a generar cada semana. El contador se reinicia cada lunes." />
             </div>
             <div>
               <p className="text-3xl font-black text-white leading-none">

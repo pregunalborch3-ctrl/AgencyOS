@@ -68,13 +68,41 @@ export default function MetaAnalysis() {
         headers: { Authorization: `Bearer ${token}` },
         body: form,
       })
-      const text = await res.text()
-      let data: any
-      try { data = JSON.parse(text) } catch {
-        throw new Error(res.status === 503 ? 'El servidor tardó demasiado. Inténtalo de nuevo.' : `Error del servidor (${res.status})`)
+
+      // Non-streaming error (401, 400, etc.) before SSE starts
+      if (!res.ok || !res.body) {
+        const text = await res.text()
+        let data: any
+        try { data = JSON.parse(text) } catch {
+          throw new Error(`Error del servidor (${res.status})`)
+        }
+        throw new Error(data.error ?? 'Error al analizar')
       }
-      if (!data.success) throw new Error(data.error ?? 'Error al analizar')
-      setResult(data.data)
+
+      // Read SSE stream
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let received = false
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() ?? ''
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const payload = JSON.parse(line.slice(6))
+            if (!payload.success) throw new Error(payload.error ?? 'Error al analizar')
+            setResult(payload.data)
+            received = true
+          }
+          // Lines starting with ':' are heartbeat comments — ignore
+        }
+      }
+
+      if (!received) throw new Error('No se recibió respuesta del servidor. Inténtalo de nuevo.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al analizar las campañas.')
     } finally {
