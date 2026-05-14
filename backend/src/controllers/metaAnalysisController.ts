@@ -228,7 +228,7 @@ export async function analyzeMetaAds(req: Request, res: Response): Promise<void>
     try {
       const stream = client.messages.stream({
         model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
+        max_tokens: 8192,
         system: `Eres un auditor forense de paid media con 10+ años auditando cuentas de Meta Ads. \
 Tu metodología evalúa cada euro gastado con la precisión de un auditor financiero: ningún dato sin contrastar, ninguna ineficiencia sin cuantificar, ninguna recomendación sin impacto de negocio estimado. \
 Diagnosticas fatiga creativa, saturación de audiencia, eficiencia de coste por placement y salud estructural de la cuenta. \
@@ -260,18 +260,19 @@ ${plainText}
 
 ━━━ FORMATO DE RESPUESTA ━━━
 
-Devuelve ÚNICAMENTE este JSON (sin markdown, sin bloques de código):
+Devuelve ÚNICAMENTE este JSON (sin markdown, sin bloques de código).
+LÍMITES ESTRICTOS DE LONGITUD: summary ≤60 palabras, reason/action/fix ≤20 palabras, description ≤25 palabras, executiveSummary ≤80 palabras. Máximo 4 items por array.
 {
-  "summary": "2-3 frases: estado global, eficiencia del gasto, hallazgo más crítico con cifra exacta",
-  "performingWell": [{"name":"nombre exacto","reason":"por qué supera benchmarks","highlight":"cifra clave"}],
-  "performingPoorly": [{"name":"nombre exacto","reason":"diagnóstico con valor exacto","action":"acción inmediata"}],
-  "belowAverage": [{"metric":"columna exacta","value":"valor promedio real","benchmark":"referencia sector","fix":"acción correctora"}],
+  "summary": "2-3 frases cortas: estado global, cifra clave",
+  "performingWell": [{"name":"nombre exacto","reason":"motivo breve","highlight":"cifra"}],
+  "performingPoorly": [{"name":"nombre exacto","reason":"problema concreto","action":"acción inmediata"}],
+  "belowAverage": [{"metric":"métrica","value":"valor real","benchmark":"referencia","fix":"corrección"}],
   "recommendations": [
-    {"priority":"alta","title":"acción imperativa","description":"qué hacer, por qué ahora, impacto estimado"},
+    {"priority":"alta","title":"acción","description":"qué y por qué, breve"},
     {"priority":"media","title":"...","description":"..."},
     {"priority":"baja","title":"...","description":"..."}
   ],
-  "executiveSummary": "4-5 frases para el cliente: cifras reales, qué funciona, qué falla, próximos 3 pasos"
+  "executiveSummary": "3-4 frases para el cliente: cifras reales, qué funciona, qué falla, próximo paso"
 }
 
 ${EUR_INSTRUCTION}`,
