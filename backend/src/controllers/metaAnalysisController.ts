@@ -29,39 +29,44 @@ export const upload = multer({
   },
 })
 
-// ─── Parse Excel/CSV buffer → rows ───────────────────────────────────────────
-// Uses XLSX for both formats — handles RFC 4180 edge cases: quoted fields with
-// embedded commas, newlines, and escaped double-quotes ("").
-function parseFile(buffer: Buffer, mimetype: string, originalname: string): Array<Record<string, string>> {
+// ─── File → plain text for Claude ────────────────────────────────────────────
+// CSV: read the raw UTF-8 bytes directly — no intermediate parsing.
+//   XLSX.parse would mangle cell values that contain embedded newlines or
+//   special characters before we even reach Claude, producing corrupt JSON.
+// Excel: still needs XLSX to convert binary → TSV text.
+// Returns the plain-text table and an approximate row count.
+function fileToPlainText(
+  buffer: Buffer,
+  mimetype: string,
+  originalname: string,
+): { text: string; rowCount: number } {
   const name    = originalname.toLowerCase()
   const isExcel = name.endsWith('.xlsx') || name.endsWith('.xls')
     || mimetype.includes('spreadsheet') || mimetype.includes('excel')
 
-  const wb = isExcel
-    ? XLSX.read(buffer, { type: 'buffer' })
-    : XLSX.read(buffer.toString('utf-8'), { type: 'string', raw: false })
+  if (isExcel) {
+    const wb   = XLSX.read(buffer, { type: 'buffer' })
+    const ws   = wb.Sheets[wb.SheetNames[0]]
+    const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' })
+    if (rows.length === 0) return { text: '', rowCount: 0 }
+    const capped = rows.slice(0, 100)
+    const cols   = Object.keys(capped[0])
+    const text   = [
+      cols.join('\t'),
+      ...capped.map(row => cols.map(c => String((row as Record<string, unknown>)[c] ?? '')).join('\t')),
+    ].join('\n')
+    return { text, rowCount: rows.length }
+  }
 
-  const ws   = wb.Sheets[wb.SheetNames[0]]
-  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' })
-  return rows.map(row => {
-    const out: Record<string, string> = {}
-    for (const [k, v] of Object.entries(row)) {
-      out[String(k)] = String(v ?? '')
-    }
-    return out
-  })
-}
-
-// ─── Format raw rows as a readable table for Claude ──────────────────────────
-// Sends the actual column names and values — no brittle alias mapping needed.
-function buildRawTable(rows: Array<Record<string, string>>): string {
-  if (rows.length === 0) return ''
-  const cols = Object.keys(rows[0])
-  const cap  = rows.slice(0, 40) // cap at 40 rows to stay within token budget
-  return [
-    cols.join('\t'),
-    ...cap.map(row => cols.map(c => row[c] ?? '').join('\t')),
-  ].join('\n')
+  // ── CSV: raw text, strip UTF-8 BOM if present, cap at 100 data rows ──────
+  const raw   = buffer.toString('utf-8').replace(/^﻿/, '')
+  const lines = raw.split(/\r?\n/)
+  const nonEmpty = lines.filter(l => l.trim() !== '')
+  const capped   = nonEmpty.slice(0, 101) // header + up to 100 rows
+  return {
+    text:     capped.join('\n'),
+    rowCount: Math.max(0, capped.length - 1),
+  }
 }
 
 // ─── Robust JSON repair ───────────────────────────────────────────────────────
@@ -122,25 +127,24 @@ export async function analyzeMetaAds(req: Request, res: Response): Promise<void>
       return
     }
 
-    let rows: Array<Record<string, string>>
+    let plainText: string
+    let rowCount: number
     try {
-      rows = parseFile(req.file.buffer, req.file.mimetype, req.file.originalname)
+      const parsed = fileToPlainText(req.file.buffer, req.file.mimetype, req.file.originalname)
+      plainText = parsed.text
+      rowCount  = parsed.rowCount
     } catch {
       res.status(400).json({ success: false, error: 'No se pudo leer el archivo. Asegúrate de que es un CSV o Excel válido de Meta Ads.' })
       return
     }
 
-    if (rows.length === 0) {
+    if (!plainText || rowCount === 0) {
       res.status(400).json({ success: false, error: 'El archivo está vacío o no tiene datos válidos.' })
       return
     }
 
-    const rawTable   = buildRawTable(rows)
-    const columnsList = Object.keys(rows[0]).join(', ')
-
-    console.log('[metaAnalysis] columns:', columnsList)
-    console.log('[metaAnalysis] rows received:', rows.length)
-    console.log('[metaAnalysis] raw table (first 3 rows):\n', buildRawTable(rows.slice(0, 3)))
+    console.log('[metaAnalysis] rows received:', rowCount)
+    console.log('[metaAnalysis] first 200 chars:', plainText.slice(0, 200))
 
     const client = getClient()
     const msg = await client.messages.create({
@@ -157,8 +161,8 @@ ${EUR_INSTRUCTION}`,
         content: `Realiza una auditoría experta de estos datos reales de Meta Ads Manager. \
 Cada hallazgo debe citar valores exactos de la tabla. No inventes ni estimes datos.
 
-DATOS (${rows.length} filas, columnas separadas por tabulador):
-${rawTable}
+DATOS (${rowCount} filas):
+${plainText}
 
 ━━━ FRAMEWORK DE AUDITORÍA ━━━
 
@@ -241,7 +245,7 @@ ${EUR_INSTRUCTION}`,
       // Retry after repairing unescaped control characters in string values
       analysis = JSON.parse(repairJson(jsonSlice)) as AnalysisResult
     }
-    res.json({ success: true, data: { analysis, rowCount: rows.length } })
+    res.json({ success: true, data: { analysis, rowCount } })
   } catch (err) {
     console.error('[metaAnalysis] Error:', err)
     const msg = err instanceof Error ? err.message : 'Error al analizar las campañas.'
