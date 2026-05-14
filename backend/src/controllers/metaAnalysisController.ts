@@ -64,6 +64,46 @@ function buildRawTable(rows: Array<Record<string, string>>): string {
   ].join('\n')
 }
 
+// ─── Robust JSON repair ───────────────────────────────────────────────────────
+// Walks the raw string char-by-char and escapes control characters that are
+// invalid inside JSON strings (literal \n, \r, \t, etc.). This fixes the
+// "Expected ',' or ']'" errors that occur when Claude includes unescaped
+// newlines or other control chars from CSV cell values.
+function repairJson(s: string): string {
+  let out = ''
+  let inString = false
+  let i = 0
+  while (i < s.length) {
+    const ch   = s[i]
+    const code = s.charCodeAt(i)
+    if (inString) {
+      if (ch === '\\') {
+        // pass through escape sequence as-is
+        out += ch + (s[i + 1] ?? '')
+        i += 2
+        continue
+      }
+      if (ch === '"') {
+        inString = false
+        out += ch
+      } else if (code < 0x20) {
+        // control char inside string → escape it
+        if      (code === 0x0a) out += '\\n'
+        else if (code === 0x0d) out += '\\r'
+        else if (code === 0x09) out += '\\t'
+        // drop other control chars (0x00-0x08, 0x0b, 0x0c, 0x0e-0x1f)
+      } else {
+        out += ch
+      }
+    } else {
+      if (ch === '"') inString = true
+      out += ch
+    }
+    i++
+  }
+  return out
+}
+
 // ─── Analysis result type ─────────────────────────────────────────────────────
 interface AnalysisResult {
   summary: string
@@ -193,7 +233,14 @@ ${EUR_INSTRUCTION}`,
       return
     }
 
-    const analysis = JSON.parse(raw.slice(first, last + 1)) as AnalysisResult
+    const jsonSlice = raw.slice(first, last + 1)
+    let analysis: AnalysisResult
+    try {
+      analysis = JSON.parse(jsonSlice) as AnalysisResult
+    } catch {
+      // Retry after repairing unescaped control characters in string values
+      analysis = JSON.parse(repairJson(jsonSlice)) as AnalysisResult
+    }
     res.json({ success: true, data: { analysis, rowCount: rows.length } })
   } catch (err) {
     console.error('[metaAnalysis] Error:', err)
