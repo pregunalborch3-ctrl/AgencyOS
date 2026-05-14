@@ -101,21 +101,16 @@ function fileToPlainText(
     return { text, rowCount: allRows.length }
   }
 
-  // ── CSV: raw text, strip UTF-8 BOM, parse header + up to 50 data rows ────
+  // ── CSV: send raw text as-is — no parsing, no splitting, no corruption ──
+  // Naive comma-split breaks quoted fields ("value, with, commas").
+  // Claude understands CSV natively; just strip BOM and cap at 50 data rows.
   const raw      = buffer.toString('utf-8').replace(/^﻿/, '')
   const lines    = raw.split(/\r?\n/).filter(l => l.trim() !== '')
   if (lines.length < 2) return { text: lines.join('\n'), rowCount: 0 }
 
   const totalDataRows = lines.length - 1
   const capped        = lines.slice(0, 51) // header + 50 rows
-
-  // Parse header to apply column filter
-  const header = capped[0].split(',').map(h => h.replace(/^"|"$/g, '').trim())
-  const dataRows = capped.slice(1).map(l => l.split(',').map(c => c.replace(/^"|"$/g, '').trim()))
-  const { header: fHeader, rows: fRows } = filterCols(header, dataRows)
-
-  const text = [fHeader.join('\t'), ...fRows.map(r => r.join('\t'))].join('\n')
-  return { text, rowCount: totalDataRows }
+  return { text: capped.join('\n'), rowCount: totalDataRows }
 }
 
 // ─── Robust JSON repair ───────────────────────────────────────────────────────

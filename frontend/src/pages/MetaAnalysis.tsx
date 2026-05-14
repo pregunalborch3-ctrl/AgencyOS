@@ -68,7 +68,11 @@ export default function MetaAnalysis() {
         headers: { Authorization: `Bearer ${token}` },
         body: form,
       })
-      const data = await res.json()
+      const text = await res.text()
+      let data: any
+      try { data = JSON.parse(text) } catch {
+        throw new Error(res.status === 503 ? 'El servidor tardó demasiado. Inténtalo de nuevo.' : `Error del servidor (${res.status})`)
+      }
       if (!data.success) throw new Error(data.error ?? 'Error al analizar')
       setResult(data.data)
     } catch (err) {
@@ -107,7 +111,7 @@ export default function MetaAnalysis() {
               <p className="text-xs text-zinc-500 mt-0.5">Sube tu export de Meta Ads Manager y obtén insights con IA</p>
             </div>
           </div>
-          <InfoTooltip text="Sube tu export CSV o Excel de Meta Ads Manager. La IA analiza rendimiento, detecta campañas con problemas y genera un resumen ejecutivo listo para el cliente." />
+          <InfoTooltip prominent text="Sube tu export CSV o Excel de Meta Ads Manager. La IA analiza rendimiento, detecta campañas con problemas y genera un resumen ejecutivo listo para el cliente." />
         </div>
       </div>
 
