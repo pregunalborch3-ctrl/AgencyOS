@@ -95,7 +95,7 @@ function fileToPlainText(
     const allRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' })
     if (allRows.length === 0) return { text: '', rowCount: 0 }
     const cols   = Object.keys(allRows[0])
-    const data   = allRows.slice(0, 50).map(r => cols.map(c => String((r as Record<string, unknown>)[c] ?? '')))
+    const data   = allRows.slice(0, 100).map(r => cols.map(c => String((r as Record<string, unknown>)[c] ?? '')))
     const { header, rows } = filterCols(cols, data)
     const text = [header.join('\t'), ...rows.map(r => r.join('\t'))].join('\n')
     return { text, rowCount: allRows.length }
@@ -109,7 +109,7 @@ function fileToPlainText(
   if (lines.length < 2) return { text: lines.join('\n'), rowCount: 0 }
 
   const totalDataRows = lines.length - 1
-  const capped        = lines.slice(0, 51) // header + 50 rows
+  const capped        = lines.slice(0, 101) // header + 100 rows
   return { text: capped.join('\n'), rowCount: totalDataRows }
 }
 
@@ -228,12 +228,13 @@ export async function analyzeMetaAds(req: Request, res: Response): Promise<void>
     try {
       const stream = client.messages.stream({
         model: 'claude-sonnet-4-6',
-        max_tokens: 8192,
-        system: `Eres un auditor forense de paid media con 10+ años auditando cuentas de Meta Ads. \
-Tu metodología evalúa cada euro gastado con la precisión de un auditor financiero: ningún dato sin contrastar, ninguna ineficiencia sin cuantificar, ninguna recomendación sin impacto de negocio estimado. \
-Diagnosticas fatiga creativa, saturación de audiencia, eficiencia de coste por placement y salud estructural de la cuenta. \
+        max_tokens: 16000,
+        system: `Eres el director de paid media de una agencia de performance con 15+ años auditando cuentas de Meta Ads para clientes de e-commerce, retail y servicios en España y Latinoamérica. \
+Tu auditoría es el estándar de la industria: cada euro analizado, cada ineficiencia cuantificada, cada oportunidad priorizada por impacto en negocio. \
+Diagnosticas fatiga creativa, saturación de audiencia, overlap de públicos, eficiencia por placement y salud estructural de la cuenta. \
+Cuando el CSV contiene muchas campañas, analiza TODAS y agrupa las conclusiones. Sé exhaustivo: el cliente paga por una auditoría completa, no por un resumen superficial. \
 Responde SOLO con JSON válido. Sin markdown, sin bloques de código, sin texto fuera del JSON. \
-IMPORTANTE: Todos los valores de string deben estar en una sola línea. Nunca uses saltos de línea reales ni barras invertidas dentro de los valores. Usa solo caracteres ASCII seguros.
+IMPORTANTE: Todos los valores de string deben estar en una sola línea. Nunca uses saltos de línea reales dentro de los valores. Usa solo caracteres ASCII seguros.
 
 ${EUR_INSTRUCTION}`,
         messages: [{
@@ -261,18 +262,20 @@ ${plainText}
 ━━━ FORMATO DE RESPUESTA ━━━
 
 Devuelve ÚNICAMENTE este JSON (sin markdown, sin bloques de código).
-LÍMITES ESTRICTOS DE LONGITUD: summary ≤60 palabras, reason/action/fix ≤20 palabras, description ≤25 palabras, executiveSummary ≤80 palabras. Máximo 4 items por array.
+Incluye TODOS los anuncios/conjuntos relevantes — no te limites a 3 o 4. Cuantos más datos tenga el CSV, más completo debe ser el análisis.
 {
-  "summary": "2-3 frases cortas: estado global, cifra clave",
-  "performingWell": [{"name":"nombre exacto","reason":"motivo breve","highlight":"cifra"}],
-  "performingPoorly": [{"name":"nombre exacto","reason":"problema concreto","action":"acción inmediata"}],
-  "belowAverage": [{"metric":"métrica","value":"valor real","benchmark":"referencia","fix":"corrección"}],
+  "summary": "3-4 frases: estado global de la cuenta, eficiencia del gasto total, hallazgo más crítico con cifra exacta, potencial de mejora estimado",
+  "performingWell": [{"name":"nombre exacto del anuncio/conjunto","reason":"explicación detallada de por qué supera benchmarks con cifras concretas","highlight":"métrica clave con valor exacto"}],
+  "performingPoorly": [{"name":"nombre exacto","reason":"diagnóstico detallado con valor exacto y comparativa con benchmark","action":"acción concreta e inmediata con impacto esperado"}],
+  "belowAverage": [{"metric":"nombre exacto de la columna","value":"valor promedio real de la cuenta","benchmark":"referencia del sector para España/Europa","fix":"acción correctora específica con impacto esperado"}],
   "recommendations": [
-    {"priority":"alta","title":"acción","description":"qué y por qué, breve"},
+    {"priority":"alta","title":"título imperativo y específico","description":"qué hacer exactamente, por qué es urgente, impacto estimado en ROAS/CPA/gasto"},
+    {"priority":"alta","title":"...","description":"..."},
+    {"priority":"media","title":"...","description":"..."},
     {"priority":"media","title":"...","description":"..."},
     {"priority":"baja","title":"...","description":"..."}
   ],
-  "executiveSummary": "3-4 frases para el cliente: cifras reales, qué funciona, qué falla, próximo paso"
+  "executiveSummary": "5-6 frases profesionales para presentar al cliente: inversión total analizada, rendimiento global vs benchmarks, 2-3 hallazgos clave con cifras, próximos 3 pasos priorizados"
 }
 
 ${EUR_INSTRUCTION}`,
